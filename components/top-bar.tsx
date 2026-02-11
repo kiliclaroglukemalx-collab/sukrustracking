@@ -20,55 +20,48 @@ export function TopBar({ data }: TopBarProps) {
   const genelToplam = data.reduce((sum, d) => sum + d.kalanKasa, 0);
 
   return (
-    <div className="flex items-center justify-between pr-12">
-      {/* Left: Title + Clock */}
-      <div className="flex items-center gap-4">
-        <h1 className="text-xs font-bold tracking-[0.25em] uppercase text-white md:text-sm">
+    <div className="flex items-start justify-between pr-10">
+      {/* Left: Title + Timestamp */}
+      <div className="flex flex-col gap-0.5">
+        <h1 className="text-glow text-sm font-bold tracking-[0.3em] uppercase text-white md:text-base">
           Saatlik Kasa
         </h1>
-        <div className="hidden h-4 w-px bg-white/15 sm:block" />
-        <div className="hidden sm:block">
-          <LiveClock />
-        </div>
+        <LiveClock />
       </div>
 
-      {/* Right: Summary totals */}
-      <div className="flex items-center gap-5 md:gap-8">
-        <div className="flex flex-col items-end">
-          <span className="text-[8px] font-medium uppercase tracking-widest text-white/35 lg:text-[9px]">
-            Toplam Yatirim
-          </span>
-          <span className="font-mono text-xs font-bold text-white lg:text-sm">
-            {"₺"}{formatCurrency(toplamYatirim)}
-          </span>
-        </div>
-
-        <div className="h-6 w-px bg-white/10" />
-
-        <div className="flex flex-col items-end">
-          <span className="text-[8px] font-medium uppercase tracking-widest text-white/35 lg:text-[9px]">
-            Toplam Cekim
-          </span>
-          <span className="font-mono text-xs font-bold text-red-400 lg:text-sm">
-            {"₺"}{formatCurrency(toplamCekim)}
-          </span>
-        </div>
-
-        <div className="h-6 w-px bg-white/10" />
-
-        <div className="flex flex-col items-end">
-          <span className="text-[8px] font-medium uppercase tracking-widest text-white/35 lg:text-[9px]">
-            Genel Toplam
-          </span>
-          <span
-            className={`font-mono text-xs font-bold lg:text-sm ${
-              genelToplam >= 0 ? "text-emerald-400" : "text-red-400"
-            }`}
-          >
-            {"₺"}{formatCurrency(genelToplam)}
-          </span>
-        </div>
+      {/* Right: Three metrics inline */}
+      <div className="flex items-center gap-4 md:gap-6">
+        <MetricPill label="Toplam Yatirim" value={toplamYatirim} color="text-white" />
+        <div className="h-5 w-px bg-white/[0.08]" />
+        <MetricPill label="Toplam Cekim" value={toplamCekim} color="text-red-400" />
+        <div className="h-5 w-px bg-white/[0.08]" />
+        <MetricPill
+          label="Genel Toplam"
+          value={genelToplam}
+          color={genelToplam >= 0 ? "text-emerald-400" : "text-red-400"}
+        />
       </div>
+    </div>
+  );
+}
+
+function MetricPill({
+  label,
+  value,
+  color,
+}: {
+  label: string;
+  value: number;
+  color: string;
+}) {
+  return (
+    <div className="flex flex-col items-end gap-px">
+      <span className="text-[8px] font-medium uppercase tracking-[0.15em] text-white/30 lg:text-[9px]">
+        {label}
+      </span>
+      <span className={`font-mono text-xs font-bold tabular-nums ${color} lg:text-sm`}>
+        {"₺"}{formatCurrency(value)}
+      </span>
     </div>
   );
 }

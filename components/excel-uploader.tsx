@@ -3,7 +3,7 @@
 import React from "react"
 
 import { useCallback, useRef } from "react";
-import { Upload, FileSpreadsheet } from "lucide-react";
+import { FileSpreadsheet, Upload } from "lucide-react";
 import type { KasaCardData } from "@/lib/excel-processor";
 import { parseExcelFile, processExcelData } from "@/lib/excel-processor";
 
@@ -51,18 +51,18 @@ export function ExcelUploader({ onDataLoaded }: ExcelUploaderProps) {
       }}
       role="button"
       tabIndex={0}
-      className="flex cursor-pointer flex-col items-center gap-3 rounded-lg border-2 border-dashed border-border p-6 transition-colors hover:border-muted-foreground/50 hover:bg-secondary/30"
+      className="flex cursor-pointer flex-col items-center gap-2 rounded-lg border border-dashed border-white/[0.1] px-3 py-4 transition-colors hover:border-white/[0.2] hover:bg-white/[0.03]"
     >
-      <div className="flex items-center gap-3">
-        <FileSpreadsheet className="h-5 w-5 text-accent" />
-        <Upload className="h-5 w-5 text-muted-foreground" />
+      <div className="flex items-center gap-2">
+        <FileSpreadsheet className="h-4 w-4 text-emerald-500/60" strokeWidth={1.5} />
+        <Upload className="h-3.5 w-3.5 text-white/30" strokeWidth={1.5} />
       </div>
       <div className="text-center">
-        <p className="text-sm font-medium text-foreground">
+        <p className="text-[11px] font-medium text-white/60">
           Excel Dosyasi Yukle
         </p>
-        <p className="mt-1 text-xs text-muted-foreground">
-          {"Surukle & birak veya tiklayarak sec (.xlsx, .xls)"}
+        <p className="mt-0.5 text-[9px] text-white/25">
+          .xlsx, .xls veya .csv
         </p>
       </div>
       <input

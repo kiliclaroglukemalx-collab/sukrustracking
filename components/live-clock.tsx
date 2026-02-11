@@ -11,11 +11,11 @@ export function LiveClock() {
     return () => clearInterval(timer);
   }, []);
 
-  if (!now) return <div className="h-4" />;
+  if (!now) return <div className="h-3" />;
 
   const date = now.toLocaleDateString("tr-TR", {
     day: "2-digit",
-    month: "2-digit",
+    month: "long",
     year: "numeric",
   });
 
@@ -26,11 +26,10 @@ export function LiveClock() {
   });
 
   return (
-    <div className="flex items-center gap-2">
-      <span className="text-[10px] tracking-wider text-white/40">{date}</span>
-      <span className="font-mono text-[11px] font-bold tabular-nums text-white/70">
-        {time}
-      </span>
-    </div>
+    <span className="flex items-center gap-2 text-[11px] text-white/40">
+      <span>{date}</span>
+      <span className="text-white/15">{"/"}</span>
+      <span className="font-mono tabular-nums text-white/55">{time}</span>
+    </span>
   );
 }

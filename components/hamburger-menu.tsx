@@ -1,7 +1,16 @@
 "use client";
 
-import { useState } from "react";
-import { Menu, X, Upload, RotateCcw, Film } from "lucide-react";
+import { useState, useRef, useEffect, useCallback } from "react";
+import {
+  MoreVertical,
+  Upload,
+  RotateCcw,
+  Film,
+  Camera,
+  Layers,
+  Settings,
+  X,
+} from "lucide-react";
 import type { KasaCardData } from "@/lib/excel-processor";
 import { ExcelUploader } from "./excel-uploader";
 
@@ -10,6 +19,8 @@ interface HamburgerMenuProps {
   onReset: () => void;
   onVideoChange: (url: string) => void;
   videoUrl: string;
+  screenshotMode: boolean;
+  onScreenshotToggle: () => void;
 }
 
 export function HamburgerMenu({
@@ -17,141 +28,281 @@ export function HamburgerMenu({
   onReset,
   onVideoChange,
   videoUrl,
+  screenshotMode,
+  onScreenshotToggle,
 }: HamburgerMenuProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const [activePanel, setActivePanel] = useState<
+    "main" | "excel" | "video" | "methods"
+  >("main");
   const [videoInput, setVideoInput] = useState(videoUrl);
+  const menuRef = useRef<HTMLDivElement>(null);
 
-  const handleVideoApply = () => {
-    onVideoChange(videoInput);
-  };
+  useEffect(() => {
+    setVideoInput(videoUrl);
+  }, [videoUrl]);
 
-  const handleVideoClear = () => {
-    setVideoInput("");
-    onVideoChange("");
-  };
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setIsOpen(false);
+        setActivePanel("main");
+      }
+    }
+    if (isOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [isOpen]);
+
+  const close = useCallback(() => {
+    setIsOpen(false);
+    setActivePanel("main");
+  }, []);
 
   return (
-    <>
-      {/* Thin hamburger icon - fixed top right */}
+    <div ref={menuRef} className="fixed right-3 top-2.5 z-50">
+      {/* Trigger button */}
       <button
-        onClick={() => setIsOpen(true)}
+        onClick={() => {
+          setIsOpen(!isOpen);
+          setActivePanel("main");
+        }}
         type="button"
-        className="fixed right-3 top-2 z-50 flex h-7 w-7 items-center justify-center rounded transition-colors hover:bg-white/10"
+        className="flex h-7 w-7 items-center justify-center rounded-md border border-white/[0.06] bg-white/[0.03] text-white/50 transition-all hover:border-white/[0.12] hover:bg-white/[0.08] hover:text-white/80"
         aria-label="Menu"
       >
-        <Menu className="h-4 w-4 text-white/60" strokeWidth={1.5} />
+        {isOpen ? (
+          <X className="h-3.5 w-3.5" strokeWidth={1.5} />
+        ) : (
+          <MoreVertical className="h-3.5 w-3.5" strokeWidth={1.5} />
+        )}
       </button>
 
-      {/* Overlay */}
+      {/* Dropdown */}
       {isOpen && (
-        <div
-          className="fixed inset-0 z-50 bg-black/60"
-          onClick={() => setIsOpen(false)}
-          onKeyDown={(e) => {
-            if (e.key === "Escape") setIsOpen(false);
-          }}
-          role="button"
-          tabIndex={0}
-          aria-label="Kapat"
-        />
+        <div className="absolute right-0 top-9 w-64 overflow-hidden rounded-lg border border-white/[0.08] bg-zinc-950/95 shadow-2xl shadow-black/50 backdrop-blur-xl">
+          {activePanel === "main" && (
+            <div className="flex flex-col py-1">
+              {/* Screenshot Mode toggle */}
+              <button
+                type="button"
+                onClick={onScreenshotToggle}
+                className="flex items-center justify-between px-3 py-2.5 text-left transition-colors hover:bg-white/[0.05]"
+              >
+                <span className="flex items-center gap-2.5">
+                  <Camera
+                    className="h-3.5 w-3.5 text-white/40"
+                    strokeWidth={1.5}
+                  />
+                  <span className="text-[11px] text-white/70">
+                    Screenshot Mode
+                  </span>
+                </span>
+                <div
+                  className={`h-4 w-7 rounded-full transition-colors ${
+                    screenshotMode ? "bg-emerald-500/80" : "bg-white/10"
+                  } flex items-center px-0.5`}
+                >
+                  <div
+                    className={`h-3 w-3 rounded-full bg-white shadow transition-transform ${
+                      screenshotMode ? "translate-x-3" : "translate-x-0"
+                    }`}
+                  />
+                </div>
+              </button>
+
+              <div className="mx-3 h-px bg-white/[0.05]" />
+
+              {/* Excel Upload */}
+              <button
+                type="button"
+                onClick={() => setActivePanel("excel")}
+                className="flex items-center gap-2.5 px-3 py-2.5 text-left transition-colors hover:bg-white/[0.05]"
+              >
+                <Upload
+                  className="h-3.5 w-3.5 text-white/40"
+                  strokeWidth={1.5}
+                />
+                <span className="text-[11px] text-white/70">Excel Yukle</span>
+              </button>
+
+              {/* Video */}
+              <button
+                type="button"
+                onClick={() => setActivePanel("video")}
+                className="flex items-center gap-2.5 px-3 py-2.5 text-left transition-colors hover:bg-white/[0.05]"
+              >
+                <Film
+                  className="h-3.5 w-3.5 text-white/40"
+                  strokeWidth={1.5}
+                />
+                <span className="text-[11px] text-white/70">
+                  Video Ayarlari
+                </span>
+              </button>
+
+              {/* Yontemler */}
+              <button
+                type="button"
+                onClick={() => setActivePanel("methods")}
+                className="flex items-center gap-2.5 px-3 py-2.5 text-left transition-colors hover:bg-white/[0.05]"
+              >
+                <Layers
+                  className="h-3.5 w-3.5 text-white/40"
+                  strokeWidth={1.5}
+                />
+                <span className="text-[11px] text-white/70">Yontemler</span>
+              </button>
+
+              <div className="mx-3 h-px bg-white/[0.05]" />
+
+              {/* Reset */}
+              <button
+                type="button"
+                onClick={() => {
+                  onReset();
+                  close();
+                }}
+                className="flex items-center gap-2.5 px-3 py-2.5 text-left transition-colors hover:bg-white/[0.05]"
+              >
+                <RotateCcw
+                  className="h-3.5 w-3.5 text-white/40"
+                  strokeWidth={1.5}
+                />
+                <span className="text-[11px] text-white/70">
+                  Demo Veriye Don
+                </span>
+              </button>
+
+              {/* Ayarlar info */}
+              <button
+                type="button"
+                className="flex items-center gap-2.5 px-3 py-2.5 text-left opacity-40"
+                disabled
+              >
+                <Settings className="h-3.5 w-3.5" strokeWidth={1.5} />
+                <span className="text-[11px]">Ayarlar</span>
+              </button>
+            </div>
+          )}
+
+          {activePanel === "excel" && (
+            <div className="p-3">
+              <button
+                type="button"
+                onClick={() => setActivePanel("main")}
+                className="mb-3 text-[10px] text-white/40 transition-colors hover:text-white/70"
+              >
+                {"< Geri"}
+              </button>
+              <ExcelUploader
+                onDataLoaded={(data) => {
+                  onDataLoaded(data);
+                  close();
+                }}
+              />
+            </div>
+          )}
+
+          {activePanel === "video" && (
+            <div className="p-3">
+              <button
+                type="button"
+                onClick={() => setActivePanel("main")}
+                className="mb-3 text-[10px] text-white/40 transition-colors hover:text-white/70"
+              >
+                {"< Geri"}
+              </button>
+              <label className="mb-1.5 block text-[9px] font-medium uppercase tracking-widest text-white/30">
+                Video URL (mp4)
+              </label>
+              <input
+                type="text"
+                value={videoInput}
+                onChange={(e) => setVideoInput(e.target.value)}
+                placeholder="https://example.com/video.mp4"
+                className="mb-2 w-full rounded border border-white/[0.08] bg-white/[0.03] px-2.5 py-1.5 text-[11px] text-white placeholder-white/20 outline-none transition-colors focus:border-white/20"
+              />
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    onVideoChange(videoInput);
+                    close();
+                  }}
+                  className="flex-1 rounded bg-white/10 py-1.5 text-[10px] font-medium text-white transition-colors hover:bg-white/20"
+                >
+                  Uygula
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setVideoInput("");
+                    onVideoChange("");
+                  }}
+                  className="rounded px-3 py-1.5 text-[10px] text-white/40 transition-colors hover:bg-white/[0.05] hover:text-white/70"
+                >
+                  Temizle
+                </button>
+              </div>
+            </div>
+          )}
+
+          {activePanel === "methods" && (
+            <div className="max-h-72 overflow-y-auto p-3">
+              <button
+                type="button"
+                onClick={() => setActivePanel("main")}
+                className="mb-3 text-[10px] text-white/40 transition-colors hover:text-white/70"
+              >
+                {"< Geri"}
+              </button>
+              <p className="mb-2 text-[9px] uppercase tracking-widest text-white/30">
+                Komisyon Oranlari
+              </p>
+              <div className="space-y-1">
+                {[
+                  ["Nakit", "0%"],
+                  ["Kredi Karti", "1.79%"],
+                  ["Banka Karti", "0.95%"],
+                  ["Havale/EFT", "0%"],
+                  ["Yemek Karti", "5%"],
+                  ["Online Odeme", "2.5%"],
+                  ["Multinet", "5%"],
+                  ["Sodexo", "5%"],
+                  ["Ticket", "5%"],
+                  ["Metropol", "5%"],
+                  ["Setcard", "5%"],
+                  ["iyzico", "2.99%"],
+                  ["PayPal", "3.4%"],
+                  ["Param", "2.79%"],
+                  ["Paycell", "2.5%"],
+                  ["Hopi", "3%"],
+                  ["Tosla", "2.5%"],
+                  ["Papara", "1.5%"],
+                  ["Cuzdan", "0%"],
+                  ["Acik Hesap", "0%"],
+                  ["Fis/Cek", "0%"],
+                  ["Garanti Pay", "2.2%"],
+                  ["QR Odeme", "1.8%"],
+                  ["Puan", "0%"],
+                ].map(([name, rate]) => (
+                  <div
+                    key={name}
+                    className="flex items-center justify-between py-0.5"
+                  >
+                    <span className="text-[10px] text-white/50">{name}</span>
+                    <span className="font-mono text-[10px] text-white/70">
+                      {rate}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
       )}
-
-      {/* Side panel */}
-      <div
-        className={`fixed right-0 top-0 z-50 flex h-full w-72 flex-col border-l border-white/10 bg-black/95 backdrop-blur-xl transition-transform duration-300 ${
-          isOpen ? "translate-x-0" : "translate-x-full"
-        }`}
-      >
-        {/* Header */}
-        <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
-          <span className="text-xs font-semibold uppercase tracking-widest text-white/70">
-            Ayarlar
-          </span>
-          <button
-            onClick={() => setIsOpen(false)}
-            type="button"
-            className="flex h-6 w-6 items-center justify-center rounded transition-colors hover:bg-white/10"
-            aria-label="Kapat"
-          >
-            <X className="h-3.5 w-3.5 text-white/60" />
-          </button>
-        </div>
-
-        {/* Content */}
-        <div className="flex flex-1 flex-col gap-5 overflow-y-auto p-4">
-          {/* Video section */}
-          <section>
-            <div className="mb-2 flex items-center gap-2">
-              <Film className="h-3.5 w-3.5 text-white/40" />
-              <span className="text-[9px] font-medium uppercase tracking-widest text-white/40">
-                Arka Plan Videosu
-              </span>
-            </div>
-            <input
-              type="text"
-              value={videoInput}
-              onChange={(e) => setVideoInput(e.target.value)}
-              placeholder="Video URL (mp4)"
-              className="mb-2 w-full rounded border border-white/10 bg-white/5 px-3 py-1.5 text-[11px] text-white placeholder-white/25 outline-none focus:border-white/25"
-            />
-            <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={handleVideoApply}
-                className="flex-1 rounded border border-white/10 bg-white/10 py-1 text-[10px] font-medium text-white transition-colors hover:bg-white/20"
-              >
-                Uygula
-              </button>
-              <button
-                type="button"
-                onClick={handleVideoClear}
-                className="rounded border border-white/10 px-3 py-1 text-[10px] text-white/40 transition-colors hover:bg-white/10"
-              >
-                Sil
-              </button>
-            </div>
-          </section>
-
-          <div className="h-px bg-white/[0.06]" />
-
-          {/* Excel upload */}
-          <section>
-            <div className="mb-2 flex items-center gap-2">
-              <Upload className="h-3.5 w-3.5 text-white/40" />
-              <span className="text-[9px] font-medium uppercase tracking-widest text-white/40">
-                Excel Yukle
-              </span>
-            </div>
-            <ExcelUploader
-              onDataLoaded={(data) => {
-                onDataLoaded(data);
-                setIsOpen(false);
-              }}
-            />
-          </section>
-
-          <div className="h-px bg-white/[0.06]" />
-
-          {/* Reset */}
-          <button
-            onClick={() => {
-              onReset();
-              setIsOpen(false);
-            }}
-            type="button"
-            className="flex items-center gap-2 rounded border border-white/10 px-3 py-2 text-[11px] text-white/60 transition-colors hover:bg-white/10 hover:text-white"
-          >
-            <RotateCcw className="h-3 w-3" />
-            Demo Veriye Don
-          </button>
-
-          {/* Info */}
-          <p className="mt-auto text-[9px] leading-relaxed text-white/25">
-            Excel: Odeme Turu Adi, Borc, Kredi kolonlari. Komisyon otomatik
-            hesaplanir.
-          </p>
-        </div>
-      </div>
-    </>
+    </div>
   );
 }

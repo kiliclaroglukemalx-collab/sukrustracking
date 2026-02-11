@@ -4,9 +4,10 @@ import { useRef, useState, useEffect } from "react";
 
 interface VideoBackgroundProps {
   src?: string;
+  disabled?: boolean;
 }
 
-export function VideoBackground({ src }: VideoBackgroundProps) {
+export function VideoBackground({ src, disabled }: VideoBackgroundProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [hasError, setHasError] = useState(false);
 
@@ -18,15 +19,15 @@ export function VideoBackground({ src }: VideoBackgroundProps) {
     }
   }, [src]);
 
-  if (!src || hasError) {
-    return <div className="fixed inset-0 z-0 bg-black" aria-hidden="true" />;
+  if (!src || hasError || disabled) {
+    return null;
   }
 
   return (
     <div className="fixed inset-0 z-0 overflow-hidden" aria-hidden="true">
       <video
         ref={videoRef}
-        className="h-full w-full object-cover opacity-15"
+        className="h-full w-full object-cover opacity-[0.08] blur-[1px]"
         autoPlay
         muted
         loop
@@ -35,7 +36,7 @@ export function VideoBackground({ src }: VideoBackgroundProps) {
       >
         <source src={src} type="video/mp4" />
       </video>
-      <div className="absolute inset-0 bg-black/70" />
+      <div className="absolute inset-0 bg-black/80" />
     </div>
   );
 }
