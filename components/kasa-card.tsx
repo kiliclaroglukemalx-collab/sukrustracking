@@ -2,7 +2,19 @@
 
 import type { KasaCardData } from "@/lib/excel-processor";
 
-const NAME_COLOR = "#E5A230";
+const METHOD_COLORS = [
+  "#22d3ee", "#a78bfa", "#f97316", "#34d399", "#f472b6",
+  "#facc15", "#60a5fa", "#e879f9", "#fb923c", "#4ade80",
+  "#c084fc", "#38bdf8", "#fbbf24", "#f87171", "#2dd4bf",
+  "#a3e635", "#818cf8", "#fb7185", "#67e8f9", "#d946ef",
+  "#fca5a1", "#86efac", "#fde047", "#93c5fd",
+];
+
+const NAME_COLOR = "#ffffff"; // Declare NAME_COLOR variable
+
+function getMethodColor(index: number): string {
+  return METHOD_COLORS[index % METHOD_COLORS.length];
+}
 
 function formatAmount(value: number): string {
   const abs = Math.abs(value);
@@ -17,9 +29,11 @@ function formatAmount(value: number): string {
 
 interface KasaCardProps {
   data: KasaCardData;
+  index: number;
 }
 
-export function KasaCard({ data }: KasaCardProps) {
+export function KasaCard({ data, index }: KasaCardProps) {
+  const nameColor = getMethodColor(index);
   const isNegative = data.kalanKasa < 0;
 
   return (
@@ -39,21 +53,21 @@ export function KasaCard({ data }: KasaCardProps) {
         }}
       />
 
-      {/* Payment method name - top, large, word-wrap allowed */}
+      {/* Payment method name - top, word-wrap allowed */}
       <span
-        className="relative z-10 text-balance font-sans text-sm font-black uppercase leading-tight tracking-[0.15em] md:text-base lg:text-lg"
+        className="relative z-10 text-balance font-sans text-xs font-extrabold uppercase leading-tight tracking-[0.14em] md:text-sm lg:text-base"
         style={{
-          color: NAME_COLOR,
-          textShadow: `0 0 24px ${NAME_COLOR}55`,
+          color: nameColor,
+          textShadow: `0 0 20px ${nameColor}44`,
         }}
       >
         {data.odemeTuruAdi}
       </span>
 
-      {/* Spacer pushes amount to bottom-center area */}
+      {/* Amount centered */}
       <div className="flex flex-1 items-center justify-center">
         <span
-          className={`relative z-10 font-mono text-2xl font-black tabular-nums tracking-tight sm:text-3xl md:text-3xl lg:text-4xl ${
+          className={`relative z-10 font-mono text-xl font-black tabular-nums tracking-tight sm:text-2xl lg:text-3xl ${
             isNegative ? "text-red-500" : "text-white"
           }`}
           style={{

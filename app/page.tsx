@@ -85,8 +85,8 @@ export default function Page() {
             gridTemplateRows: `repeat(${grid.rows}, 1fr)`,
           }}
         >
-          {kasaData.map((card) => (
-            <KasaCard key={card.id} data={card} />
+          {kasaData.map((card, i) => (
+            <KasaCard key={card.id} data={card} index={i} />
           ))}
         </div>
       </div>
