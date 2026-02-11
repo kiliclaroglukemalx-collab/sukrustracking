@@ -37,52 +37,53 @@ export function TopBar({ data }: TopBarProps) {
 
   return (
     <div className="flex h-[72px] items-center justify-between">
-      {/* LEFT: Hour + Title */}
-      <div className="flex items-baseline gap-2.5">
-        <span className="font-mono text-2xl font-black tracking-wider text-neutral-900 lg:text-3xl">
+      {/* LEFT: Hour + Kasasi */}
+      <div className="flex flex-shrink-0 items-baseline gap-2">
+        <span className="font-mono text-xl font-black tracking-wide text-neutral-900 lg:text-2xl">
           {roundedHour}
         </span>
-        <span className="text-lg font-bold tracking-[0.2em] uppercase text-neutral-900 lg:text-xl">
-          Saatlik Kasasi
+        <span className="text-sm font-bold tracking-[0.15em] uppercase text-neutral-900 lg:text-base">
+          Kasasi
         </span>
       </div>
 
-      {/* CENTER: Yatirim / Komisyon / Cekim */}
-      <div className="flex items-center gap-6 lg:gap-10">
-        <Metric
-          label="Toplam Yatirim"
-          value={toplamYatirim}
-          color="text-neutral-900"
-        />
-        <div className="h-7 w-px bg-neutral-200" />
-        <Metric
-          label="Toplam Komisyon"
-          value={toplamKomisyon}
-          color="text-amber-600"
-        />
-        <div className="h-7 w-px bg-neutral-200" />
-        <Metric
-          label="Toplam Cekim"
-          value={toplamCekim}
-          color="text-red-600"
-        />
-      </div>
-
-      {/* RIGHT: Genel Toplam (neon green, prominent) */}
-      <div className="flex flex-col items-end gap-0.5 pr-10">
-        <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-neutral-400 lg:text-[11px]">
-          Genel Toplam
+      {/* CENTER: Total Kasa - black bg, white label, green amount */}
+      <div className="flex flex-col items-center justify-center rounded-lg bg-neutral-950 px-8 py-1.5">
+        <span className="text-[10px] font-bold uppercase tracking-[0.25em] text-white lg:text-[11px]">
+          Total Kasa
         </span>
         <span
-          className="font-mono text-xl font-black tabular-nums lg:text-2xl xl:text-3xl"
+          className="font-mono text-2xl font-black tabular-nums lg:text-3xl"
           style={{
             color: "#00FF00",
-            textShadow: "0 0 12px rgba(0,255,0,0.35), 0 0 4px rgba(0,255,0,0.2)",
+            textShadow:
+              "0 0 14px rgba(0,255,0,0.4), 0 0 5px rgba(0,255,0,0.25)",
           }}
         >
           {"₺"}
           {formatCurrency(genelToplam)}
         </span>
+      </div>
+
+      {/* RIGHT: Yatirim / Komisyon / Cekim + menu spacer */}
+      <div className="flex flex-shrink-0 items-center gap-5 pr-10 lg:gap-8">
+        <Metric
+          label="Toplam Yatirim"
+          value={toplamYatirim}
+          color="text-neutral-900"
+        />
+        <div className="h-6 w-px bg-neutral-200" />
+        <Metric
+          label="Toplam Komisyon"
+          value={toplamKomisyon}
+          color="text-amber-600"
+        />
+        <div className="h-6 w-px bg-neutral-200" />
+        <Metric
+          label="Toplam Cekim"
+          value={toplamCekim}
+          color="text-red-600"
+        />
       </div>
     </div>
   );
