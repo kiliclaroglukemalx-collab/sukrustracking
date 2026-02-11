@@ -6,15 +6,15 @@
   :root {
     --background: 0 0% 0%;
     --foreground: 0 0% 100%;
-    --card: 0 0% 5%;
+    --card: 0 0% 100%;
     --card-foreground: 0 0% 100%;
-    --popover: 0 0% 5%;
+    --popover: 0 0% 4%;
     --popover-foreground: 0 0% 100%;
     --primary: 0 0% 100%;
     --primary-foreground: 0 0% 0%;
-    --secondary: 0 0% 10%;
+    --secondary: 0 0% 8%;
     --secondary-foreground: 0 0% 100%;
-    --muted: 0 0% 12%;
+    --muted: 0 0% 10%;
     --muted-foreground: 0 0% 55%;
     --accent: 142 72% 45%;
     --accent-foreground: 0 0% 100%;
@@ -23,12 +23,7 @@
     --border: 0 0% 15%;
     --input: 0 0% 15%;
     --ring: 0 0% 100%;
-    --chart-1: 142 72% 45%;
-    --chart-2: 0 72% 50%;
-    --chart-3: 45 90% 55%;
-    --chart-4: 200 70% 50%;
-    --chart-5: 280 65% 60%;
-    --radius: 0.75rem;
+    --radius: 0.625rem;
   }
 }
 
@@ -38,7 +33,9 @@
   }
   html,
   body {
-    @apply h-full overflow-hidden bg-black text-white;
+    @apply h-full overflow-hidden;
+    background: #000000;
+    color: #ffffff;
   }
 }
 
@@ -46,24 +43,13 @@
   .text-balance {
     text-wrap: balance;
   }
-  .card-glow {
-    box-shadow:
-      0 0 0 1px rgba(255, 255, 255, 0.06),
-      0 4px 24px -4px rgba(0, 0, 0, 0.5),
-      0 0 48px -12px rgba(255, 255, 255, 0.03);
-  }
-  .card-glow-hover {
-    box-shadow:
-      0 0 0 1px rgba(255, 255, 255, 0.12),
-      0 8px 32px -4px rgba(0, 0, 0, 0.6),
-      0 0 64px -8px rgba(255, 255, 255, 0.06);
-  }
   .text-glow {
-    text-shadow: 0 0 20px rgba(255, 255, 255, 0.15);
+    text-shadow: 0 0 20px rgba(255, 255, 255, 0.12);
   }
   .text-glow-strong {
     text-shadow:
-      0 0 10px rgba(255, 255, 255, 0.3),
-      0 0 40px rgba(255, 255, 255, 0.1);
+      0 1px 2px rgba(0, 0, 0, 0.8),
+      0 0 20px rgba(255, 255, 255, 0.18),
+      0 0 60px rgba(255, 255, 255, 0.06);
   }
 }

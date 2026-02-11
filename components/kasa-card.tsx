@@ -23,28 +23,48 @@ export function KasaCard({ data, screenshotMode }: KasaCardProps) {
 
   return (
     <div
-      className={`group relative flex flex-col items-center justify-center overflow-hidden rounded-lg border transition-all duration-300 ${
-        screenshotMode
-          ? "border-white/[0.08] bg-white/[0.04]"
-          : "card-glow border-white/[0.06] bg-white/[0.03] backdrop-blur-md hover:card-glow-hover hover:border-white/[0.12] hover:bg-white/[0.06]"
-      }`}
+      className="relative flex flex-col items-center justify-center overflow-hidden rounded-lg"
+      style={{
+        background: screenshotMode
+          ? "radial-gradient(ellipse at center, rgba(255,255,255,0.07) 0%, rgba(255,255,255,0.02) 50%, transparent 100%)"
+          : "radial-gradient(ellipse at center, rgba(255,255,255,0.09) 0%, rgba(255,255,255,0.03) 40%, rgba(0,0,0,0.0) 100%)",
+      }}
     >
-      {/* Subtle top gradient line */}
+      {/* Faint border that fades at edges */}
       <div
-        className={`absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/[0.1] to-transparent ${
-          screenshotMode ? "opacity-50" : "opacity-100"
-        }`}
+        className="pointer-events-none absolute inset-0 rounded-lg"
+        style={{
+          border: "1px solid transparent",
+          borderImage:
+            "linear-gradient(135deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0.04) 50%, transparent 100%) 1",
+          mask: "linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0)",
+          WebkitMask:
+            "linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0)",
+        }}
       />
 
-      {/* Payment method name */}
-      <span className="mb-1 text-[9px] font-semibold uppercase tracking-[0.2em] text-white/40 lg:text-[10px]">
+      {/* Payment method name - large and prominent */}
+      <span
+        className={`mb-1 font-sans font-bold uppercase tracking-[0.15em] text-white/90 ${
+          screenshotMode
+            ? "text-[11px] lg:text-xs"
+            : "text-[10px] lg:text-[11px]"
+        }`}
+        style={{
+          textShadow: "0 1px 3px rgba(0,0,0,0.6)",
+        }}
+      >
         {data.odemeTuruAdi}
       </span>
 
-      {/* Amount - the hero */}
+      {/* Amount - the hero number */}
       <span
-        className={`text-glow-strong font-mono text-base font-black tabular-nums tracking-tight sm:text-lg md:text-xl lg:text-2xl ${
+        className={`text-glow-strong font-mono font-black tabular-nums tracking-tight ${
           isPositive ? "text-white" : "text-red-400"
+        } ${
+          screenshotMode
+            ? "text-lg sm:text-xl md:text-2xl lg:text-3xl"
+            : "text-base sm:text-lg md:text-xl lg:text-2xl"
         }`}
       >
         {"₺"}

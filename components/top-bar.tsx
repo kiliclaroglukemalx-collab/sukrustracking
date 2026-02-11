@@ -12,12 +12,47 @@ function formatCurrency(value: number): string {
 
 interface TopBarProps {
   data: KasaCardData[];
+  screenshotMode?: boolean;
 }
 
-export function TopBar({ data }: TopBarProps) {
+function getRoundedHour(): string {
+  const now = new Date();
+  const mins = now.getMinutes();
+  const h = mins >= 30 ? now.getHours() + 1 : now.getHours();
+  const hour = h % 24;
+  return `${hour.toString().padStart(2, "0")}:00`;
+}
+
+export function TopBar({ data, screenshotMode }: TopBarProps) {
   const toplamYatirim = data.reduce((sum, d) => sum + d.toplamBorc, 0);
   const toplamCekim = data.reduce((sum, d) => sum + d.toplamKredi, 0);
-  const genelToplam = data.reduce((sum, d) => sum + d.kalanKasa, 0);
+  const toplamKomisyon = data.reduce((sum, d) => sum + d.komisyon, 0);
+
+  if (screenshotMode) {
+    const roundedHour = getRoundedHour();
+    return (
+      <div className="flex flex-col items-center gap-1 pb-1">
+        {/* Large centered hour title */}
+        <h1
+          className="text-glow-strong font-mono text-2xl font-black tracking-wider text-white md:text-3xl"
+        >
+          {roundedHour}{" "}
+          <span className="font-sans text-xl font-bold tracking-[0.2em] uppercase md:text-2xl">
+            Saatlik Kasasi
+          </span>
+        </h1>
+
+        {/* Three metrics side by side */}
+        <div className="flex items-center gap-6">
+          <ScreenshotMetric label="Toplam Yatirim" value={toplamYatirim} color="text-white" />
+          <div className="h-4 w-px bg-white/10" />
+          <ScreenshotMetric label="Toplam Komisyon" value={toplamKomisyon} color="text-amber-400" />
+          <div className="h-4 w-px bg-white/10" />
+          <ScreenshotMetric label="Toplam Cekim" value={toplamCekim} color="text-red-400" />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex items-start justify-between pr-10">
@@ -32,13 +67,13 @@ export function TopBar({ data }: TopBarProps) {
       {/* Right: Three metrics inline */}
       <div className="flex items-center gap-4 md:gap-6">
         <MetricPill label="Toplam Yatirim" value={toplamYatirim} color="text-white" />
-        <div className="h-5 w-px bg-white/[0.08]" />
+        <div className="h-5 w-px bg-white/[0.06]" />
         <MetricPill label="Toplam Cekim" value={toplamCekim} color="text-red-400" />
-        <div className="h-5 w-px bg-white/[0.08]" />
+        <div className="h-5 w-px bg-white/[0.06]" />
         <MetricPill
           label="Genel Toplam"
-          value={genelToplam}
-          color={genelToplam >= 0 ? "text-emerald-400" : "text-red-400"}
+          value={toplamYatirim - toplamCekim - data.reduce((s, d) => s + d.komisyon, 0)}
+          color="text-emerald-400"
         />
       </div>
     </div>
@@ -60,6 +95,27 @@ function MetricPill({
         {label}
       </span>
       <span className={`font-mono text-xs font-bold tabular-nums ${color} lg:text-sm`}>
+        {"₺"}{formatCurrency(value)}
+      </span>
+    </div>
+  );
+}
+
+function ScreenshotMetric({
+  label,
+  value,
+  color,
+}: {
+  label: string;
+  value: number;
+  color: string;
+}) {
+  return (
+    <div className="flex flex-col items-center gap-0">
+      <span className="text-[9px] font-medium uppercase tracking-[0.15em] text-white/40 md:text-[10px]">
+        {label}
+      </span>
+      <span className={`font-mono text-sm font-bold tabular-nums md:text-base ${color}`}>
         {"₺"}{formatCurrency(value)}
       </span>
     </div>
