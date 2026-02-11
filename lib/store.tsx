@@ -5,6 +5,7 @@ import React, {
   useContext,
   useState,
   useCallback,
+  useEffect,
   useMemo,
 } from "react";
 import {
@@ -13,6 +14,14 @@ import {
   processExcelData,
 } from "@/lib/excel-processor";
 import type { KasaCardData, PaymentMethod, PaymentRow } from "@/lib/excel-processor";
+
+function getInitialRole(): UserRole {
+  if (typeof window !== "undefined") {
+    const stored = sessionStorage.getItem("kasa-role");
+    if (stored === "master") return "master";
+  }
+  return "basic";
+}
 
 export type UserRole = "basic" | "master";
 
@@ -41,7 +50,7 @@ interface StoreContextValue {
 const StoreContext = createContext<StoreContextValue | null>(null);
 
 export function StoreProvider({ children }: { children: React.ReactNode }) {
-  const [role, setRoleState] = useState<UserRole>("basic");
+  const [role, setRoleState] = useState<UserRole>(getInitialRole);
   const [methods, setMethodsState] = useState<PaymentMethod[]>(DEFAULT_METHODS);
   const [kasaData, setKasaData] = useState<KasaCardData[]>(() =>
     generateDemoData(DEFAULT_METHODS),
@@ -55,6 +64,9 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
 
   const setRole = useCallback((newRole: UserRole) => {
     setRoleState(newRole);
+    if (typeof window !== "undefined") {
+      sessionStorage.setItem("kasa-role", newRole);
+    }
   }, []);
 
   const loadExcelData = useCallback((data: KasaCardData[]) => {

@@ -29,10 +29,10 @@ const LEAGUE_COLORS = [
 
 export default function RaporlarPage() {
   const { kasaData, role } = useStore();
-  const [mounted, setMounted] = useState(false);
+  const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
-    setMounted(true);
+    setHydrated(true);
   }, []);
 
   // Sort by total yatirim (borc) descending for league
@@ -43,7 +43,7 @@ export default function RaporlarPage() {
   // Calculate max for percentage bars
   const maxYatirim = leagueSorted.length > 0 ? leagueSorted[0].toplamBorc : 1;
 
-  if (!mounted) {
+  if (!hydrated) {
     return <div className="min-h-screen bg-neutral-50" />;
   }
 

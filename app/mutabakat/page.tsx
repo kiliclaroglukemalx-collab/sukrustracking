@@ -14,13 +14,13 @@ import { useStore } from "@/lib/store";
 
 export default function MutabakatPage() {
   const { role } = useStore();
-  const [mounted, setMounted] = useState(false);
+  const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
-    setMounted(true);
+    setHydrated(true);
   }, []);
 
-  if (!mounted) {
+  if (!hydrated) {
     return <div className="min-h-screen bg-neutral-50" />;
   }
 
