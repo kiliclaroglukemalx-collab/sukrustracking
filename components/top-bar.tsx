@@ -1,6 +1,6 @@
 "use client";
 
-import { LiveClock } from "@/components/live-clock";
+import { useState, useEffect } from "react";
 import type { KasaCardData } from "@/lib/excel-processor";
 
 function formatCurrency(value: number): string {
@@ -8,11 +8,6 @@ function formatCurrency(value: number): string {
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
   }).format(value);
-}
-
-interface TopBarProps {
-  data: KasaCardData[];
-  screenshotMode?: boolean;
 }
 
 function getRoundedHour(): string {
@@ -23,106 +18,45 @@ function getRoundedHour(): string {
   return `${hour.toString().padStart(2, "0")}:00`;
 }
 
-export function TopBar({ data, screenshotMode }: TopBarProps) {
+interface TopBarProps {
+  data: KasaCardData[];
+}
+
+export function TopBar({ data }: TopBarProps) {
+  const [roundedHour, setRoundedHour] = useState(getRoundedHour);
+
+  useEffect(() => {
+    const timer = setInterval(() => setRoundedHour(getRoundedHour()), 30000);
+    return () => clearInterval(timer);
+  }, []);
+
   const toplamYatirim = data.reduce((sum, d) => sum + d.toplamBorc, 0);
   const toplamCekim = data.reduce((sum, d) => sum + d.toplamKredi, 0);
   const toplamKomisyon = data.reduce((sum, d) => sum + d.komisyon, 0);
 
-  if (screenshotMode) {
-    const roundedHour = getRoundedHour();
-    return (
-      <div className="flex flex-col items-center gap-2">
-        {/* Large centered hour title */}
-        <h1 className="font-mono text-3xl font-black tracking-wider text-neutral-900 md:text-4xl">
-          {roundedHour}{" "}
-          <span className="font-sans text-2xl font-bold tracking-[0.2em] uppercase md:text-3xl">
-            Saatlik Kasasi
-          </span>
-        </h1>
-
-        {/* Three metrics side by side */}
-        <div className="flex items-center gap-8">
-          <ScreenshotMetric
-            label="Toplam Yatirim"
-            value={toplamYatirim}
-            color="text-neutral-900"
-          />
-          <div className="h-5 w-px bg-neutral-200" />
-          <ScreenshotMetric
-            label="Toplam Komisyon"
-            value={toplamKomisyon}
-            color="text-amber-600"
-          />
-          <div className="h-5 w-px bg-neutral-200" />
-          <ScreenshotMetric
-            label="Toplam Cekim"
-            value={toplamCekim}
-            color="text-red-600"
-          />
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className="flex items-start justify-between pr-10">
-      {/* Left: Title + Timestamp */}
-      <div className="flex flex-col gap-0.5">
-        <h1 className="text-sm font-bold tracking-[0.3em] uppercase text-neutral-900 md:text-base">
-          Saatlik Kasa
-        </h1>
-        <LiveClock />
-      </div>
+    <div className="flex flex-col items-center gap-1.5">
+      {/* Large centered hour title */}
+      <h1 className="flex items-baseline gap-3 font-mono text-2xl font-black tracking-wider text-neutral-900 md:text-3xl lg:text-4xl">
+        <span>{roundedHour}</span>
+        <span className="font-sans text-xl font-bold tracking-[0.25em] uppercase md:text-2xl lg:text-3xl">
+          Saatlik Kasasi
+        </span>
+      </h1>
 
-      {/* Right: Three metrics inline */}
-      <div className="flex items-center gap-4 md:gap-6">
-        <MetricPill
-          label="Toplam Yatirim"
-          value={toplamYatirim}
-          color="text-neutral-900"
-        />
-        <div className="h-5 w-px bg-neutral-200" />
-        <MetricPill
-          label="Toplam Cekim"
-          value={toplamCekim}
-          color="text-red-600"
-        />
-        <div className="h-5 w-px bg-neutral-200" />
-        <MetricPill
-          label="Genel Toplam"
-          value={toplamYatirim - toplamCekim - toplamKomisyon}
-          color="text-emerald-600"
-        />
+      {/* Three metrics side by side */}
+      <div className="flex items-center gap-6 md:gap-8">
+        <Metric label="Toplam Yatirim" value={toplamYatirim} color="text-neutral-800" />
+        <div className="h-4 w-px bg-neutral-200" />
+        <Metric label="Toplam Komisyon" value={toplamKomisyon} color="text-amber-600" />
+        <div className="h-4 w-px bg-neutral-200" />
+        <Metric label="Toplam Cekim" value={toplamCekim} color="text-red-600" />
       </div>
     </div>
   );
 }
 
-function MetricPill({
-  label,
-  value,
-  color,
-}: {
-  label: string;
-  value: number;
-  color: string;
-}) {
-  return (
-    <div className="flex flex-col items-end gap-px">
-      <span className="text-[8px] font-medium uppercase tracking-[0.15em] text-neutral-400 lg:text-[9px]">
-        {label}
-      </span>
-      <span
-        className={`font-mono text-xs font-bold tabular-nums ${color} lg:text-sm`}
-      >
-        {"₺"}
-        {formatCurrency(value)}
-      </span>
-    </div>
-  );
-}
-
-function ScreenshotMetric({
+function Metric({
   label,
   value,
   color,
@@ -133,14 +67,11 @@ function ScreenshotMetric({
 }) {
   return (
     <div className="flex flex-col items-center gap-0.5">
-      <span className="text-[9px] font-medium uppercase tracking-[0.15em] text-neutral-400 md:text-[10px]">
+      <span className="text-[8px] font-medium uppercase tracking-[0.2em] text-neutral-400 md:text-[9px]">
         {label}
       </span>
-      <span
-        className={`font-mono text-sm font-bold tabular-nums md:text-base ${color}`}
-      >
-        {"₺"}
-        {formatCurrency(value)}
+      <span className={`font-mono text-xs font-bold tabular-nums md:text-sm ${color}`}>
+        {"₺"}{formatCurrency(value)}
       </span>
     </div>
   );

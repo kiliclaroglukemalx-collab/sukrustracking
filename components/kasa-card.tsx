@@ -3,31 +3,53 @@
 import type { KasaCardData } from "@/lib/excel-processor";
 
 const METHOD_COLORS: Record<string, string> = {
-  "Nakit": "#22d3ee",
-  "Kredi Kartı": "#a78bfa",
-  "Banka Kartı": "#60a5fa",
+  Nakit: "#22d3ee",
+  "Kredi Karti": "#a78bfa",
+  "Banka Karti": "#60a5fa",
   "Havale/EFT": "#34d399",
-  "Yemek Kartı": "#fb923c",
-  "Online Ödeme": "#f472b6",
-  "Multinet": "#fbbf24",
-  "Sodexo": "#f87171",
-  "Ticket": "#c084fc",
-  "Metropol": "#38bdf8",
-  "Setcard": "#4ade80",
-  "İyzico": "#818cf8",
-  "PayPal": "#2dd4bf",
-  "Param": "#e879f9",
-  "Paycell": "#fb7185",
-  "Hopi": "#a3e635",
-  "Tosla": "#fcd34d",
-  "Papara": "#7c3aed",
-  "Cüzdan": "#67e8f9",
-  "Açık Hesap": "#fdba74",
-  "Fiş/Çek": "#86efac",
+  "Yemek Karti": "#fb923c",
+  "Online Odeme": "#f472b6",
+  Multinet: "#fbbf24",
+  Sodexo: "#f87171",
+  Ticket: "#c084fc",
+  Metropol: "#38bdf8",
+  Setcard: "#4ade80",
+  iyzico: "#818cf8",
+  PayPal: "#2dd4bf",
+  Param: "#e879f9",
+  Paycell: "#fb7185",
+  Hopi: "#a3e635",
+  Tosla: "#fcd34d",
+  Papara: "#7c3aed",
+  Cuzdan: "#67e8f9",
+  "Acik Hesap": "#fdba74",
+  "Fis/Cek": "#86efac",
   "Garanti Pay": "#93c5fd",
-  "QR Ödeme": "#d8b4fe",
-  "Puan": "#fca5a1",
+  "QR Odeme": "#d8b4fe",
+  Puan: "#fca5a1",
 };
+
+// Fallback palette for dynamically added methods
+const FALLBACK_PALETTE = [
+  "#06b6d4",
+  "#8b5cf6",
+  "#ec4899",
+  "#f59e0b",
+  "#10b981",
+  "#ef4444",
+  "#3b82f6",
+  "#14b8a6",
+];
+
+function getMethodColor(name: string): string {
+  if (METHOD_COLORS[name]) return METHOD_COLORS[name];
+  // Hash-based fallback
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) {
+    hash = name.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return FALLBACK_PALETTE[Math.abs(hash) % FALLBACK_PALETTE.length];
+}
 
 function formatAmount(value: number): string {
   const abs = Math.abs(value);
@@ -42,37 +64,32 @@ function formatAmount(value: number): string {
 
 interface KasaCardProps {
   data: KasaCardData;
-  screenshotMode?: boolean;
 }
 
-export function KasaCard({ data, screenshotMode }: KasaCardProps) {
+export function KasaCard({ data }: KasaCardProps) {
   const isPositive = data.kalanKasa >= 0;
-  const nameColor = METHOD_COLORS[data.odemeTuruAdi] || "#94a3b8";
+  const nameColor = getMethodColor(data.odemeTuruAdi);
 
   return (
     <div
-      className={`relative flex flex-col items-center justify-center overflow-hidden rounded-2xl border border-white/[0.06] ${
-        screenshotMode ? "card-float-screenshot rounded-xl" : "card-float"
-      }`}
+      className="card-float relative flex flex-col items-center justify-center overflow-hidden rounded-xl border border-white/[0.06]"
       style={{
-        background: "linear-gradient(145deg, #141414 0%, #0a0a0a 50%, #050505 100%)",
+        background:
+          "linear-gradient(145deg, #141414 0%, #0a0a0a 50%, #050505 100%)",
       }}
     >
       {/* Top edge highlight */}
       <div
         className="pointer-events-none absolute inset-x-0 top-0 h-px"
         style={{
-          background: "linear-gradient(90deg, transparent 10%, rgba(255,255,255,0.08) 50%, transparent 90%)",
+          background:
+            "linear-gradient(90deg, transparent 10%, rgba(255,255,255,0.08) 50%, transparent 90%)",
         }}
       />
 
       {/* Payment method name */}
       <span
-        className={`relative z-10 mb-1.5 font-sans font-black uppercase tracking-[0.2em] ${
-          screenshotMode
-            ? "text-[11px] lg:text-xs xl:text-[13px]"
-            : "text-[10px] md:text-[11px] lg:text-xs xl:text-[13px]"
-        }`}
+        className="relative z-10 mb-1 font-sans text-[11px] font-black uppercase tracking-[0.2em] lg:text-xs xl:text-[13px]"
         style={{
           color: nameColor,
           textShadow: `0 0 20px ${nameColor}44`,
@@ -83,12 +100,8 @@ export function KasaCard({ data, screenshotMode }: KasaCardProps) {
 
       {/* Amount */}
       <span
-        className={`relative z-10 font-mono font-black tabular-nums tracking-tight ${
+        className={`relative z-10 font-mono text-lg font-black tabular-nums tracking-tight sm:text-xl md:text-2xl lg:text-3xl ${
           isPositive ? "text-white" : "text-red-400"
-        } ${
-          screenshotMode
-            ? "text-lg sm:text-xl md:text-2xl lg:text-3xl"
-            : "text-base sm:text-lg md:text-xl lg:text-2xl"
         }`}
         style={{
           textShadow: isPositive

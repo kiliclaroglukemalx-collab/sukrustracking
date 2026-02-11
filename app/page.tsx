@@ -5,8 +5,12 @@ import { TopBar } from "@/components/top-bar";
 import { KasaCard } from "@/components/kasa-card";
 import { HamburgerMenu } from "@/components/hamburger-menu";
 import { VideoBackground } from "@/components/video-background";
-import { generateDemoData } from "@/lib/excel-processor";
-import type { KasaCardData } from "@/lib/excel-processor";
+import {
+  generateDemoData,
+  processExcelData,
+  DEFAULT_METHODS,
+} from "@/lib/excel-processor";
+import type { KasaCardData, PaymentMethod } from "@/lib/excel-processor";
 
 function computeGrid(count: number): { cols: number; rows: number } {
   if (count <= 0) return { cols: 1, rows: 1 };
@@ -34,26 +38,47 @@ const colsClass: Record<number, string> = {
 };
 
 export default function Page() {
+  const [methods, setMethods] = useState<PaymentMethod[]>(
+    () => DEFAULT_METHODS,
+  );
   const [kasaData, setKasaData] = useState<KasaCardData[]>(() =>
-    generateDemoData(),
+    generateDemoData(DEFAULT_METHODS),
   );
   const [videoUrl, setVideoUrl] = useState("");
-  const [screenshotMode, setScreenshotMode] = useState(false);
 
-  const handleDataLoaded = useCallback((data: KasaCardData[]) => {
-    setKasaData(data);
-  }, []);
+  const handleDataLoaded = useCallback(
+    (data: KasaCardData[]) => {
+      setKasaData(data);
+    },
+    [],
+  );
 
   const handleReset = useCallback(() => {
-    setKasaData(generateDemoData());
-  }, []);
+    setKasaData(generateDemoData(methods));
+  }, [methods]);
+
+  const handleMethodsChange = useCallback(
+    (newMethods: PaymentMethod[]) => {
+      setMethods(newMethods);
+      // Recalculate existing data with new methods
+      setKasaData((prev) => {
+        const rows = prev.map((d) => ({
+          odemeTuruAdi: d.odemeTuruAdi,
+          borc: d.toplamBorc,
+          kredi: d.toplamKredi,
+        }));
+        return processExcelData(rows, newMethods);
+      });
+    },
+    [],
+  );
 
   const grid = useMemo(() => computeGrid(kasaData.length), [kasaData.length]);
 
   return (
     <div className="flex h-full flex-col overflow-hidden">
-      {/* Video behind the dark section only */}
-      <VideoBackground src={videoUrl} disabled={screenshotMode} />
+      {/* Video behind the dark section */}
+      <VideoBackground src={videoUrl} />
 
       {/* Hamburger menu */}
       <HamburgerMenu
@@ -61,22 +86,18 @@ export default function Page() {
         onReset={handleReset}
         onVideoChange={setVideoUrl}
         videoUrl={videoUrl}
-        screenshotMode={screenshotMode}
-        onScreenshotToggle={() => setScreenshotMode((p) => !p)}
+        methods={methods}
+        onMethodsChange={handleMethodsChange}
       />
 
       {/* White top section */}
-      <div
-        className={`relative z-10 flex-shrink-0 bg-white ${
-          screenshotMode ? "px-5 pt-3 pb-2" : "px-5 pt-3 pb-3"
-        }`}
-      >
-        <TopBar data={kasaData} screenshotMode={screenshotMode} />
+      <div className="relative z-10 flex-shrink-0 bg-white px-5 pt-3 pb-2">
+        <TopBar data={kasaData} />
       </div>
 
-      {/* Gradient transition: white -> black */}
+      {/* Gradient transition: white -> OLED black */}
       <div
-        className="relative z-10 h-8 flex-shrink-0"
+        className="relative z-10 h-6 flex-shrink-0"
         style={{
           background: "linear-gradient(to bottom, #ffffff 0%, #000000 100%)",
         }}
@@ -87,21 +108,14 @@ export default function Page() {
         className="relative z-10 flex flex-1 flex-col overflow-hidden"
         style={{ background: "#000000" }}
       >
-        {/* Grid */}
         <div
-          className={`grid flex-1 ${colsClass[grid.cols] || "grid-cols-7"} ${
-            screenshotMode ? "gap-2 p-2 pt-0" : "gap-3 p-3 pt-0"
-          }`}
+          className={`grid flex-1 ${colsClass[grid.cols] || "grid-cols-7"} gap-2 p-2 pt-0`}
           style={{
             gridTemplateRows: `repeat(${grid.rows}, 1fr)`,
           }}
         >
           {kasaData.map((card) => (
-            <KasaCard
-              key={card.id}
-              data={card}
-              screenshotMode={screenshotMode}
-            />
+            <KasaCard key={card.id} data={card} />
           ))}
         </div>
       </div>
