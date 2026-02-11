@@ -14,28 +14,26 @@ import {
 } from "@/lib/excel-processor";
 import type { KasaCardData, PaymentMethod, PaymentRow } from "@/lib/excel-processor";
 
-type UserRole = "basic" | "master";
+export type UserRole = "basic" | "master";
+
+const MASTER_PASSWORD = "Kk028200";
 
 interface StoreContextValue {
-  // User role
   role: UserRole;
   setRole: (role: UserRole) => void;
+  verifyMasterPassword: (password: string) => boolean;
 
-  // Methods
   methods: PaymentMethod[];
   setMethods: (methods: PaymentMethod[]) => void;
 
-  // Kasa data
   kasaData: KasaCardData[];
   loadExcelData: (data: KasaCardData[]) => void;
   resetToDemo: () => void;
   recalculate: (newMethods: PaymentMethod[]) => void;
 
-  // Video
   videoUrl: string;
   setVideoUrl: (url: string) => void;
 
-  // Raw rows for recalculation
   rawRows: PaymentRow[];
   setRawRows: (rows: PaymentRow[]) => void;
 }
@@ -43,13 +41,21 @@ interface StoreContextValue {
 const StoreContext = createContext<StoreContextValue | null>(null);
 
 export function StoreProvider({ children }: { children: React.ReactNode }) {
-  const [role, setRole] = useState<UserRole>("master");
+  const [role, setRoleState] = useState<UserRole>("basic");
   const [methods, setMethodsState] = useState<PaymentMethod[]>(DEFAULT_METHODS);
   const [kasaData, setKasaData] = useState<KasaCardData[]>(() =>
     generateDemoData(DEFAULT_METHODS),
   );
   const [videoUrl, setVideoUrl] = useState("");
   const [rawRows, setRawRows] = useState<PaymentRow[]>([]);
+
+  const verifyMasterPassword = useCallback((password: string): boolean => {
+    return password === MASTER_PASSWORD;
+  }, []);
+
+  const setRole = useCallback((newRole: UserRole) => {
+    setRoleState(newRole);
+  }, []);
 
   const loadExcelData = useCallback((data: KasaCardData[]) => {
     setKasaData(data);
@@ -65,7 +71,6 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       if (rawRows.length > 0) {
         setKasaData(processExcelData(rawRows, newMethods));
       } else {
-        // Recalculate from current kasa data
         const rows = kasaData.map((d) => ({
           odemeTuruAdi: d.odemeTuruAdi,
           borc: d.toplamBorc,
@@ -89,6 +94,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     () => ({
       role,
       setRole,
+      verifyMasterPassword,
       methods,
       setMethods,
       kasaData,
@@ -100,7 +106,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       rawRows,
       setRawRows,
     }),
-    [role, methods, setMethods, kasaData, loadExcelData, resetToDemo, recalculate, videoUrl, rawRows],
+    [role, setRole, verifyMasterPassword, methods, setMethods, kasaData, loadExcelData, resetToDemo, recalculate, videoUrl, rawRows],
   );
 
   return (

@@ -1,7 +1,16 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowLeft, TrendingUp, TrendingDown, Minus } from "lucide-react";
+import {
+  ArrowLeft,
+  Trophy,
+  Medal,
+  TrendingUp,
+  TrendingDown,
+  FileText,
+  BarChart2,
+  Lock,
+} from "lucide-react";
 import { useStore } from "@/lib/store";
 
 function formatCurrency(value: number): string {
@@ -11,15 +20,42 @@ function formatCurrency(value: number): string {
   }).format(value);
 }
 
+const LEAGUE_COLORS = [
+  { bg: "bg-amber-50", border: "border-amber-200", text: "text-amber-700", badge: "bg-amber-500" },
+  { bg: "bg-neutral-50", border: "border-neutral-200", text: "text-neutral-600", badge: "bg-neutral-400" },
+  { bg: "bg-orange-50", border: "border-orange-200", text: "text-orange-700", badge: "bg-orange-400" },
+];
+
 export default function RaporlarPage() {
-  const { kasaData } = useStore();
+  const { kasaData, role } = useStore();
 
-  const toplamYatirim = kasaData.reduce((s, d) => s + d.toplamBorc, 0);
-  const toplamCekim = kasaData.reduce((s, d) => s + d.toplamKredi, 0);
-  const toplamKomisyon = kasaData.reduce((s, d) => s + d.komisyon, 0);
-  const genelToplam = kasaData.reduce((s, d) => s + d.kalanKasa, 0);
+  // Sort by total yatirim (borc) descending for league
+  const leagueSorted = [...kasaData].sort(
+    (a, b) => b.toplamBorc - a.toplamBorc,
+  );
 
-  const sorted = [...kasaData].sort((a, b) => b.kalanKasa - a.kalanKasa);
+  // Calculate max for percentage bars
+  const maxYatirim = leagueSorted.length > 0 ? leagueSorted[0].toplamBorc : 1;
+
+  if (role === "basic") {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center bg-neutral-50">
+        <Lock className="mb-3 h-8 w-8 text-neutral-300" strokeWidth={1.5} />
+        <p className="mb-1 text-sm font-medium text-neutral-600">
+          Erisim Engellendi
+        </p>
+        <p className="mb-4 text-xs text-neutral-400">
+          Bu sayfa sadece Master kullanicilar icindir
+        </p>
+        <Link
+          href="/"
+          className="text-xs text-neutral-500 underline hover:text-neutral-800"
+        >
+          Kasaya Don
+        </Link>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-neutral-50">
@@ -38,93 +74,167 @@ export default function RaporlarPage() {
         <div className="w-20" />
       </div>
 
-      <div className="mx-auto max-w-3xl px-5 py-6">
-        {/* Summary Cards */}
-        <div className="mb-8 grid grid-cols-2 gap-3 md:grid-cols-4">
-          <SummaryCard label="Toplam Yatirim" value={toplamYatirim} color="text-neutral-900" />
-          <SummaryCard label="Toplam Komisyon" value={toplamKomisyon} color="text-amber-600" />
-          <SummaryCard label="Toplam Cekim" value={toplamCekim} color="text-red-600" />
-          <SummaryCard label="Genel Toplam" value={genelToplam} color="text-emerald-600" />
-        </div>
+      <div className="mx-auto max-w-4xl px-5 py-6">
+        {/* SECTION 1: Yontem Saatlik Performansi - Lig */}
+        <section className="mb-10">
+          <div className="mb-4 flex items-center gap-2">
+            <Trophy className="h-5 w-5 text-amber-500" strokeWidth={1.5} />
+            <h2 className="text-sm font-bold uppercase tracking-[0.12em] text-neutral-800">
+              Yontem Saatlik Performansi
+            </h2>
+          </div>
+          <p className="mb-4 text-xs text-neutral-400">
+            Yontemler aldiklari yatirim miktarina gore siralanmistir
+          </p>
 
-        {/* Detailed Table */}
-        <section>
-          <h2 className="mb-3 text-xs font-bold uppercase tracking-[0.15em] text-neutral-500">
-            Yontem Bazinda Detay
-          </h2>
           <div className="overflow-hidden rounded-xl border border-neutral-200 bg-white">
-            <div className="grid grid-cols-[1fr_90px_90px_80px_80px_100px] gap-2 border-b border-neutral-100 bg-neutral-50 px-4 py-2.5">
-              {["Yontem", "Yatirim", "Cekim", "Komisyon", "%", "Kalan Kasa"].map(
-                (h) => (
-                  <span
-                    key={h}
-                    className="text-[9px] font-bold uppercase tracking-[0.12em] text-neutral-400"
-                  >
-                    {h}
-                  </span>
-                ),
-              )}
-            </div>
-            {sorted.map((row) => (
-              <div
-                key={row.id}
-                className="grid grid-cols-[1fr_90px_90px_80px_80px_100px] items-center gap-2 border-b border-neutral-50 px-4 py-2 last:border-0 hover:bg-neutral-50/50"
-              >
-                <span className="text-sm font-medium text-neutral-800">
-                  {row.odemeTuruAdi}
-                </span>
-                <span className="font-mono text-xs text-neutral-600">
-                  {formatCurrency(row.toplamBorc)}
-                </span>
-                <span className="font-mono text-xs text-red-500">
-                  {formatCurrency(row.toplamKredi)}
-                </span>
-                <span className="font-mono text-xs text-amber-600">
-                  {formatCurrency(row.komisyon)}
-                </span>
-                <span className="font-mono text-xs text-neutral-400">
-                  %{row.komisyonOrani}
-                </span>
-                <span
-                  className={`flex items-center gap-1 font-mono text-xs font-bold ${
-                    row.kalanKasa >= 0 ? "text-neutral-900" : "text-red-600"
-                  }`}
+            {leagueSorted.map((item, index) => {
+              const pct = (item.toplamBorc / maxYatirim) * 100;
+              const leagueStyle =
+                index < 3
+                  ? LEAGUE_COLORS[index]
+                  : {
+                      bg: "bg-white",
+                      border: "border-transparent",
+                      text: "text-neutral-500",
+                      badge: "bg-neutral-300",
+                    };
+
+              return (
+                <div
+                  key={item.id}
+                  className={`flex items-center gap-3 border-b border-neutral-50 px-4 py-2.5 last:border-0 ${index < 3 ? leagueStyle.bg : "hover:bg-neutral-50/50"}`}
                 >
-                  {row.kalanKasa > 0 ? (
-                    <TrendingUp className="h-3 w-3 text-emerald-500" strokeWidth={2} />
-                  ) : row.kalanKasa < 0 ? (
-                    <TrendingDown className="h-3 w-3 text-red-500" strokeWidth={2} />
-                  ) : (
-                    <Minus className="h-3 w-3 text-neutral-300" strokeWidth={2} />
-                  )}
-                  {formatCurrency(row.kalanKasa)}
-                </span>
-              </div>
-            ))}
+                  {/* Rank */}
+                  <div
+                    className={`flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full text-[10px] font-bold text-white ${leagueStyle.badge}`}
+                  >
+                    {index + 1}
+                  </div>
+
+                  {/* Medal for top 3 */}
+                  <div className="w-5 flex-shrink-0">
+                    {index === 0 && (
+                      <Medal
+                        className="h-4 w-4 text-amber-500"
+                        strokeWidth={2}
+                      />
+                    )}
+                    {index === 1 && (
+                      <Medal
+                        className="h-4 w-4 text-neutral-400"
+                        strokeWidth={2}
+                      />
+                    )}
+                    {index === 2 && (
+                      <Medal
+                        className="h-4 w-4 text-orange-400"
+                        strokeWidth={2}
+                      />
+                    )}
+                  </div>
+
+                  {/* Method name */}
+                  <span
+                    className={`w-28 flex-shrink-0 text-xs font-semibold ${index < 3 ? leagueStyle.text : "text-neutral-700"}`}
+                  >
+                    {item.odemeTuruAdi}
+                  </span>
+
+                  {/* Bar */}
+                  <div className="relative h-4 flex-1 overflow-hidden rounded-full bg-neutral-100">
+                    <div
+                      className="absolute inset-y-0 left-0 rounded-full bg-neutral-900 transition-all"
+                      style={{ width: `${pct}%` }}
+                    />
+                  </div>
+
+                  {/* Amount */}
+                  <span className="w-24 text-right font-mono text-xs font-bold tabular-nums text-neutral-800">
+                    {"₺"}{formatCurrency(item.toplamBorc)}
+                  </span>
+
+                  {/* Trend */}
+                  <div className="w-5 flex-shrink-0">
+                    {item.kalanKasa > 0 ? (
+                      <TrendingUp
+                        className="h-3.5 w-3.5 text-emerald-500"
+                        strokeWidth={2}
+                      />
+                    ) : (
+                      <TrendingDown
+                        className="h-3.5 w-3.5 text-red-400"
+                        strokeWidth={2}
+                      />
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+
+        {/* SECTION 2: Cekim Performans Raporu */}
+        <section className="mb-10">
+          <div className="mb-4 flex items-center gap-2">
+            <FileText className="h-5 w-5 text-blue-500" strokeWidth={1.5} />
+            <h2 className="text-sm font-bold uppercase tracking-[0.12em] text-neutral-800">
+              Cekim Performans Raporu
+            </h2>
+          </div>
+
+          <div className="flex flex-col items-center rounded-xl border border-dashed border-neutral-200 bg-white px-6 py-12">
+            <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-blue-50">
+              <FileText
+                className="h-5 w-5 text-blue-400"
+                strokeWidth={1.5}
+              />
+            </div>
+            <p className="mb-1 text-sm font-medium text-neutral-600">
+              Cekim Performans Raporu
+            </p>
+            <p className="mb-4 text-center text-xs text-neutral-400">
+              Bu modul ileri asamada aktif edilecektir. Yontem bazinda cekim
+              performansini detayli analiz edecektir.
+            </p>
+            <span className="rounded-full bg-neutral-100 px-3 py-1 text-[10px] font-medium text-neutral-400">
+              Yakinda
+            </span>
+          </div>
+        </section>
+
+        {/* SECTION 3: Gunun Finansal Analizi */}
+        <section className="mb-10">
+          <div className="mb-4 flex items-center gap-2">
+            <BarChart2
+              className="h-5 w-5 text-emerald-500"
+              strokeWidth={1.5}
+            />
+            <h2 className="text-sm font-bold uppercase tracking-[0.12em] text-neutral-800">
+              Gunun Finansal Analizi
+            </h2>
+          </div>
+
+          <div className="flex flex-col items-center rounded-xl border border-dashed border-neutral-200 bg-white px-6 py-12">
+            <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-emerald-50">
+              <BarChart2
+                className="h-5 w-5 text-emerald-400"
+                strokeWidth={1.5}
+              />
+            </div>
+            <p className="mb-1 text-sm font-medium text-neutral-600">
+              Gunun Finansal Analizi
+            </p>
+            <p className="mb-4 text-center text-xs text-neutral-400">
+              Bu modul ileri asamada aktif edilecektir. Gunluk finansal
+              performansin kapsamli analizini uretecektir.
+            </p>
+            <span className="rounded-full bg-neutral-100 px-3 py-1 text-[10px] font-medium text-neutral-400">
+              Yakinda
+            </span>
           </div>
         </section>
       </div>
-    </div>
-  );
-}
-
-function SummaryCard({
-  label,
-  value,
-  color,
-}: {
-  label: string;
-  value: number;
-  color: string;
-}) {
-  return (
-    <div className="flex flex-col gap-1 rounded-xl border border-neutral-200 bg-white p-4">
-      <span className="text-[9px] font-bold uppercase tracking-[0.15em] text-neutral-400">
-        {label}
-      </span>
-      <span className={`font-mono text-lg font-black tabular-nums ${color}`}>
-        {"₺"}{formatCurrency(value)}
-      </span>
     </div>
   );
 }
