@@ -7,7 +7,8 @@ function formatCurrency(value: number): string {
   return new Intl.NumberFormat("tr-TR", {
     style: "currency",
     currency: "TRY",
-    minimumFractionDigits: 2,
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
   }).format(value);
 }
 
@@ -23,46 +24,46 @@ export function SummaryBar({ data }: SummaryBarProps) {
 
   const items = [
     {
-      label: "Toplam Borc",
+      label: "Borc",
       value: formatCurrency(toplamBorc),
       icon: TrendingUp,
-      color: "text-foreground",
+      color: "text-white",
     },
     {
-      label: "Toplam Kredi",
+      label: "Kredi",
       value: formatCurrency(toplamKredi),
       icon: TrendingDown,
-      color: "text-destructive",
+      color: "text-red-400",
     },
     {
-      label: "Toplam Komisyon",
+      label: "Komisyon",
       value: formatCurrency(toplamKomisyon),
       icon: Receipt,
-      color: "text-muted-foreground",
+      color: "text-white/50",
     },
     {
-      label: "Toplam Kalan Kasa",
+      label: "Net Kasa",
       value: formatCurrency(toplamKalanKasa),
       icon: Wallet,
-      color: toplamKalanKasa >= 0 ? "text-accent" : "text-destructive",
+      color: toplamKalanKasa >= 0 ? "text-emerald-400" : "text-red-400",
     },
   ];
 
   return (
-    <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+    <div className="flex items-center justify-center gap-6 md:gap-10">
       {items.map((item) => (
         <div
           key={item.label}
-          className="flex items-center gap-3 rounded-lg border border-border bg-card p-3"
+          className="flex items-center gap-1.5"
         >
-          <item.icon className={`h-4 w-4 shrink-0 ${item.color}`} />
-          <div className="min-w-0">
-            <p className="truncate text-[10px] uppercase tracking-wider text-muted-foreground">
+          <item.icon className={`h-3 w-3 shrink-0 ${item.color}`} />
+          <div className="flex items-baseline gap-1.5">
+            <span className="text-[9px] uppercase tracking-wider text-white/40">
               {item.label}
-            </p>
-            <p className={`font-mono text-sm font-bold ${item.color}`}>
+            </span>
+            <span className={`font-mono text-xs font-bold ${item.color}`}>
               {item.value}
-            </p>
+            </span>
           </div>
         </div>
       ))}

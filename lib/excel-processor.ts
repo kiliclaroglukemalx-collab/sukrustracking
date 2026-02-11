@@ -30,6 +30,16 @@ const KOMISYON_ORANLARI: Record<string, number> = {
   "Ticket": 5.0,
   "Metropol": 5.0,
   "Setcard": 5.0,
+  "İyzico": 2.99,
+  "PayPal": 3.4,
+  "Param": 2.79,
+  "Paycell": 2.5,
+  "Hopi": 3.0,
+  "Tosla": 2.5,
+  "Papara": 1.5,
+  "Cüzdan": 0,
+  "Açık Hesap": 0,
+  "Fiş/Çek": 0,
 };
 
 function getKomisyonOrani(odemeTuru: string): number {
@@ -120,6 +130,21 @@ export function generateDemoData(): KasaCardData[] {
     { odemeTuruAdi: "Havale/EFT", borc: 89100, kredi: 42500 },
     { odemeTuruAdi: "Yemek Kartı", borc: 23400, kredi: 5600 },
     { odemeTuruAdi: "Online Ödeme", borc: 56300, kredi: 15800 },
+    { odemeTuruAdi: "Multinet", borc: 18700, kredi: 4200 },
+    { odemeTuruAdi: "Sodexo", borc: 22100, kredi: 6100 },
+    { odemeTuruAdi: "Ticket", borc: 15300, kredi: 3800 },
+    { odemeTuruAdi: "Metropol", borc: 9800, kredi: 2100 },
+    { odemeTuruAdi: "Setcard", borc: 12600, kredi: 3400 },
+    { odemeTuruAdi: "İyzico", borc: 34500, kredi: 9700 },
+    { odemeTuruAdi: "PayPal", borc: 8200, kredi: 1900 },
+    { odemeTuruAdi: "Param", borc: 19400, kredi: 5200 },
+    { odemeTuruAdi: "Paycell", borc: 11300, kredi: 2800 },
+    { odemeTuruAdi: "Hopi", borc: 7600, kredi: 1500 },
+    { odemeTuruAdi: "Tosla", borc: 6400, kredi: 1200 },
+    { odemeTuruAdi: "Papara", borc: 28900, kredi: 7300 },
+    { odemeTuruAdi: "Cüzdan", borc: 4100, kredi: 800 },
+    { odemeTuruAdi: "Açık Hesap", borc: 52000, kredi: 31000 },
+    { odemeTuruAdi: "Fiş/Çek", borc: 37800, kredi: 14600 },
   ];
 
   return processExcelData(demoRows);
