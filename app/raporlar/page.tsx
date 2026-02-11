@@ -5,43 +5,20 @@ import Link from "next/link";
 import {
   ArrowLeft,
   Trophy,
-  Medal,
-  TrendingUp,
-  TrendingDown,
   FileText,
   BarChart2,
   Lock,
+  ChevronRight,
 } from "lucide-react";
 import { useStore } from "@/lib/store";
 
-function formatCurrency(value: number): string {
-  return new Intl.NumberFormat("tr-TR", {
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(value);
-}
-
-const LEAGUE_COLORS = [
-  { bg: "bg-amber-50", border: "border-amber-200", text: "text-amber-700", badge: "bg-amber-500" },
-  { bg: "bg-neutral-50", border: "border-neutral-200", text: "text-neutral-600", badge: "bg-neutral-400" },
-  { bg: "bg-orange-50", border: "border-orange-200", text: "text-orange-700", badge: "bg-orange-400" },
-];
-
 export default function RaporlarPage() {
-  const { kasaData, role } = useStore();
+  const { role } = useStore();
   const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
     setHydrated(true);
   }, []);
-
-  // Sort by total yatirim (borc) descending for league
-  const leagueSorted = [...kasaData].sort(
-    (a, b) => b.toplamBorc - a.toplamBorc,
-  );
-
-  // Calculate max for percentage bars
-  const maxYatirim = leagueSorted.length > 0 ? leagueSorted[0].toplamBorc : 1;
 
   if (!hydrated) {
     return <div className="min-h-screen bg-neutral-50" />;
@@ -67,6 +44,48 @@ export default function RaporlarPage() {
     );
   }
 
+  const sections = [
+    {
+      href: "/raporlar/performans",
+      icon: Trophy,
+      iconBg: "bg-amber-50",
+      iconColor: "text-amber-500",
+      badgeBg: "bg-amber-50",
+      badgeColor: "text-amber-600",
+      badgeText: "Aktif",
+      title: "Yontem Saatlik Performansi",
+      description:
+        "Yontemler aldiklari yatirim miktarina gore siralanir. En cok yatirim alan yontemler lig tablosu formatinda listelenir.",
+      footnote: "Veriler anlik kasa durumunu yansitir",
+    },
+    {
+      href: "/raporlar/cekim",
+      icon: FileText,
+      iconBg: "bg-blue-50",
+      iconColor: "text-blue-500",
+      badgeBg: "bg-neutral-100",
+      badgeColor: "text-neutral-400",
+      badgeText: "Yakinda",
+      title: "Cekim Performans Raporu",
+      description:
+        "Yontem bazinda cekim performansini detayli analiz eder. Cekim miktarlari, ortalamalar ve trendler raporlanir.",
+      footnote: "Cursor uzerinden gelistirmeye devam edilecek",
+    },
+    {
+      href: "/raporlar/analiz",
+      icon: BarChart2,
+      iconBg: "bg-emerald-50",
+      iconColor: "text-emerald-500",
+      badgeBg: "bg-neutral-100",
+      badgeColor: "text-neutral-400",
+      badgeText: "Yakinda",
+      title: "Gunun Finansal Analizi",
+      description:
+        "Gunluk finansal performansin kapsamli analizini uretir. Yatirim/cekim oranlari, komisyon dagilimi ve genel degerlendirme iceriri.",
+      footnote: "Cursor uzerinden gelistirmeye devam edilecek",
+    },
+  ];
+
   return (
     <div className="min-h-screen bg-neutral-50">
       {/* Top Nav */}
@@ -84,166 +103,62 @@ export default function RaporlarPage() {
         <div className="w-20" />
       </div>
 
-      <div className="mx-auto max-w-4xl px-5 py-6">
-        {/* SECTION 1: Yontem Saatlik Performansi - Lig */}
-        <section className="mb-10">
-          <div className="mb-4 flex items-center gap-2">
-            <Trophy className="h-5 w-5 text-amber-500" strokeWidth={1.5} />
-            <h2 className="text-sm font-bold uppercase tracking-[0.12em] text-neutral-800">
-              Yontem Saatlik Performansi
-            </h2>
-          </div>
-          <p className="mb-4 text-xs text-neutral-400">
-            Yontemler aldiklari yatirim miktarina gore siralanmistir
+      <div className="mx-auto max-w-3xl px-5 py-6">
+        {/* Section Header */}
+        <div className="mb-6 flex items-center gap-2">
+          <BarChart2
+            className="h-5 w-5 text-neutral-400"
+            strokeWidth={1.5}
+          />
+          <p className="text-xs text-neutral-400">
+            Rapor modulleri icin asagidaki bolumleri kullanin
           </p>
+        </div>
 
-          <div className="overflow-hidden rounded-xl border border-neutral-200 bg-white">
-            {leagueSorted.map((item, index) => {
-              const pct = (item.toplamBorc / maxYatirim) * 100;
-              const leagueStyle =
-                index < 3
-                  ? LEAGUE_COLORS[index]
-                  : {
-                      bg: "bg-white",
-                      border: "border-transparent",
-                      text: "text-neutral-500",
-                      badge: "bg-neutral-300",
-                    };
-
-              return (
-                <div
-                  key={item.id}
-                  className={`flex items-center gap-3 border-b border-neutral-50 px-4 py-2.5 last:border-0 ${index < 3 ? leagueStyle.bg : "hover:bg-neutral-50/50"}`}
-                >
-                  {/* Rank */}
-                  <div
-                    className={`flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full text-[10px] font-bold text-white ${leagueStyle.badge}`}
-                  >
-                    {index + 1}
-                  </div>
-
-                  {/* Medal for top 3 */}
-                  <div className="w-5 flex-shrink-0">
-                    {index === 0 && (
-                      <Medal
-                        className="h-4 w-4 text-amber-500"
-                        strokeWidth={2}
-                      />
-                    )}
-                    {index === 1 && (
-                      <Medal
-                        className="h-4 w-4 text-neutral-400"
-                        strokeWidth={2}
-                      />
-                    )}
-                    {index === 2 && (
-                      <Medal
-                        className="h-4 w-4 text-orange-400"
-                        strokeWidth={2}
-                      />
-                    )}
-                  </div>
-
-                  {/* Method name */}
-                  <span
-                    className={`w-28 flex-shrink-0 text-xs font-semibold ${index < 3 ? leagueStyle.text : "text-neutral-700"}`}
-                  >
-                    {item.odemeTuruAdi}
-                  </span>
-
-                  {/* Bar */}
-                  <div className="relative h-4 flex-1 overflow-hidden rounded-full bg-neutral-100">
+        {/* Cards */}
+        {sections.map((section) => {
+          const Icon = section.icon;
+          return (
+            <Link key={section.href} href={section.href}>
+              <section className="mb-4 cursor-pointer">
+                <div className="overflow-hidden rounded-xl border border-neutral-200 bg-white transition-all hover:border-neutral-300 hover:shadow-md">
+                  <div className="flex items-start gap-4 p-6">
                     <div
-                      className="absolute inset-y-0 left-0 rounded-full bg-neutral-900 transition-all"
-                      style={{ width: `${pct}%` }}
+                      className={`flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl ${section.iconBg}`}
+                    >
+                      <Icon
+                        className={`h-5 w-5 ${section.iconColor}`}
+                        strokeWidth={1.5}
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="mb-1 text-sm font-bold text-neutral-800">
+                        {section.title}
+                      </h3>
+                      <p className="mb-4 text-xs leading-relaxed text-neutral-400">
+                        {section.description}
+                      </p>
+                      <div className="flex items-center gap-3">
+                        <span
+                          className={`rounded-full px-3 py-1 text-[10px] font-medium ${section.badgeBg} ${section.badgeColor}`}
+                        >
+                          {section.badgeText}
+                        </span>
+                        <span className="text-[10px] text-neutral-300">
+                          {section.footnote}
+                        </span>
+                      </div>
+                    </div>
+                    <ChevronRight
+                      className="mt-2 h-4 w-4 flex-shrink-0 text-neutral-300"
+                      strokeWidth={1.5}
                     />
                   </div>
-
-                  {/* Amount */}
-                  <span className="w-24 text-right font-mono text-xs font-bold tabular-nums text-neutral-800">
-                    {"₺"}{formatCurrency(item.toplamBorc)}
-                  </span>
-
-                  {/* Trend */}
-                  <div className="w-5 flex-shrink-0">
-                    {item.kalanKasa > 0 ? (
-                      <TrendingUp
-                        className="h-3.5 w-3.5 text-emerald-500"
-                        strokeWidth={2}
-                      />
-                    ) : (
-                      <TrendingDown
-                        className="h-3.5 w-3.5 text-red-400"
-                        strokeWidth={2}
-                      />
-                    )}
-                  </div>
                 </div>
-              );
-            })}
-          </div>
-        </section>
-
-        {/* SECTION 2: Cekim Performans Raporu */}
-        <section className="mb-10">
-          <div className="mb-4 flex items-center gap-2">
-            <FileText className="h-5 w-5 text-blue-500" strokeWidth={1.5} />
-            <h2 className="text-sm font-bold uppercase tracking-[0.12em] text-neutral-800">
-              Cekim Performans Raporu
-            </h2>
-          </div>
-
-          <div className="flex flex-col items-center rounded-xl border border-dashed border-neutral-200 bg-white px-6 py-12">
-            <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-blue-50">
-              <FileText
-                className="h-5 w-5 text-blue-400"
-                strokeWidth={1.5}
-              />
-            </div>
-            <p className="mb-1 text-sm font-medium text-neutral-600">
-              Cekim Performans Raporu
-            </p>
-            <p className="mb-4 text-center text-xs text-neutral-400">
-              Bu modul ileri asamada aktif edilecektir. Yontem bazinda cekim
-              performansini detayli analiz edecektir.
-            </p>
-            <span className="rounded-full bg-neutral-100 px-3 py-1 text-[10px] font-medium text-neutral-400">
-              Yakinda
-            </span>
-          </div>
-        </section>
-
-        {/* SECTION 3: Gunun Finansal Analizi */}
-        <section className="mb-10">
-          <div className="mb-4 flex items-center gap-2">
-            <BarChart2
-              className="h-5 w-5 text-emerald-500"
-              strokeWidth={1.5}
-            />
-            <h2 className="text-sm font-bold uppercase tracking-[0.12em] text-neutral-800">
-              Gunun Finansal Analizi
-            </h2>
-          </div>
-
-          <div className="flex flex-col items-center rounded-xl border border-dashed border-neutral-200 bg-white px-6 py-12">
-            <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-emerald-50">
-              <BarChart2
-                className="h-5 w-5 text-emerald-400"
-                strokeWidth={1.5}
-              />
-            </div>
-            <p className="mb-1 text-sm font-medium text-neutral-600">
-              Gunun Finansal Analizi
-            </p>
-            <p className="mb-4 text-center text-xs text-neutral-400">
-              Bu modul ileri asamada aktif edilecektir. Gunluk finansal
-              performansin kapsamli analizini uretecektir.
-            </p>
-            <span className="rounded-full bg-neutral-100 px-3 py-1 text-[10px] font-medium text-neutral-400">
-              Yakinda
-            </span>
-          </div>
-        </section>
+              </section>
+            </Link>
+          );
+        })}
       </div>
     </div>
   );
