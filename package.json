@@ -56,7 +56,6 @@
     "sonner": "^1.7.1",
     "tailwind-merge": "^2.5.5",
     "tailwindcss-animate": "^1.0.7",
-    "@supabase/ssr": "^0.6.1",
     "@supabase/supabase-js": "^2.49.4",
     "vaul": "^1.1.2",
     "xlsx": "^0.18.5",
