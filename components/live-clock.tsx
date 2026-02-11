@@ -11,13 +11,12 @@ export function LiveClock() {
     return () => clearInterval(timer);
   }, []);
 
-  if (!now) return <div className="h-5" />;
+  if (!now) return <div className="h-4" />;
 
-  const day = now.toLocaleDateString("tr-TR", {
-    weekday: "long",
+  const date = now.toLocaleDateString("tr-TR", {
+    day: "2-digit",
+    month: "2-digit",
     year: "numeric",
-    month: "long",
-    day: "numeric",
   });
 
   const time = now.toLocaleTimeString("tr-TR", {
@@ -27,11 +26,9 @@ export function LiveClock() {
   });
 
   return (
-    <div className="flex items-center gap-3">
-      <span className="text-[10px] tracking-widest uppercase text-white/40">
-        {day}
-      </span>
-      <span className="text-xs font-mono font-bold tracking-wider tabular-nums text-white/80">
+    <div className="flex items-center gap-2">
+      <span className="text-[10px] tracking-wider text-white/40">{date}</span>
+      <span className="font-mono text-[11px] font-bold tabular-nums text-white/70">
         {time}
       </span>
     </div>

@@ -4,7 +4,7 @@ import { useState, useCallback } from "react";
 import { LiveClock } from "@/components/live-clock";
 import { KasaCard } from "@/components/kasa-card";
 import { HamburgerMenu } from "@/components/hamburger-menu";
-import { SummaryBar } from "@/components/summary-bar";
+import { TopBar } from "@/components/top-bar";
 import { VideoBackground } from "@/components/video-background";
 import { generateDemoData } from "@/lib/excel-processor";
 import type { KasaCardData } from "@/lib/excel-processor";
@@ -29,12 +29,10 @@ export default function Page() {
 
   return (
     <>
-      {/* Full-screen video background */}
       <VideoBackground src={videoUrl} />
 
-      {/* Content overlay */}
-      <main className="relative z-10 flex h-screen flex-col overflow-hidden px-3 pb-3 pt-2">
-        {/* Hamburger Menu */}
+      <main className="relative z-10 flex h-screen flex-col px-3 py-2">
+        {/* Hamburger Menu - absolute top right */}
         <HamburgerMenu
           onDataLoaded={handleDataLoaded}
           onReset={handleReset}
@@ -42,38 +40,18 @@ export default function Page() {
           videoUrl={videoUrl}
         />
 
-        {/* Title Row - Compact */}
-        <div className="mb-2 flex flex-col items-center">
-          <h1 className="text-sm font-bold tracking-[0.3em] uppercase text-white md:text-base">
-            Saatlik Kasa
-          </h1>
-          <LiveClock />
-        </div>
+        {/* Top Bar: Title + Clock + Totals */}
+        <TopBar data={kasaData} />
 
-        {/* Summary Bar */}
-        <div className="mb-2">
-          <SummaryBar data={kasaData} />
-        </div>
+        {/* Thin separator */}
+        <div className="my-1.5 h-px w-full bg-white/10" />
 
-        {/* Separator */}
-        <div className="mb-2 border-t border-white/[0.06]" />
-
-        {/* 21-Card Grid: 7 columns x 3 rows, fills remaining space */}
-        <div className="grid flex-1 grid-cols-3 grid-rows-7 gap-1.5 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-7 lg:grid-rows-3">
+        {/* Card Grid - fills remaining height */}
+        <div className="grid flex-1 grid-cols-4 grid-rows-6 gap-1.5 md:grid-cols-6 md:grid-rows-4 lg:grid-cols-8 lg:grid-rows-3">
           {kasaData.map((card) => (
             <KasaCard key={card.id} data={card} />
           ))}
         </div>
-
-        {/* Empty State */}
-        {kasaData.length === 0 && (
-          <div className="flex flex-1 flex-col items-center justify-center text-white/40">
-            <p className="text-sm">Veri bulunamadi</p>
-            <p className="mt-1 text-[10px]">
-              Sag ustteki menu ile Excel dosyasi yukleyin
-            </p>
-          </div>
-        )}
       </main>
     </>
   );

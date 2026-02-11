@@ -11,37 +11,22 @@ export function VideoBackground({ src }: VideoBackgroundProps) {
   const [hasError, setHasError] = useState(false);
 
   useEffect(() => {
+    setHasError(false);
     if (videoRef.current && src) {
-      videoRef.current.play().catch(() => {
-        // autoplay may be blocked
-      });
+      videoRef.current.load();
+      videoRef.current.play().catch(() => {});
     }
   }, [src]);
 
-  // If no src provided, show empty dark background
-  if (!src) {
-    return (
-      <div
-        className="fixed inset-0 z-0 bg-black"
-        aria-hidden="true"
-      />
-    );
-  }
-
-  if (hasError) {
-    return (
-      <div
-        className="fixed inset-0 z-0 bg-black"
-        aria-hidden="true"
-      />
-    );
+  if (!src || hasError) {
+    return <div className="fixed inset-0 z-0 bg-black" aria-hidden="true" />;
   }
 
   return (
     <div className="fixed inset-0 z-0 overflow-hidden" aria-hidden="true">
       <video
         ref={videoRef}
-        className="h-full w-full object-cover"
+        className="h-full w-full object-cover opacity-15"
         autoPlay
         muted
         loop
@@ -50,8 +35,7 @@ export function VideoBackground({ src }: VideoBackgroundProps) {
       >
         <source src={src} type="video/mp4" />
       </video>
-      {/* Dark overlay so cards remain legible */}
-      <div className="absolute inset-0 bg-black/50" />
+      <div className="absolute inset-0 bg-black/70" />
     </div>
   );
 }

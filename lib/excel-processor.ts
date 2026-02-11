@@ -40,6 +40,9 @@ const KOMISYON_ORANLARI: Record<string, number> = {
   "Cüzdan": 0,
   "Açık Hesap": 0,
   "Fiş/Çek": 0,
+  "Garanti Pay": 2.2,
+  "QR Ödeme": 1.8,
+  "Puan": 0,
 };
 
 function getKomisyonOrani(odemeTuru: string): number {
@@ -145,6 +148,9 @@ export function generateDemoData(): KasaCardData[] {
     { odemeTuruAdi: "Cüzdan", borc: 4100, kredi: 800 },
     { odemeTuruAdi: "Açık Hesap", borc: 52000, kredi: 31000 },
     { odemeTuruAdi: "Fiş/Çek", borc: 37800, kredi: 14600 },
+    { odemeTuruAdi: "Garanti Pay", borc: 14200, kredi: 3900 },
+    { odemeTuruAdi: "QR Ödeme", borc: 5600, kredi: 1100 },
+    { odemeTuruAdi: "Puan", borc: 3200, kredi: 700 },
   ];
 
   return processExcelData(demoRows);
