@@ -4,7 +4,6 @@ import { useMemo } from "react";
 import { TopBar } from "@/components/top-bar";
 import { KasaCard } from "@/components/kasa-card";
 import { HamburgerMenu } from "@/components/hamburger-menu";
-import { LiveClock } from "@/components/live-clock";
 import { useStore } from "@/lib/store";
 
 function computeGrid(count: number): { cols: number; rows: number } {
@@ -41,20 +40,9 @@ export default function Page() {
       {/* Hamburger menu */}
       <HamburgerMenu />
 
-      {/* White top section */}
-      <div className="relative z-10 flex flex-shrink-0 items-start bg-white px-5 pt-3 pb-2">
-        {/* Left: Date & Clock */}
-        <div className="flex w-48 flex-shrink-0 flex-col gap-0.5 pt-2">
-          <LiveClock />
-        </div>
-
-        {/* Center: Title & Metrics */}
-        <div className="flex flex-1 justify-center">
-          <TopBar data={kasaData} />
-        </div>
-
-        {/* Right: spacer to balance the left side */}
-        <div className="w-48 flex-shrink-0" />
+      {/* White top section - fixed height header */}
+      <div className="relative z-10 flex-shrink-0 bg-white px-5">
+        <TopBar data={kasaData} />
       </div>
 
       {/* Gradient transition: white to OLED black */}

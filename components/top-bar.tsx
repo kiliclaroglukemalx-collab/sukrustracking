@@ -33,24 +33,56 @@ export function TopBar({ data }: TopBarProps) {
   const toplamYatirim = data.reduce((sum, d) => sum + d.toplamBorc, 0);
   const toplamCekim = data.reduce((sum, d) => sum + d.toplamKredi, 0);
   const toplamKomisyon = data.reduce((sum, d) => sum + d.komisyon, 0);
+  const genelToplam = toplamYatirim - toplamKomisyon - toplamCekim;
 
   return (
-    <div className="flex flex-col items-center gap-1.5">
-      {/* Large centered hour title */}
-      <h1 className="flex items-baseline gap-3 font-mono text-2xl font-black tracking-wider text-neutral-900 md:text-3xl lg:text-4xl">
-        <span>{roundedHour}</span>
-        <span className="font-sans text-xl font-bold tracking-[0.25em] uppercase md:text-2xl lg:text-3xl">
+    <div className="flex h-[72px] items-center justify-between">
+      {/* LEFT: Hour + Title */}
+      <div className="flex items-baseline gap-2.5">
+        <span className="font-mono text-2xl font-black tracking-wider text-neutral-900 lg:text-3xl">
+          {roundedHour}
+        </span>
+        <span className="text-lg font-bold tracking-[0.2em] uppercase text-neutral-900 lg:text-xl">
           Saatlik Kasasi
         </span>
-      </h1>
+      </div>
 
-      {/* Three metrics side by side */}
-      <div className="flex items-center gap-8 md:gap-12">
-        <Metric label="Toplam Yatirim" value={toplamYatirim} color="text-neutral-900" />
-        <div className="h-8 w-px bg-neutral-300" />
-        <Metric label="Toplam Komisyon" value={toplamKomisyon} color="text-amber-600" />
-        <div className="h-8 w-px bg-neutral-300" />
-        <Metric label="Toplam Cekim" value={toplamCekim} color="text-red-600" />
+      {/* CENTER: Yatirim / Komisyon / Cekim */}
+      <div className="flex items-center gap-6 lg:gap-10">
+        <Metric
+          label="Toplam Yatirim"
+          value={toplamYatirim}
+          color="text-neutral-900"
+        />
+        <div className="h-7 w-px bg-neutral-200" />
+        <Metric
+          label="Toplam Komisyon"
+          value={toplamKomisyon}
+          color="text-amber-600"
+        />
+        <div className="h-7 w-px bg-neutral-200" />
+        <Metric
+          label="Toplam Cekim"
+          value={toplamCekim}
+          color="text-red-600"
+        />
+      </div>
+
+      {/* RIGHT: Genel Toplam (neon green, prominent) */}
+      <div className="flex flex-col items-end gap-0.5 pr-10">
+        <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-neutral-400 lg:text-[11px]">
+          Genel Toplam
+        </span>
+        <span
+          className="font-mono text-xl font-black tabular-nums lg:text-2xl xl:text-3xl"
+          style={{
+            color: "#00FF00",
+            textShadow: "0 0 12px rgba(0,255,0,0.35), 0 0 4px rgba(0,255,0,0.2)",
+          }}
+        >
+          {"₺"}
+          {formatCurrency(genelToplam)}
+        </span>
       </div>
     </div>
   );
@@ -66,12 +98,15 @@ function Metric({
   color: string;
 }) {
   return (
-    <div className="flex flex-col items-center gap-1">
-      <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-neutral-500 md:text-xs">
+    <div className="flex flex-col items-center gap-0.5">
+      <span className="text-[9px] font-semibold uppercase tracking-[0.18em] text-neutral-400 lg:text-[10px]">
         {label}
       </span>
-      <span className={`font-mono text-base font-extrabold tabular-nums md:text-lg lg:text-xl ${color}`}>
-        {"₺"}{formatCurrency(value)}
+      <span
+        className={`font-mono text-sm font-extrabold tabular-nums lg:text-base ${color}`}
+      >
+        {"₺"}
+        {formatCurrency(value)}
       </span>
     </div>
   );
