@@ -80,18 +80,23 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
 
   const recalculate = useCallback(
     (newMethods: PaymentMethod[]) => {
-      if (rawRows.length > 0) {
-        setKasaData(processExcelData(rawRows, newMethods));
-      } else {
-        const rows = kasaData.map((d) => ({
-          odemeTuruAdi: d.odemeTuruAdi,
-          borc: d.toplamBorc,
-          kredi: d.toplamKredi,
-        }));
-        setKasaData(processExcelData(rows, newMethods));
-      }
+      setRawRows((currentRawRows) => {
+        if (currentRawRows.length > 0) {
+          setKasaData(processExcelData(currentRawRows, newMethods));
+        } else {
+          setKasaData((currentKasaData) => {
+            const rows = currentKasaData.map((d) => ({
+              odemeTuruAdi: d.odemeTuruAdi,
+              borc: d.toplamBorc,
+              kredi: d.toplamKredi,
+            }));
+            return processExcelData(rows, newMethods);
+          });
+        }
+        return currentRawRows;
+      });
     },
-    [rawRows, kasaData],
+    [],
   );
 
   const setMethods = useCallback(

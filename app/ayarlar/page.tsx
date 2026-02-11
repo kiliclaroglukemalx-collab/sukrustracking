@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import Link from "next/link";
 import {
   ArrowLeft,
@@ -11,17 +11,35 @@ import {
   X,
   Layers,
   Film,
+  Save,
+  CheckCircle2,
 } from "lucide-react";
 import { useStore } from "@/lib/store";
 import type { PaymentMethod } from "@/lib/excel-processor";
 
 export default function AyarlarPage() {
   const { methods, setMethods, videoUrl, setVideoUrl } = useStore();
+
+  // Local copy of methods so user can make multiple changes before saving
+  const [localMethods, setLocalMethods] = useState<PaymentMethod[]>(methods);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState("");
   const [editKomisyon, setEditKomisyon] = useState("");
   const [editBakiye, setEditBakiye] = useState("");
   const [videoInput, setVideoInput] = useState(videoUrl);
+  const [hasChanges, setHasChanges] = useState(false);
+  const [showSaved, setShowSaved] = useState(false);
+
+  // Sync when store methods change externally
+  useEffect(() => {
+    setLocalMethods(methods);
+  }, [methods]);
+
+  // Track changes
+  useEffect(() => {
+    const changed = JSON.stringify(localMethods) !== JSON.stringify(methods);
+    setHasChanges(changed);
+  }, [localMethods, methods]);
 
   const startEdit = useCallback((m: PaymentMethod) => {
     setEditingId(m.id);
@@ -36,8 +54,8 @@ export default function AyarlarPage() {
 
   const saveEdit = useCallback(() => {
     if (!editingId || !editName.trim()) return;
-    setMethods(
-      methods.map((m) =>
+    setLocalMethods((prev) =>
+      prev.map((m) =>
         m.id === editingId
           ? {
               ...m,
@@ -49,7 +67,7 @@ export default function AyarlarPage() {
       ),
     );
     setEditingId(null);
-  }, [editingId, editName, editKomisyon, editBakiye, methods, setMethods]);
+  }, [editingId, editName, editKomisyon, editBakiye]);
 
   const addMethod = useCallback(() => {
     const newMethod: PaymentMethod = {
@@ -58,17 +76,24 @@ export default function AyarlarPage() {
       komisyonOrani: 0,
       baslangicBakiye: 0,
     };
-    setMethods([...methods, newMethod]);
+    setLocalMethods((prev) => [...prev, newMethod]);
     startEdit(newMethod);
-  }, [methods, setMethods, startEdit]);
+  }, [startEdit]);
 
   const deleteMethod = useCallback(
     (id: string) => {
-      setMethods(methods.filter((m) => m.id !== id));
+      setLocalMethods((prev) => prev.filter((m) => m.id !== id));
       if (editingId === id) setEditingId(null);
     },
-    [methods, setMethods, editingId],
+    [editingId],
   );
+
+  const handleSaveAll = useCallback(() => {
+    setMethods(localMethods);
+    setHasChanges(false);
+    setShowSaved(true);
+    setTimeout(() => setShowSaved(false), 2500);
+  }, [localMethods, setMethods]);
 
   return (
     <div className="min-h-screen bg-neutral-50">
@@ -137,7 +162,7 @@ export default function AyarlarPage() {
             <div className="flex items-center gap-2">
               <Layers className="h-4 w-4 text-neutral-400" strokeWidth={1.5} />
               <h2 className="text-xs font-bold uppercase tracking-[0.15em] text-neutral-500">
-                Odeme Yontemleri ({methods.length})
+                Odeme Yontemleri ({localMethods.length})
               </h2>
             </div>
             <button
@@ -168,7 +193,7 @@ export default function AyarlarPage() {
             </div>
 
             {/* Method rows */}
-            {methods.map((method) => (
+            {localMethods.map((method) => (
               <div
                 key={method.id}
                 className="group grid grid-cols-[1fr_100px_120px_72px] items-center gap-3 border-b border-neutral-50 px-4 py-2.5 transition-colors last:border-0 hover:bg-neutral-50/50"
@@ -202,7 +227,7 @@ export default function AyarlarPage() {
                         type="button"
                         onClick={saveEdit}
                         className="rounded-md p-1.5 text-emerald-600 transition-colors hover:bg-emerald-50"
-                        aria-label="Kaydet"
+                        aria-label="Onayla"
                       >
                         <Check className="h-3.5 w-3.5" strokeWidth={2} />
                       </button>
@@ -252,7 +277,7 @@ export default function AyarlarPage() {
               </div>
             ))}
 
-            {methods.length === 0 && (
+            {localMethods.length === 0 && (
               <div className="flex flex-col items-center py-10 text-neutral-400">
                 <Layers className="mb-2 h-6 w-6" strokeWidth={1} />
                 <p className="text-sm">Henuz yontem eklenmedi</p>
@@ -261,6 +286,35 @@ export default function AyarlarPage() {
           </div>
         </section>
       </div>
+
+      {/* Sticky Save Bar */}
+      {hasChanges && (
+        <div className="fixed inset-x-0 bottom-0 z-30 border-t border-neutral-200 bg-white/95 px-5 py-3 shadow-[0_-4px_20px_rgba(0,0,0,0.08)] backdrop-blur-sm">
+          <div className="mx-auto flex max-w-2xl items-center justify-between">
+            <p className="text-xs text-neutral-500">
+              Kaydedilmemis degisiklikler var
+            </p>
+            <button
+              type="button"
+              onClick={handleSaveAll}
+              className="flex items-center gap-2 rounded-lg bg-neutral-900 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-neutral-800"
+            >
+              <Save className="h-4 w-4" strokeWidth={1.5} />
+              Degisiklikleri Kaydet
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Saved Toast */}
+      {showSaved && (
+        <div className="fixed bottom-6 left-1/2 z-40 -translate-x-1/2">
+          <div className="flex items-center gap-2 rounded-full bg-emerald-600 px-5 py-2.5 text-sm font-medium text-white shadow-xl">
+            <CheckCircle2 className="h-4 w-4" strokeWidth={2} />
+            Degisiklikler kaydedildi
+          </div>
+        </div>
+      )}
     </div>
   );
 }
