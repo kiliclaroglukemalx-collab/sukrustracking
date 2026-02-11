@@ -71,7 +71,7 @@ export default function Page() {
         <TopBar data={kasaData} screenshotMode={screenshotMode} />
 
         {/* Separator */}
-        <div className={`${screenshotMode ? "my-1.5" : "my-2"} h-px w-full bg-white/[0.04]`} />
+        <div className={`${screenshotMode ? "my-1.5" : "my-2"} h-px w-full bg-foreground/[0.06]`} />
 
         {/* Card Grid - fills remaining height */}
         <div

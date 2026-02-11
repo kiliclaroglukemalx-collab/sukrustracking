@@ -69,7 +69,7 @@ export function HamburgerMenu({
           setActivePanel("main");
         }}
         type="button"
-        className="flex h-7 w-7 items-center justify-center rounded-md border border-white/[0.06] bg-white/[0.03] text-white/50 transition-all hover:border-white/[0.12] hover:bg-white/[0.08] hover:text-white/80"
+        className="flex h-7 w-7 items-center justify-center rounded-md border border-foreground/10 bg-foreground/[0.04] text-foreground/40 transition-all hover:border-foreground/20 hover:bg-foreground/[0.08] hover:text-foreground/70"
         aria-label="Menu"
       >
         {isOpen ? (
@@ -81,27 +81,27 @@ export function HamburgerMenu({
 
       {/* Dropdown */}
       {isOpen && (
-        <div className="absolute right-0 top-9 w-64 overflow-hidden rounded-lg border border-white/[0.08] bg-zinc-950/95 shadow-2xl shadow-black/50 backdrop-blur-xl">
+        <div className="absolute right-0 top-9 w-64 overflow-hidden rounded-xl border border-neutral-200 bg-white shadow-xl shadow-black/10">
           {activePanel === "main" && (
             <div className="flex flex-col py-1">
               {/* Screenshot Mode toggle */}
               <button
                 type="button"
                 onClick={onScreenshotToggle}
-                className="flex items-center justify-between px-3 py-2.5 text-left transition-colors hover:bg-white/[0.05]"
+                className="flex items-center justify-between px-3 py-2.5 text-left transition-colors hover:bg-neutral-50"
               >
                 <span className="flex items-center gap-2.5">
                   <Camera
-                    className="h-3.5 w-3.5 text-white/40"
+                    className="h-3.5 w-3.5 text-neutral-400"
                     strokeWidth={1.5}
                   />
-                  <span className="text-[11px] text-white/70">
+                  <span className="text-[11px] text-neutral-600">
                     Screenshot Mode
                   </span>
                 </span>
                 <div
                   className={`h-4 w-7 rounded-full transition-colors ${
-                    screenshotMode ? "bg-emerald-500/80" : "bg-white/10"
+                    screenshotMode ? "bg-emerald-500" : "bg-neutral-200"
                   } flex items-center px-0.5`}
                 >
                   <div
@@ -112,32 +112,34 @@ export function HamburgerMenu({
                 </div>
               </button>
 
-              <div className="mx-3 h-px bg-white/[0.05]" />
+              <div className="mx-3 h-px bg-neutral-100" />
 
               {/* Excel Upload */}
               <button
                 type="button"
                 onClick={() => setActivePanel("excel")}
-                className="flex items-center gap-2.5 px-3 py-2.5 text-left transition-colors hover:bg-white/[0.05]"
+                className="flex items-center gap-2.5 px-3 py-2.5 text-left transition-colors hover:bg-neutral-50"
               >
                 <Upload
-                  className="h-3.5 w-3.5 text-white/40"
+                  className="h-3.5 w-3.5 text-neutral-400"
                   strokeWidth={1.5}
                 />
-                <span className="text-[11px] text-white/70">Excel Yukle</span>
+                <span className="text-[11px] text-neutral-600">
+                  Excel Yukle
+                </span>
               </button>
 
               {/* Video */}
               <button
                 type="button"
                 onClick={() => setActivePanel("video")}
-                className="flex items-center gap-2.5 px-3 py-2.5 text-left transition-colors hover:bg-white/[0.05]"
+                className="flex items-center gap-2.5 px-3 py-2.5 text-left transition-colors hover:bg-neutral-50"
               >
                 <Film
-                  className="h-3.5 w-3.5 text-white/40"
+                  className="h-3.5 w-3.5 text-neutral-400"
                   strokeWidth={1.5}
                 />
-                <span className="text-[11px] text-white/70">
+                <span className="text-[11px] text-neutral-600">
                   Video Ayarlari
                 </span>
               </button>
@@ -146,16 +148,18 @@ export function HamburgerMenu({
               <button
                 type="button"
                 onClick={() => setActivePanel("methods")}
-                className="flex items-center gap-2.5 px-3 py-2.5 text-left transition-colors hover:bg-white/[0.05]"
+                className="flex items-center gap-2.5 px-3 py-2.5 text-left transition-colors hover:bg-neutral-50"
               >
                 <Layers
-                  className="h-3.5 w-3.5 text-white/40"
+                  className="h-3.5 w-3.5 text-neutral-400"
                   strokeWidth={1.5}
                 />
-                <span className="text-[11px] text-white/70">Yontemler</span>
+                <span className="text-[11px] text-neutral-600">
+                  Yontemler
+                </span>
               </button>
 
-              <div className="mx-3 h-px bg-white/[0.05]" />
+              <div className="mx-3 h-px bg-neutral-100" />
 
               {/* Reset */}
               <button
@@ -164,13 +168,13 @@ export function HamburgerMenu({
                   onReset();
                   close();
                 }}
-                className="flex items-center gap-2.5 px-3 py-2.5 text-left transition-colors hover:bg-white/[0.05]"
+                className="flex items-center gap-2.5 px-3 py-2.5 text-left transition-colors hover:bg-neutral-50"
               >
                 <RotateCcw
-                  className="h-3.5 w-3.5 text-white/40"
+                  className="h-3.5 w-3.5 text-neutral-400"
                   strokeWidth={1.5}
                 />
-                <span className="text-[11px] text-white/70">
+                <span className="text-[11px] text-neutral-600">
                   Demo Veriye Don
                 </span>
               </button>
@@ -178,7 +182,7 @@ export function HamburgerMenu({
               {/* Ayarlar info */}
               <button
                 type="button"
-                className="flex items-center gap-2.5 px-3 py-2.5 text-left opacity-40"
+                className="flex items-center gap-2.5 px-3 py-2.5 text-left opacity-30"
                 disabled
               >
                 <Settings className="h-3.5 w-3.5" strokeWidth={1.5} />
@@ -192,7 +196,7 @@ export function HamburgerMenu({
               <button
                 type="button"
                 onClick={() => setActivePanel("main")}
-                className="mb-3 text-[10px] text-white/40 transition-colors hover:text-white/70"
+                className="mb-3 text-[10px] text-neutral-400 transition-colors hover:text-neutral-600"
               >
                 {"< Geri"}
               </button>
@@ -210,11 +214,11 @@ export function HamburgerMenu({
               <button
                 type="button"
                 onClick={() => setActivePanel("main")}
-                className="mb-3 text-[10px] text-white/40 transition-colors hover:text-white/70"
+                className="mb-3 text-[10px] text-neutral-400 transition-colors hover:text-neutral-600"
               >
                 {"< Geri"}
               </button>
-              <label className="mb-1.5 block text-[9px] font-medium uppercase tracking-widest text-white/30">
+              <label className="mb-1.5 block text-[9px] font-medium uppercase tracking-widest text-neutral-400">
                 Video URL (mp4)
               </label>
               <input
@@ -222,7 +226,7 @@ export function HamburgerMenu({
                 value={videoInput}
                 onChange={(e) => setVideoInput(e.target.value)}
                 placeholder="https://example.com/video.mp4"
-                className="mb-2 w-full rounded border border-white/[0.08] bg-white/[0.03] px-2.5 py-1.5 text-[11px] text-white placeholder-white/20 outline-none transition-colors focus:border-white/20"
+                className="mb-2 w-full rounded-lg border border-neutral-200 bg-neutral-50 px-2.5 py-1.5 text-[11px] text-foreground placeholder-neutral-300 outline-none transition-colors focus:border-neutral-400"
               />
               <div className="flex gap-2">
                 <button
@@ -231,7 +235,7 @@ export function HamburgerMenu({
                     onVideoChange(videoInput);
                     close();
                   }}
-                  className="flex-1 rounded bg-white/10 py-1.5 text-[10px] font-medium text-white transition-colors hover:bg-white/20"
+                  className="flex-1 rounded-lg bg-neutral-900 py-1.5 text-[10px] font-medium text-white transition-colors hover:bg-neutral-800"
                 >
                   Uygula
                 </button>
@@ -241,7 +245,7 @@ export function HamburgerMenu({
                     setVideoInput("");
                     onVideoChange("");
                   }}
-                  className="rounded px-3 py-1.5 text-[10px] text-white/40 transition-colors hover:bg-white/[0.05] hover:text-white/70"
+                  className="rounded-lg px-3 py-1.5 text-[10px] text-neutral-400 transition-colors hover:bg-neutral-50 hover:text-neutral-600"
                 >
                   Temizle
                 </button>
@@ -254,11 +258,11 @@ export function HamburgerMenu({
               <button
                 type="button"
                 onClick={() => setActivePanel("main")}
-                className="mb-3 text-[10px] text-white/40 transition-colors hover:text-white/70"
+                className="mb-3 text-[10px] text-neutral-400 transition-colors hover:text-neutral-600"
               >
                 {"< Geri"}
               </button>
-              <p className="mb-2 text-[9px] uppercase tracking-widest text-white/30">
+              <p className="mb-2 text-[9px] uppercase tracking-widest text-neutral-400">
                 Komisyon Oranlari
               </p>
               <div className="space-y-1">
@@ -292,8 +296,8 @@ export function HamburgerMenu({
                     key={name}
                     className="flex items-center justify-between py-0.5"
                   >
-                    <span className="text-[10px] text-white/50">{name}</span>
-                    <span className="font-mono text-[10px] text-white/70">
+                    <span className="text-[10px] text-neutral-500">{name}</span>
+                    <span className="font-mono text-[10px] text-neutral-700">
                       {rate}
                     </span>
                   </div>

@@ -23,49 +23,54 @@ export function KasaCard({ data, screenshotMode }: KasaCardProps) {
 
   return (
     <div
-      className="relative flex flex-col items-center justify-center overflow-hidden rounded-lg"
+      className={`relative flex flex-col items-center justify-center overflow-hidden rounded-2xl transition-transform hover:-translate-y-0.5 ${
+        screenshotMode ? "card-float-screenshot rounded-xl" : "card-float"
+      }`}
       style={{
-        background: screenshotMode
-          ? "radial-gradient(ellipse at center, rgba(255,255,255,0.07) 0%, rgba(255,255,255,0.02) 50%, transparent 100%)"
-          : "radial-gradient(ellipse at center, rgba(255,255,255,0.09) 0%, rgba(255,255,255,0.03) 40%, rgba(0,0,0,0.0) 100%)",
+        background:
+          "radial-gradient(ellipse at center, #111111 0%, #0c0c0c 40%, #080808 70%, transparent 100%)",
       }}
     >
-      {/* Faint border that fades at edges */}
+      {/* Outer gradient mask that fades edges into the white background */}
       <div
-        className="pointer-events-none absolute inset-0 rounded-lg"
+        className="pointer-events-none absolute inset-0 rounded-2xl"
         style={{
-          border: "1px solid transparent",
-          borderImage:
-            "linear-gradient(135deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0.04) 50%, transparent 100%) 1",
-          mask: "linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0)",
-          WebkitMask:
-            "linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0)",
+          background:
+            "linear-gradient(to bottom, transparent 60%, rgba(255,255,255,0.03) 100%)",
         }}
       />
 
-      {/* Payment method name - large and prominent */}
-      <span
-        className={`mb-1 font-sans font-bold uppercase tracking-[0.15em] text-white/90 ${
-          screenshotMode
-            ? "text-[11px] lg:text-xs"
-            : "text-[10px] lg:text-[11px]"
-        }`}
+      {/* Subtle inner border glow */}
+      <div
+        className="pointer-events-none absolute inset-0 rounded-2xl"
         style={{
-          textShadow: "0 1px 3px rgba(0,0,0,0.6)",
+          boxShadow: "inset 0 1px 0 rgba(255,255,255,0.06), inset 0 0 20px rgba(255,255,255,0.02)",
         }}
+      />
+
+      {/* Payment method name - prominent, colored */}
+      <span
+        className={`relative z-10 mb-1.5 font-sans font-extrabold uppercase tracking-[0.18em] text-cyan-400 ${
+          screenshotMode
+            ? "text-[11px] lg:text-xs xl:text-[13px]"
+            : "text-[10px] md:text-[11px] lg:text-xs xl:text-[13px]"
+        }`}
       >
         {data.odemeTuruAdi}
       </span>
 
       {/* Amount - the hero number */}
       <span
-        className={`text-glow-strong font-mono font-black tabular-nums tracking-tight ${
+        className={`relative z-10 font-mono font-black tabular-nums tracking-tight ${
           isPositive ? "text-white" : "text-red-400"
         } ${
           screenshotMode
             ? "text-lg sm:text-xl md:text-2xl lg:text-3xl"
             : "text-base sm:text-lg md:text-xl lg:text-2xl"
         }`}
+        style={{
+          textShadow: "0 0 20px rgba(255,255,255,0.15)",
+        }}
       >
         {"₺"}
         {formatAmount(data.kalanKasa)}

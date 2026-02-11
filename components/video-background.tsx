@@ -27,7 +27,7 @@ export function VideoBackground({ src, disabled }: VideoBackgroundProps) {
     <div className="fixed inset-0 z-0 overflow-hidden" aria-hidden="true">
       <video
         ref={videoRef}
-        className="h-full w-full object-cover opacity-[0.08] blur-[1px]"
+        className="h-full w-full object-cover opacity-[0.06] blur-[2px] grayscale"
         autoPlay
         muted
         loop
@@ -36,7 +36,8 @@ export function VideoBackground({ src, disabled }: VideoBackgroundProps) {
       >
         <source src={src} type="video/mp4" />
       </video>
-      <div className="absolute inset-0 bg-black/80" />
+      {/* White overlay to keep the light theme */}
+      <div className="absolute inset-0 bg-white/85" />
     </div>
   );
 }

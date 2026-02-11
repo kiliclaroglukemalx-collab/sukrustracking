@@ -51,17 +51,17 @@ export function ExcelUploader({ onDataLoaded }: ExcelUploaderProps) {
       }}
       role="button"
       tabIndex={0}
-      className="flex cursor-pointer flex-col items-center gap-2 rounded-lg border border-dashed border-white/[0.1] px-3 py-4 transition-colors hover:border-white/[0.2] hover:bg-white/[0.03]"
+      className="flex cursor-pointer flex-col items-center gap-2 rounded-lg border border-dashed border-neutral-200 px-3 py-4 transition-colors hover:border-neutral-400 hover:bg-neutral-50"
     >
       <div className="flex items-center gap-2">
-        <FileSpreadsheet className="h-4 w-4 text-emerald-500/60" strokeWidth={1.5} />
-        <Upload className="h-3.5 w-3.5 text-white/30" strokeWidth={1.5} />
+        <FileSpreadsheet className="h-4 w-4 text-emerald-600/70" strokeWidth={1.5} />
+        <Upload className="h-3.5 w-3.5 text-neutral-400" strokeWidth={1.5} />
       </div>
       <div className="text-center">
-        <p className="text-[11px] font-medium text-white/60">
+        <p className="text-[11px] font-medium text-neutral-600">
           Excel Dosyasi Yukle
         </p>
-        <p className="mt-0.5 text-[9px] text-white/25">
+        <p className="mt-0.5 text-[9px] text-neutral-400">
           .xlsx, .xls veya .csv
         </p>
       </div>

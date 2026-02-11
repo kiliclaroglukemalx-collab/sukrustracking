@@ -26,10 +26,10 @@ export function LiveClock() {
   });
 
   return (
-    <span className="flex items-center gap-2 text-[11px] text-white/40">
+    <span className="flex items-center gap-2 text-[11px] text-foreground/40">
       <span>{date}</span>
-      <span className="text-white/15">{"/"}</span>
-      <span className="font-mono tabular-nums text-white/55">{time}</span>
+      <span className="text-foreground/15">{"/"}</span>
+      <span className="font-mono tabular-nums text-foreground/55">{time}</span>
     </span>
   );
 }
