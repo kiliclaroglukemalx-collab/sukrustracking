@@ -31,7 +31,7 @@ export function KasaCard({ data, index }: KasaCardProps) {
     parenIdx > -1 ? data.odemeTuruAdi.slice(parenIdx).trim() : null;
 
   return (
-    <div className="card-float flex flex-col overflow-hidden rounded-xl">
+    <div className="card-float flex flex-col overflow-hidden rounded-xl border border-neutral-700/40">
       {/* Top half - light, method name */}
       <div className="flex flex-1 flex-col justify-center bg-neutral-100 px-3 py-2">
         <span className="text-xs font-extrabold uppercase leading-tight tracking-[0.12em] text-neutral-900 text-balance md:text-sm lg:text-base">
