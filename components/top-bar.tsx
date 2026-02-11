@@ -18,15 +18,30 @@ function getRoundedHour(): string {
   return `${hour.toString().padStart(2, "0")}:00`;
 }
 
+function getFormattedDate(): string {
+  const now = new Date();
+  return now.toLocaleDateString("tr-TR", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+}
+
 interface TopBarProps {
   data: KasaCardData[];
 }
 
 export function TopBar({ data }: TopBarProps) {
   const [roundedHour, setRoundedHour] = useState(getRoundedHour);
+  const [dateStr, setDateStr] = useState("");
 
   useEffect(() => {
-    const timer = setInterval(() => setRoundedHour(getRoundedHour()), 30000);
+    setDateStr(getFormattedDate());
+    const timer = setInterval(() => {
+      setRoundedHour(getRoundedHour());
+      setDateStr(getFormattedDate());
+    }, 30000);
     return () => clearInterval(timer);
   }, []);
 
@@ -37,14 +52,28 @@ export function TopBar({ data }: TopBarProps) {
 
   return (
     <div className="flex h-[72px] items-center justify-between">
-      {/* LEFT: Hour + Kasasi */}
-      <div className="flex flex-shrink-0 items-baseline gap-2">
-        <span className="font-mono text-xl font-black tracking-wide text-neutral-900 lg:text-2xl">
-          {roundedHour}
-        </span>
-        <span className="text-sm font-bold tracking-[0.15em] uppercase text-neutral-900 lg:text-base">
-          Kasasi
-        </span>
+      {/* LEFT: Hour + Kasasi + date */}
+      <div className="flex flex-shrink-0 flex-col">
+        <div className="flex items-baseline gap-2">
+          <span className="font-mono text-xl font-black tracking-wide text-neutral-900 lg:text-2xl">
+            {roundedHour}
+          </span>
+          <span className="text-sm font-bold tracking-[0.15em] uppercase text-neutral-900 lg:text-base">
+            Kasasi
+          </span>
+        </div>
+        {dateStr && (
+          <span
+            className="text-[9px] font-semibold tracking-wider uppercase lg:text-[10px]"
+            style={{
+              background: "linear-gradient(90deg, #f43f5e, #f97316, #eab308, #22c55e, #3b82f6, #a855f7)",
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+            }}
+          >
+            {dateStr}
+          </span>
+        )}
       </div>
 
       {/* CENTER: Total Kasa - black bg, white label, green amount */}
