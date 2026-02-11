@@ -80,7 +80,7 @@ export default function Page() {
 
         {/* Card grid */}
         <div
-          className={`relative z-10 grid flex-1 ${colsClass[grid.cols] || "grid-cols-7"} gap-2.5 p-2.5 pt-1`}
+          className={`relative z-10 grid flex-1 ${colsClass[grid.cols] || "grid-cols-7"} gap-x-2.5 gap-y-3 p-2.5 pt-1.5`}
           style={{
             gridTemplateRows: `repeat(${grid.rows}, 1fr)`,
           }}
