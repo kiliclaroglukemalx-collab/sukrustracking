@@ -31,24 +31,26 @@ export function KasaCard({ data, index }: KasaCardProps) {
     parenIdx > -1 ? data.odemeTuruAdi.slice(parenIdx).trim() : null;
 
   return (
-    <div className="card-float flex flex-col overflow-hidden rounded-xl border border-neutral-500/50">
-      {/* Thin accent bar at the very top - ties name to its card */}
-      <div className="h-[3px] flex-shrink-0 bg-gradient-to-r from-neutral-400 via-neutral-300 to-neutral-400" />
-
-      {/* Top half - light, method name */}
-      <div className="flex flex-1 flex-col justify-center bg-neutral-100 px-3 py-2">
+    <div
+      className="card-float flex flex-col overflow-hidden rounded-xl border border-neutral-500/50"
+      style={{
+        background: "linear-gradient(180deg, #f0f0f0 0%, #e5e5e5 38%, #404040 50%, #0a0a0a 62%, #0a0a0a 100%)",
+      }}
+    >
+      {/* Top half - method name */}
+      <div className="flex flex-1 flex-col justify-center px-3 py-2">
         <span className="text-xs font-extrabold uppercase leading-tight tracking-[0.12em] text-neutral-900 text-balance md:text-sm lg:text-base">
           {mainName}
         </span>
         {subName && (
-          <span className="mt-0.5 block truncate text-[8px] font-semibold uppercase tracking-wider text-neutral-400 md:text-[9px]">
+          <span className="mt-0.5 block truncate text-[8px] font-semibold uppercase tracking-wider text-neutral-500 md:text-[9px]">
             {subName}
           </span>
         )}
       </div>
 
-      {/* Bottom half - dark, amount */}
-      <div className="flex flex-1 items-center justify-center bg-neutral-950 px-3 py-2.5">
+      {/* Bottom half - amount */}
+      <div className="flex flex-1 items-center justify-center px-3 py-2.5">
         <span
           className={`font-mono text-xl font-black tabular-nums tracking-tight sm:text-2xl lg:text-3xl ${
             isNegative ? "text-red-500" : "text-white"
