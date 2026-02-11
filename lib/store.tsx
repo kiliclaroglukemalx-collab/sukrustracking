@@ -82,16 +82,11 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     (newMethods: PaymentMethod[]) => {
       setRawRows((currentRawRows) => {
         if (currentRawRows.length > 0) {
+          // Real Excel data loaded: reprocess with updated methods
           setKasaData(processExcelData(currentRawRows, newMethods));
         } else {
-          setKasaData((currentKasaData) => {
-            const rows = currentKasaData.map((d) => ({
-              odemeTuruAdi: d.odemeTuruAdi,
-              borc: d.toplamBorc,
-              kredi: d.toplamKredi,
-            }));
-            return processExcelData(rows, newMethods);
-          });
+          // Demo mode: regenerate demo data based on the new methods list
+          setKasaData(generateDemoData(newMethods));
         }
         return currentRawRows;
       });

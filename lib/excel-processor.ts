@@ -161,32 +161,38 @@ export function parseExcelFile(buffer: ArrayBuffer): PaymentRow[] {
 }
 
 export function generateDemoData(methods: PaymentMethod[]): KasaCardData[] {
-  const demoRows: PaymentRow[] = [
-    { odemeTuruAdi: "Nakit", borc: 45200, kredi: 12300 },
-    { odemeTuruAdi: "Kredi Karti", borc: 128750, kredi: 35600 },
-    { odemeTuruAdi: "Banka Karti", borc: 67400, kredi: 18200 },
-    { odemeTuruAdi: "Havale/EFT", borc: 89100, kredi: 42500 },
-    { odemeTuruAdi: "Yemek Karti", borc: 23400, kredi: 5600 },
-    { odemeTuruAdi: "Online Odeme", borc: 56300, kredi: 15800 },
-    { odemeTuruAdi: "Multinet", borc: 18700, kredi: 4200 },
-    { odemeTuruAdi: "Sodexo", borc: 22100, kredi: 6100 },
-    { odemeTuruAdi: "Ticket", borc: 15300, kredi: 3800 },
-    { odemeTuruAdi: "Metropol", borc: 9800, kredi: 2100 },
-    { odemeTuruAdi: "Setcard", borc: 12600, kredi: 3400 },
-    { odemeTuruAdi: "iyzico", borc: 34500, kredi: 9700 },
-    { odemeTuruAdi: "PayPal", borc: 8200, kredi: 1900 },
-    { odemeTuruAdi: "Param", borc: 19400, kredi: 5200 },
-    { odemeTuruAdi: "Paycell", borc: 11300, kredi: 2800 },
-    { odemeTuruAdi: "Hopi", borc: 7600, kredi: 1500 },
-    { odemeTuruAdi: "Tosla", borc: 6400, kredi: 1200 },
-    { odemeTuruAdi: "Papara", borc: 28900, kredi: 7300 },
-    { odemeTuruAdi: "Cuzdan", borc: 4100, kredi: 800 },
-    { odemeTuruAdi: "Acik Hesap", borc: 52000, kredi: 31000 },
-    { odemeTuruAdi: "Fis/Cek", borc: 37800, kredi: 14600 },
-    { odemeTuruAdi: "Garanti Pay", borc: 14200, kredi: 3900 },
-    { odemeTuruAdi: "QR Odeme", borc: 5600, kredi: 1100 },
-    { odemeTuruAdi: "Puan", borc: 3200, kredi: 700 },
-  ];
+  const demoRowsMap: Record<string, { borc: number; kredi: number }> = {
+    "Nakit": { borc: 45200, kredi: 12300 },
+    "Kredi Karti": { borc: 128750, kredi: 35600 },
+    "Banka Karti": { borc: 67400, kredi: 18200 },
+    "Havale/EFT": { borc: 89100, kredi: 42500 },
+    "Yemek Karti": { borc: 23400, kredi: 5600 },
+    "Online Odeme": { borc: 56300, kredi: 15800 },
+    "Multinet": { borc: 18700, kredi: 4200 },
+    "Sodexo": { borc: 22100, kredi: 6100 },
+    "Ticket": { borc: 15300, kredi: 3800 },
+    "Metropol": { borc: 9800, kredi: 2100 },
+    "Setcard": { borc: 12600, kredi: 3400 },
+    "iyzico": { borc: 34500, kredi: 9700 },
+    "PayPal": { borc: 8200, kredi: 1900 },
+    "Param": { borc: 19400, kredi: 5200 },
+    "Paycell": { borc: 11300, kredi: 2800 },
+    "Hopi": { borc: 7600, kredi: 1500 },
+    "Tosla": { borc: 6400, kredi: 1200 },
+    "Papara": { borc: 28900, kredi: 7300 },
+    "Cuzdan": { borc: 4100, kredi: 800 },
+    "Acik Hesap": { borc: 52000, kredi: 31000 },
+    "Fis/Cek": { borc: 37800, kredi: 14600 },
+    "Garanti Pay": { borc: 14200, kredi: 3900 },
+    "QR Odeme": { borc: 5600, kredi: 1100 },
+    "Puan": { borc: 3200, kredi: 700 },
+  };
+
+  // Build rows based on the current methods list so added/removed methods are reflected
+  const demoRows: PaymentRow[] = methods.map((m) => {
+    const data = demoRowsMap[m.name] || { borc: 0, kredi: 0 };
+    return { odemeTuruAdi: m.name, borc: data.borc, kredi: data.kredi };
+  });
 
   return processExcelData(demoRows, methods);
 }
