@@ -76,13 +76,13 @@ export default function RaporlarPage() {
       icon: BarChart2,
       iconBg: "bg-emerald-50",
       iconColor: "text-emerald-500",
-      badgeBg: "bg-neutral-100",
-      badgeColor: "text-neutral-400",
-      badgeText: "Yakinda",
+      badgeBg: "bg-emerald-50",
+      badgeColor: "text-emerald-600",
+      badgeText: "Aktif",
       title: "Gunun Finansal Analizi",
       description:
         "Gunluk finansal performansin kapsamli analizini uretir. Yatirim/cekim oranlari, komisyon dagilimi ve genel degerlendirme iceriri.",
-      footnote: "Cursor uzerinden gelistirmeye devam edilecek",
+      footnote: "Mock veri ile hazir, Cursor uzerinden AI entegrasyonu yapilacak",
     },
   ];
 
