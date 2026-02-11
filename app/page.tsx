@@ -1,16 +1,10 @@
 "use client";
 
-import { useState, useCallback, useMemo } from "react";
+import { useMemo } from "react";
 import { TopBar } from "@/components/top-bar";
 import { KasaCard } from "@/components/kasa-card";
 import { HamburgerMenu } from "@/components/hamburger-menu";
-import { VideoBackground } from "@/components/video-background";
-import {
-  generateDemoData,
-  processExcelData,
-  DEFAULT_METHODS,
-} from "@/lib/excel-processor";
-import type { KasaCardData, PaymentMethod } from "@/lib/excel-processor";
+import { useStore } from "@/lib/store";
 
 function computeGrid(count: number): { cols: number; rows: number } {
   if (count <= 0) return { cols: 1, rows: 1 };
@@ -38,64 +32,20 @@ const colsClass: Record<number, string> = {
 };
 
 export default function Page() {
-  const [methods, setMethods] = useState<PaymentMethod[]>(
-    () => DEFAULT_METHODS,
-  );
-  const [kasaData, setKasaData] = useState<KasaCardData[]>(() =>
-    generateDemoData(DEFAULT_METHODS),
-  );
-  const [videoUrl, setVideoUrl] = useState("");
-
-  const handleDataLoaded = useCallback(
-    (data: KasaCardData[]) => {
-      setKasaData(data);
-    },
-    [],
-  );
-
-  const handleReset = useCallback(() => {
-    setKasaData(generateDemoData(methods));
-  }, [methods]);
-
-  const handleMethodsChange = useCallback(
-    (newMethods: PaymentMethod[]) => {
-      setMethods(newMethods);
-      // Recalculate existing data with new methods
-      setKasaData((prev) => {
-        const rows = prev.map((d) => ({
-          odemeTuruAdi: d.odemeTuruAdi,
-          borc: d.toplamBorc,
-          kredi: d.toplamKredi,
-        }));
-        return processExcelData(rows, newMethods);
-      });
-    },
-    [],
-  );
-
+  const { kasaData, videoUrl } = useStore();
   const grid = useMemo(() => computeGrid(kasaData.length), [kasaData.length]);
 
   return (
     <div className="flex h-full flex-col overflow-hidden">
-      {/* Video behind the dark section */}
-      <VideoBackground src={videoUrl} />
-
       {/* Hamburger menu */}
-      <HamburgerMenu
-        onDataLoaded={handleDataLoaded}
-        onReset={handleReset}
-        onVideoChange={setVideoUrl}
-        videoUrl={videoUrl}
-        methods={methods}
-        onMethodsChange={handleMethodsChange}
-      />
+      <HamburgerMenu />
 
       {/* White top section */}
       <div className="relative z-10 flex-shrink-0 bg-white px-5 pt-3 pb-2">
         <TopBar data={kasaData} />
       </div>
 
-      {/* Gradient transition: white -> OLED black */}
+      {/* Gradient transition: white to OLED black */}
       <div
         className="relative z-10 h-6 flex-shrink-0"
         style={{
@@ -103,13 +53,34 @@ export default function Page() {
         }}
       />
 
-      {/* OLED Black grid section */}
+      {/* OLED Black grid section with scoped video */}
       <div
         className="relative z-10 flex flex-1 flex-col overflow-hidden"
         style={{ background: "#000000" }}
       >
+        {/* Video background - scoped to dark section only */}
+        {videoUrl && (
+          <div className="absolute inset-0 z-0 overflow-hidden" aria-hidden="true">
+            <video
+              className="h-full w-full object-cover opacity-[0.06] blur-[2px]"
+              autoPlay
+              muted
+              loop
+              playsInline
+              key={videoUrl}
+            >
+              <source src={videoUrl} type="video/mp4" />
+            </video>
+            <div
+              className="absolute inset-0"
+              style={{ background: "rgba(0,0,0,0.88)" }}
+            />
+          </div>
+        )}
+
+        {/* Card grid */}
         <div
-          className={`grid flex-1 ${colsClass[grid.cols] || "grid-cols-7"} gap-2 p-2 pt-0`}
+          className={`relative z-10 grid flex-1 ${colsClass[grid.cols] || "grid-cols-7"} gap-2 p-2 pt-0`}
           style={{
             gridTemplateRows: `repeat(${grid.rows}, 1fr)`,
           }}

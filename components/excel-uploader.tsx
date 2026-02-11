@@ -1,27 +1,27 @@
 "use client";
 
-import React from "react"
-
-import { useCallback, useRef } from "react";
+import React, { useCallback, useRef } from "react";
 import { FileSpreadsheet, Upload } from "lucide-react";
 import type { KasaCardData } from "@/lib/excel-processor";
 import { parseExcelFile, processExcelData } from "@/lib/excel-processor";
+import { useStore } from "@/lib/store";
 
 interface ExcelUploaderProps {
   onDataLoaded: (data: KasaCardData[]) => void;
 }
 
 export function ExcelUploader({ onDataLoaded }: ExcelUploaderProps) {
+  const { methods } = useStore();
   const inputRef = useRef<HTMLInputElement>(null);
 
   const handleFile = useCallback(
     async (file: File) => {
       const buffer = await file.arrayBuffer();
       const rows = parseExcelFile(buffer);
-      const processed = processExcelData(rows);
+      const processed = processExcelData(rows, methods);
       onDataLoaded(processed);
     },
-    [onDataLoaded],
+    [onDataLoaded, methods],
   );
 
   const handleDrop = useCallback(
