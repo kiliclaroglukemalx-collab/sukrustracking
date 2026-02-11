@@ -55,10 +55,16 @@ export function TopBar({ data }: TopBarProps) {
       {/* LEFT: Hour + Kasasi + date */}
       <div className="flex flex-shrink-0 flex-col">
         <div className="flex items-baseline gap-2">
-          <span className="font-mono text-xl font-black tracking-wide text-neutral-900 lg:text-2xl">
+          <span
+            className="font-mono text-xl font-black tracking-wide lg:text-2xl"
+            style={{ color: "#d946a8" }}
+          >
             {roundedHour}
           </span>
-          <span className="text-sm font-bold tracking-[0.15em] uppercase text-neutral-900 lg:text-base">
+          <span
+            className="text-sm font-bold tracking-[0.15em] uppercase lg:text-base"
+            style={{ color: "#d946a8" }}
+          >
             Kasasi
           </span>
         </div>
