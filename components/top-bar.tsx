@@ -45,11 +45,11 @@ export function TopBar({ data }: TopBarProps) {
       </h1>
 
       {/* Three metrics side by side */}
-      <div className="flex items-center gap-6 md:gap-8">
-        <Metric label="Toplam Yatirim" value={toplamYatirim} color="text-neutral-800" />
-        <div className="h-4 w-px bg-neutral-200" />
+      <div className="flex items-center gap-8 md:gap-12">
+        <Metric label="Toplam Yatirim" value={toplamYatirim} color="text-neutral-900" />
+        <div className="h-8 w-px bg-neutral-300" />
         <Metric label="Toplam Komisyon" value={toplamKomisyon} color="text-amber-600" />
-        <div className="h-4 w-px bg-neutral-200" />
+        <div className="h-8 w-px bg-neutral-300" />
         <Metric label="Toplam Cekim" value={toplamCekim} color="text-red-600" />
       </div>
     </div>
@@ -66,11 +66,11 @@ function Metric({
   color: string;
 }) {
   return (
-    <div className="flex flex-col items-center gap-0.5">
-      <span className="text-[8px] font-medium uppercase tracking-[0.2em] text-neutral-400 md:text-[9px]">
+    <div className="flex flex-col items-center gap-1">
+      <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-neutral-500 md:text-xs">
         {label}
       </span>
-      <span className={`font-mono text-xs font-bold tabular-nums md:text-sm ${color}`}>
+      <span className={`font-mono text-base font-extrabold tabular-nums md:text-lg lg:text-xl ${color}`}>
         {"₺"}{formatCurrency(value)}
       </span>
     </div>
