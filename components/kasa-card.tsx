@@ -54,15 +54,22 @@ export function KasaCard({ data, index }: KasaCardProps) {
       />
 
       {/* Payment method name - top, word-wrap allowed */}
-      <span
-        className="relative z-10 text-balance font-sans text-xs font-extrabold uppercase leading-tight tracking-[0.14em] md:text-sm lg:text-base"
-        style={{
-          color: nameColor,
-          textShadow: `0 0 20px ${nameColor}44`,
-        }}
-      >
-        {data.odemeTuruAdi}
-      </span>
+      {(() => {
+        const parenIdx = data.odemeTuruAdi.indexOf("(");
+        const mainName = parenIdx > -1 ? data.odemeTuruAdi.slice(0, parenIdx).trim() : data.odemeTuruAdi;
+        const subName = parenIdx > -1 ? data.odemeTuruAdi.slice(parenIdx).trim() : null;
+        return (
+          <span
+            className="relative z-10 font-sans font-extrabold uppercase leading-tight tracking-[0.14em]"
+            style={{ color: nameColor, textShadow: `0 0 20px ${nameColor}44` }}
+          >
+            <span className="block text-xs text-balance md:text-sm lg:text-base">{mainName}</span>
+            {subName && (
+              <span className="block truncate text-[9px] font-semibold opacity-50 md:text-[10px]">{subName}</span>
+            )}
+          </span>
+        );
+      })()}
 
       {/* Amount centered */}
       <div className="flex flex-1 items-center justify-center">
