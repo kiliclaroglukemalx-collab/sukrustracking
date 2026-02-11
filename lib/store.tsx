@@ -7,6 +7,7 @@ import React, {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
 } from "react";
 import {
   DEFAULT_METHODS,
@@ -18,13 +19,14 @@ import type {
   PaymentMethod,
   PaymentRow,
 } from "@/lib/excel-processor";
+import { createClient } from "@/lib/supabase/client";
 
-// --- localStorage helpers ---
+// --- localStorage helpers (fast cache / offline fallback) ---
 const LS_METHODS = "kasa-methods";
 const LS_VIDEO = "kasa-video";
 const LS_ROLE = "kasa-role";
 
-function loadMethods(): PaymentMethod[] {
+function loadMethodsFromCache(): PaymentMethod[] {
   if (typeof window === "undefined") return DEFAULT_METHODS;
   try {
     const raw = localStorage.getItem(LS_METHODS);
@@ -38,7 +40,7 @@ function loadMethods(): PaymentMethod[] {
   return DEFAULT_METHODS;
 }
 
-function saveMethods(m: PaymentMethod[]) {
+function cacheMethodsLocally(m: PaymentMethod[]) {
   if (typeof window !== "undefined") {
     localStorage.setItem(LS_METHODS, JSON.stringify(m));
   }
@@ -66,6 +68,78 @@ function saveRole(r: UserRole) {
   }
 }
 
+// --- Supabase helpers ---
+async function fetchMethodsFromSupabase(): Promise<PaymentMethod[] | null> {
+  try {
+    const supabase = createClient();
+    const { data, error } = await supabase
+      .from("payment_methods")
+      .select("*")
+      .order("sort_order", { ascending: true });
+
+    if (error || !data || data.length === 0) return null;
+
+    return data.map((row: Record<string, unknown>) => ({
+      id: row.id as string,
+      name: row.name as string,
+      komisyonOrani: (row.komisyon_orani as number) || 0,
+      baslangicBakiye: (row.baslangic_bakiye as number) || 0,
+    }));
+  } catch {
+    return null;
+  }
+}
+
+async function syncMethodsToSupabase(methods: PaymentMethod[]) {
+  try {
+    const supabase = createClient();
+
+    // Delete all existing methods and re-insert (simple full sync)
+    await supabase.from("payment_methods").delete().neq("id", "__never__");
+
+    const rows = methods.map((m, i) => ({
+      id: m.id,
+      name: m.name,
+      komisyon_orani: m.komisyonOrani,
+      baslangic_bakiye: m.baslangicBakiye,
+      sort_order: i,
+    }));
+
+    if (rows.length > 0) {
+      await supabase.from("payment_methods").insert(rows);
+    }
+  } catch {
+    // Silently fail - localStorage still works as fallback
+  }
+}
+
+async function saveSettingToSupabase(key: string, value: string) {
+  try {
+    const supabase = createClient();
+    await supabase
+      .from("app_settings")
+      .upsert({ key, value }, { onConflict: "key" });
+  } catch {
+    /* silent */
+  }
+}
+
+async function loadSettingFromSupabase(
+  key: string,
+): Promise<string | null> {
+  try {
+    const supabase = createClient();
+    const { data } = await supabase
+      .from("app_settings")
+      .select("value")
+      .eq("key", key)
+      .single();
+    return data?.value ?? null;
+  } catch {
+    return null;
+  }
+}
+
 // --- Types ---
 export type UserRole = "basic" | "master";
 const MASTER_PASSWORD = "Kk028200";
@@ -87,18 +161,47 @@ interface StoreContextValue {
 
   rawRows: PaymentRow[];
   setRawRows: (rows: PaymentRow[]) => void;
+
+  supabaseReady: boolean;
 }
 
 const StoreContext = createContext<StoreContextValue | null>(null);
 
 export function StoreProvider({ children }: { children: React.ReactNode }) {
   const [role, setRoleState] = useState<UserRole>(loadRole);
-  const [methods, setMethodsState] = useState<PaymentMethod[]>(loadMethods);
+  const [methods, setMethodsState] = useState<PaymentMethod[]>(loadMethodsFromCache);
   const [kasaData, setKasaData] = useState<KasaCardData[]>(() =>
-    generateDemoData(loadMethods()),
+    generateDemoData(loadMethodsFromCache()),
   );
   const [videoUrl, setVideoUrlState] = useState(loadVideo);
   const [rawRows, setRawRows] = useState<PaymentRow[]>([]);
+  const [supabaseReady, setSupabaseReady] = useState(false);
+  const initDone = useRef(false);
+
+  // --- On mount: fetch from Supabase (source of truth) ---
+  useEffect(() => {
+    if (initDone.current) return;
+    initDone.current = true;
+
+    (async () => {
+      // Load methods from Supabase
+      const sbMethods = await fetchMethodsFromSupabase();
+      if (sbMethods && sbMethods.length > 0) {
+        setMethodsState(sbMethods);
+        cacheMethodsLocally(sbMethods);
+        setKasaData(generateDemoData(sbMethods));
+      }
+
+      // Load video URL from Supabase
+      const sbVideo = await loadSettingFromSupabase("video_url");
+      if (sbVideo !== null) {
+        setVideoUrlState(sbVideo);
+        saveVideo(sbVideo);
+      }
+
+      setSupabaseReady(true);
+    })();
+  }, []);
 
   // --- Role ---
   const verifyMasterPassword = useCallback(
@@ -115,6 +218,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const setVideoUrl = useCallback((url: string) => {
     setVideoUrlState(url);
     saveVideo(url);
+    saveSettingToSupabase("video_url", url);
   }, []);
 
   // --- Excel ---
@@ -130,10 +234,11 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     });
   }, []);
 
-  // --- Methods (the critical part) ---
+  // --- Methods (sync to both localStorage and Supabase) ---
   const setMethods = useCallback((newMethods: PaymentMethod[]) => {
     setMethodsState(newMethods);
-    saveMethods(newMethods);
+    cacheMethodsLocally(newMethods);
+    syncMethodsToSupabase(newMethods);
 
     // Recalculate kasa data immediately
     setRawRows((currentRawRows) => {
@@ -161,6 +266,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       setVideoUrl,
       rawRows,
       setRawRows,
+      supabaseReady,
     }),
     [
       role,
@@ -174,6 +280,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       videoUrl,
       setVideoUrl,
       rawRows,
+      supabaseReady,
     ],
   );
 
