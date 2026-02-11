@@ -83,12 +83,12 @@ export function TopBar({ data }: TopBarProps) {
       </div>
 
       {/* CENTER: Total Kasa - black bg, white label, green amount */}
-      <div className="flex flex-col items-center justify-center rounded-lg bg-neutral-950 px-8 py-1.5">
+      <div className="flex min-w-[200px] flex-col items-center justify-center rounded-lg bg-neutral-950 px-10 py-1.5 lg:min-w-[260px] lg:px-14">
         <span className="text-[10px] font-bold uppercase tracking-[0.25em] text-white lg:text-[11px]">
           Total Kasa
         </span>
         <span
-          className="font-mono text-2xl font-black tabular-nums lg:text-3xl"
+          className="font-mono text-xl font-black tabular-nums lg:text-2xl"
           style={{
             color: "#00FF00",
             textShadow:
