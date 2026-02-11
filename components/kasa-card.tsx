@@ -32,6 +32,9 @@ export function KasaCard({ data, index }: KasaCardProps) {
 
   return (
     <div className="card-float flex flex-col overflow-hidden rounded-xl border border-neutral-500/50">
+      {/* Thin accent bar at the very top - ties name to its card */}
+      <div className="h-[3px] flex-shrink-0 bg-gradient-to-r from-neutral-400 via-neutral-300 to-neutral-400" />
+
       {/* Top half - light, method name */}
       <div className="flex flex-1 flex-col justify-center bg-neutral-100 px-3 py-2">
         <span className="text-xs font-extrabold uppercase leading-tight tracking-[0.12em] text-neutral-900 text-balance md:text-sm lg:text-base">
