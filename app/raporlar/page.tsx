@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import {
   ArrowLeft,
@@ -28,6 +29,11 @@ const LEAGUE_COLORS = [
 
 export default function RaporlarPage() {
   const { kasaData, role } = useStore();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Sort by total yatirim (borc) descending for league
   const leagueSorted = [...kasaData].sort(
@@ -36,6 +42,10 @@ export default function RaporlarPage() {
 
   // Calculate max for percentage bars
   const maxYatirim = leagueSorted.length > 0 ? leagueSorted[0].toplamBorc : 1;
+
+  if (!mounted) {
+    return <div className="min-h-screen bg-neutral-50" />;
+  }
 
   if (role === "basic") {
     return (

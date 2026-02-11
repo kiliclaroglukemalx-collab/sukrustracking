@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import {
   ArrowLeft,
@@ -13,6 +14,15 @@ import { useStore } from "@/lib/store";
 
 export default function MutabakatPage() {
   const { role } = useStore();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) {
+    return <div className="min-h-screen bg-neutral-50" />;
+  }
 
   if (role === "basic") {
     return (
