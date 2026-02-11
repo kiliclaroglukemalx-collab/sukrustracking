@@ -13,18 +13,61 @@ import {
   generateDemoData,
   processExcelData,
 } from "@/lib/excel-processor";
-import type { KasaCardData, PaymentMethod, PaymentRow } from "@/lib/excel-processor";
+import type {
+  KasaCardData,
+  PaymentMethod,
+  PaymentRow,
+} from "@/lib/excel-processor";
 
-function getInitialRole(): UserRole {
-  if (typeof window !== "undefined") {
-    const stored = sessionStorage.getItem("kasa-role");
-    if (stored === "master") return "master";
+// --- localStorage helpers ---
+const LS_METHODS = "kasa-methods";
+const LS_VIDEO = "kasa-video";
+const LS_ROLE = "kasa-role";
+
+function loadMethods(): PaymentMethod[] {
+  if (typeof window === "undefined") return DEFAULT_METHODS;
+  try {
+    const raw = localStorage.getItem(LS_METHODS);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    }
+  } catch {
+    /* ignore */
   }
-  return "basic";
+  return DEFAULT_METHODS;
 }
 
-export type UserRole = "basic" | "master";
+function saveMethods(m: PaymentMethod[]) {
+  if (typeof window !== "undefined") {
+    localStorage.setItem(LS_METHODS, JSON.stringify(m));
+  }
+}
 
+function loadVideo(): string {
+  if (typeof window === "undefined") return "";
+  return localStorage.getItem(LS_VIDEO) || "";
+}
+
+function saveVideo(url: string) {
+  if (typeof window !== "undefined") {
+    localStorage.setItem(LS_VIDEO, url);
+  }
+}
+
+function loadRole(): UserRole {
+  if (typeof window === "undefined") return "basic";
+  return sessionStorage.getItem(LS_ROLE) === "master" ? "master" : "basic";
+}
+
+function saveRole(r: UserRole) {
+  if (typeof window !== "undefined") {
+    sessionStorage.setItem(LS_ROLE, r);
+  }
+}
+
+// --- Types ---
+export type UserRole = "basic" | "master";
 const MASTER_PASSWORD = "Kk028200";
 
 interface StoreContextValue {
@@ -38,7 +81,6 @@ interface StoreContextValue {
   kasaData: KasaCardData[];
   loadExcelData: (data: KasaCardData[]) => void;
   resetToDemo: () => void;
-  recalculate: (newMethods: PaymentMethod[]) => void;
 
   videoUrl: string;
   setVideoUrl: (url: string) => void;
@@ -50,58 +92,61 @@ interface StoreContextValue {
 const StoreContext = createContext<StoreContextValue | null>(null);
 
 export function StoreProvider({ children }: { children: React.ReactNode }) {
-  const [role, setRoleState] = useState<UserRole>(getInitialRole);
-  const [methods, setMethodsState] = useState<PaymentMethod[]>(DEFAULT_METHODS);
+  const [role, setRoleState] = useState<UserRole>(loadRole);
+  const [methods, setMethodsState] = useState<PaymentMethod[]>(loadMethods);
   const [kasaData, setKasaData] = useState<KasaCardData[]>(() =>
-    generateDemoData(DEFAULT_METHODS),
+    generateDemoData(loadMethods()),
   );
-  const [videoUrl, setVideoUrl] = useState("");
+  const [videoUrl, setVideoUrlState] = useState(loadVideo);
   const [rawRows, setRawRows] = useState<PaymentRow[]>([]);
 
-  const verifyMasterPassword = useCallback((password: string): boolean => {
-    return password === MASTER_PASSWORD;
+  // --- Role ---
+  const verifyMasterPassword = useCallback(
+    (password: string): boolean => password === MASTER_PASSWORD,
+    [],
+  );
+
+  const setRole = useCallback((r: UserRole) => {
+    setRoleState(r);
+    saveRole(r);
   }, []);
 
-  const setRole = useCallback((newRole: UserRole) => {
-    setRoleState(newRole);
-    if (typeof window !== "undefined") {
-      sessionStorage.setItem("kasa-role", newRole);
-    }
+  // --- Video ---
+  const setVideoUrl = useCallback((url: string) => {
+    setVideoUrlState(url);
+    saveVideo(url);
   }, []);
 
+  // --- Excel ---
   const loadExcelData = useCallback((data: KasaCardData[]) => {
     setKasaData(data);
   }, []);
 
   const resetToDemo = useCallback(() => {
     setRawRows([]);
-    setKasaData(generateDemoData(methods));
-  }, [methods]);
+    setMethodsState((currentMethods) => {
+      setKasaData(generateDemoData(currentMethods));
+      return currentMethods;
+    });
+  }, []);
 
-  const recalculate = useCallback(
-    (newMethods: PaymentMethod[]) => {
-      setRawRows((currentRawRows) => {
-        if (currentRawRows.length > 0) {
-          // Real Excel data loaded: reprocess with updated methods
-          setKasaData(processExcelData(currentRawRows, newMethods));
-        } else {
-          // Demo mode: regenerate demo data based on the new methods list
-          setKasaData(generateDemoData(newMethods));
-        }
-        return currentRawRows;
-      });
-    },
-    [],
-  );
+  // --- Methods (the critical part) ---
+  const setMethods = useCallback((newMethods: PaymentMethod[]) => {
+    setMethodsState(newMethods);
+    saveMethods(newMethods);
 
-  const setMethods = useCallback(
-    (newMethods: PaymentMethod[]) => {
-      setMethodsState(newMethods);
-      recalculate(newMethods);
-    },
-    [recalculate],
-  );
+    // Recalculate kasa data immediately
+    setRawRows((currentRawRows) => {
+      if (currentRawRows.length > 0) {
+        setKasaData(processExcelData(currentRawRows, newMethods));
+      } else {
+        setKasaData(generateDemoData(newMethods));
+      }
+      return currentRawRows;
+    });
+  }, []);
 
+  // --- Context value ---
   const value = useMemo(
     () => ({
       role,
@@ -112,13 +157,24 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       kasaData,
       loadExcelData,
       resetToDemo,
-      recalculate,
       videoUrl,
       setVideoUrl,
       rawRows,
       setRawRows,
     }),
-    [role, setRole, verifyMasterPassword, methods, setMethods, kasaData, loadExcelData, resetToDemo, recalculate, videoUrl, rawRows],
+    [
+      role,
+      setRole,
+      verifyMasterPassword,
+      methods,
+      setMethods,
+      kasaData,
+      loadExcelData,
+      resetToDemo,
+      videoUrl,
+      setVideoUrl,
+      rawRows,
+    ],
   );
 
   return (

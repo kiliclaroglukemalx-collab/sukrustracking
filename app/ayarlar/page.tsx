@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState, useCallback } from "react";
 import Link from "next/link";
 import {
   ArrowLeft,
@@ -11,8 +11,6 @@ import {
   X,
   Layers,
   Film,
-  Save,
-  CheckCircle2,
 } from "lucide-react";
 import { useStore } from "@/lib/store";
 import type { PaymentMethod } from "@/lib/excel-processor";
@@ -20,27 +18,13 @@ import type { PaymentMethod } from "@/lib/excel-processor";
 export default function AyarlarPage() {
   const { methods, setMethods, videoUrl, setVideoUrl } = useStore();
 
-  // Local copy of methods so user can make multiple changes before saving
-  const [localMethods, setLocalMethods] = useState<PaymentMethod[]>(methods);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState("");
   const [editKomisyon, setEditKomisyon] = useState("");
   const [editBakiye, setEditBakiye] = useState("");
   const [videoInput, setVideoInput] = useState(videoUrl);
-  const [hasChanges, setHasChanges] = useState(false);
-  const [showSaved, setShowSaved] = useState(false);
 
-  // Sync when store methods change externally
-  useEffect(() => {
-    setLocalMethods(methods);
-  }, [methods]);
-
-  // Track changes
-  useEffect(() => {
-    const changed = JSON.stringify(localMethods) !== JSON.stringify(methods);
-    setHasChanges(changed);
-  }, [localMethods, methods]);
-
+  // --- Edit ---
   const startEdit = useCallback((m: PaymentMethod) => {
     setEditingId(m.id);
     setEditName(m.name);
@@ -54,21 +38,21 @@ export default function AyarlarPage() {
 
   const saveEdit = useCallback(() => {
     if (!editingId || !editName.trim()) return;
-    setLocalMethods((prev) =>
-      prev.map((m) =>
-        m.id === editingId
-          ? {
-              ...m,
-              name: editName.trim(),
-              komisyonOrani: Number.parseFloat(editKomisyon) || 0,
-              baslangicBakiye: Number.parseFloat(editBakiye) || 0,
-            }
-          : m,
-      ),
+    const updated = methods.map((m) =>
+      m.id === editingId
+        ? {
+            ...m,
+            name: editName.trim(),
+            komisyonOrani: Number.parseFloat(editKomisyon) || 0,
+            baslangicBakiye: Number.parseFloat(editBakiye) || 0,
+          }
+        : m,
     );
+    setMethods(updated);
     setEditingId(null);
-  }, [editingId, editName, editKomisyon, editBakiye]);
+  }, [editingId, editName, editKomisyon, editBakiye, methods, setMethods]);
 
+  // --- Add ---
   const addMethod = useCallback(() => {
     const newMethod: PaymentMethod = {
       id: `m-${Date.now()}`,
@@ -76,24 +60,22 @@ export default function AyarlarPage() {
       komisyonOrani: 0,
       baslangicBakiye: 0,
     };
-    setLocalMethods((prev) => [...prev, newMethod]);
-    startEdit(newMethod);
-  }, [startEdit]);
+    setMethods([...methods, newMethod]);
+    // Start editing the new method immediately
+    setEditingId(newMethod.id);
+    setEditName(newMethod.name);
+    setEditKomisyon("0");
+    setEditBakiye("0");
+  }, [methods, setMethods]);
 
+  // --- Delete ---
   const deleteMethod = useCallback(
     (id: string) => {
-      setLocalMethods((prev) => prev.filter((m) => m.id !== id));
+      setMethods(methods.filter((m) => m.id !== id));
       if (editingId === id) setEditingId(null);
     },
-    [editingId],
+    [methods, setMethods, editingId],
   );
-
-  const handleSaveAll = useCallback(() => {
-    setMethods(localMethods);
-    setHasChanges(false);
-    setShowSaved(true);
-    setTimeout(() => setShowSaved(false), 2500);
-  }, [localMethods, setMethods]);
 
   return (
     <div className="min-h-screen bg-neutral-50">
@@ -162,7 +144,7 @@ export default function AyarlarPage() {
             <div className="flex items-center gap-2">
               <Layers className="h-4 w-4 text-neutral-400" strokeWidth={1.5} />
               <h2 className="text-xs font-bold uppercase tracking-[0.15em] text-neutral-500">
-                Odeme Yontemleri ({localMethods.length})
+                Odeme Yontemleri ({methods.length})
               </h2>
             </div>
             <button
@@ -193,7 +175,7 @@ export default function AyarlarPage() {
             </div>
 
             {/* Method rows */}
-            {localMethods.map((method) => (
+            {methods.map((method) => (
               <div
                 key={method.id}
                 className="group grid grid-cols-[1fr_100px_120px_72px] items-center gap-3 border-b border-neutral-50 px-4 py-2.5 transition-colors last:border-0 hover:bg-neutral-50/50"
@@ -277,44 +259,19 @@ export default function AyarlarPage() {
               </div>
             ))}
 
-            {localMethods.length === 0 && (
+            {methods.length === 0 && (
               <div className="flex flex-col items-center py-10 text-neutral-400">
                 <Layers className="mb-2 h-6 w-6" strokeWidth={1} />
                 <p className="text-sm">Henuz yontem eklenmedi</p>
               </div>
             )}
           </div>
+
+          <p className="mt-2 text-center text-[10px] text-neutral-400">
+            Degisiklikler aninda kaydedilir
+          </p>
         </section>
       </div>
-
-      {/* Sticky Save Bar */}
-      {hasChanges && (
-        <div className="fixed inset-x-0 bottom-0 z-30 border-t border-neutral-200 bg-white/95 px-5 py-3 shadow-[0_-4px_20px_rgba(0,0,0,0.08)] backdrop-blur-sm">
-          <div className="mx-auto flex max-w-2xl items-center justify-between">
-            <p className="text-xs text-neutral-500">
-              Kaydedilmemis degisiklikler var
-            </p>
-            <button
-              type="button"
-              onClick={handleSaveAll}
-              className="flex items-center gap-2 rounded-lg bg-neutral-900 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-neutral-800"
-            >
-              <Save className="h-4 w-4" strokeWidth={1.5} />
-              Degisiklikleri Kaydet
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Saved Toast */}
-      {showSaved && (
-        <div className="fixed bottom-6 left-1/2 z-40 -translate-x-1/2">
-          <div className="flex items-center gap-2 rounded-full bg-emerald-600 px-5 py-2.5 text-sm font-medium text-white shadow-xl">
-            <CheckCircle2 className="h-4 w-4" strokeWidth={2} />
-            Degisiklikler kaydedildi
-          </div>
-        </div>
-      )}
     </div>
   );
 }
