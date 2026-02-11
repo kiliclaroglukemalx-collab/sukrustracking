@@ -31,11 +31,11 @@ export function TopBar({ data, screenshotMode }: TopBarProps) {
   if (screenshotMode) {
     const roundedHour = getRoundedHour();
     return (
-      <div className="flex flex-col items-center gap-1.5 pb-1">
+      <div className="flex flex-col items-center gap-2">
         {/* Large centered hour title */}
-        <h1 className="text-glow-strong font-mono text-2xl font-black tracking-wider text-foreground md:text-3xl">
+        <h1 className="font-mono text-3xl font-black tracking-wider text-neutral-900 md:text-4xl">
           {roundedHour}{" "}
-          <span className="font-sans text-xl font-bold tracking-[0.2em] uppercase md:text-2xl">
+          <span className="font-sans text-2xl font-bold tracking-[0.2em] uppercase md:text-3xl">
             Saatlik Kasasi
           </span>
         </h1>
@@ -45,19 +45,19 @@ export function TopBar({ data, screenshotMode }: TopBarProps) {
           <ScreenshotMetric
             label="Toplam Yatirim"
             value={toplamYatirim}
-            color="text-foreground"
+            color="text-neutral-900"
           />
-          <div className="h-4 w-px bg-foreground/10" />
+          <div className="h-5 w-px bg-neutral-200" />
           <ScreenshotMetric
             label="Toplam Komisyon"
             value={toplamKomisyon}
             color="text-amber-600"
           />
-          <div className="h-4 w-px bg-foreground/10" />
+          <div className="h-5 w-px bg-neutral-200" />
           <ScreenshotMetric
             label="Toplam Cekim"
             value={toplamCekim}
-            color="text-red-500"
+            color="text-red-600"
           />
         </div>
       </div>
@@ -68,7 +68,7 @@ export function TopBar({ data, screenshotMode }: TopBarProps) {
     <div className="flex items-start justify-between pr-10">
       {/* Left: Title + Timestamp */}
       <div className="flex flex-col gap-0.5">
-        <h1 className="text-glow text-sm font-bold tracking-[0.3em] uppercase text-foreground md:text-base">
+        <h1 className="text-sm font-bold tracking-[0.3em] uppercase text-neutral-900 md:text-base">
           Saatlik Kasa
         </h1>
         <LiveClock />
@@ -79,22 +79,18 @@ export function TopBar({ data, screenshotMode }: TopBarProps) {
         <MetricPill
           label="Toplam Yatirim"
           value={toplamYatirim}
-          color="text-foreground"
+          color="text-neutral-900"
         />
-        <div className="h-5 w-px bg-foreground/10" />
+        <div className="h-5 w-px bg-neutral-200" />
         <MetricPill
           label="Toplam Cekim"
           value={toplamCekim}
-          color="text-red-500"
+          color="text-red-600"
         />
-        <div className="h-5 w-px bg-foreground/10" />
+        <div className="h-5 w-px bg-neutral-200" />
         <MetricPill
           label="Genel Toplam"
-          value={
-            toplamYatirim -
-            toplamCekim -
-            data.reduce((s, d) => s + d.komisyon, 0)
-          }
+          value={toplamYatirim - toplamCekim - toplamKomisyon}
           color="text-emerald-600"
         />
       </div>
@@ -113,7 +109,7 @@ function MetricPill({
 }) {
   return (
     <div className="flex flex-col items-end gap-px">
-      <span className="text-[8px] font-medium uppercase tracking-[0.15em] text-foreground/35 lg:text-[9px]">
+      <span className="text-[8px] font-medium uppercase tracking-[0.15em] text-neutral-400 lg:text-[9px]">
         {label}
       </span>
       <span
@@ -137,7 +133,7 @@ function ScreenshotMetric({
 }) {
   return (
     <div className="flex flex-col items-center gap-0.5">
-      <span className="text-[9px] font-medium uppercase tracking-[0.15em] text-foreground/40 md:text-[10px]">
+      <span className="text-[9px] font-medium uppercase tracking-[0.15em] text-neutral-400 md:text-[10px]">
         {label}
       </span>
       <span

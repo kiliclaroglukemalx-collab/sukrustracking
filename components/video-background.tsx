@@ -27,7 +27,7 @@ export function VideoBackground({ src, disabled }: VideoBackgroundProps) {
     <div className="fixed inset-0 z-0 overflow-hidden" aria-hidden="true">
       <video
         ref={videoRef}
-        className="h-full w-full object-cover opacity-[0.06] blur-[2px] grayscale"
+        className="h-full w-full object-cover opacity-[0.08] blur-[1px]"
         autoPlay
         muted
         loop
@@ -36,8 +36,8 @@ export function VideoBackground({ src, disabled }: VideoBackgroundProps) {
       >
         <source src={src} type="video/mp4" />
       </video>
-      {/* White overlay to keep the light theme */}
-      <div className="absolute inset-0 bg-white/85" />
+      {/* Dark overlay to keep OLED feel */}
+      <div className="absolute inset-0" style={{ background: "rgba(0,0,0,0.85)" }} />
     </div>
   );
 }

@@ -1,44 +1,37 @@
 "use client";
 
 import { useState, useCallback, useMemo } from "react";
-import { KasaCard } from "@/components/kasa-card";
 import { TopBar } from "@/components/top-bar";
+import { KasaCard } from "@/components/kasa-card";
 import { HamburgerMenu } from "@/components/hamburger-menu";
 import { VideoBackground } from "@/components/video-background";
 import { generateDemoData } from "@/lib/excel-processor";
 import type { KasaCardData } from "@/lib/excel-processor";
 
-/**
- * Algorithmic grid: pick columns/rows so there is NO empty last row.
- * 21 -> 7x3, 22-24 -> 6x4 or 8x3, etc.
- */
 function computeGrid(count: number): { cols: number; rows: number } {
-  const candidates = [
-    { cols: 7, rows: 3 }, // 21
-    { cols: 8, rows: 3 }, // 24
-    { cols: 6, rows: 4 }, // 24
-    { cols: 6, rows: 3 }, // 18
-    { cols: 7, rows: 4 }, // 28
-    { cols: 5, rows: 4 }, // 20
-    { cols: 5, rows: 5 }, // 25
-  ];
-
-  for (const g of candidates) {
-    const total = g.cols * g.rows;
-    if (total >= count) {
-      const lastRowItems = count - g.cols * (g.rows - 1);
-      if (lastRowItems > 0) return g;
-    }
+  if (count <= 0) return { cols: 1, rows: 1 };
+  const candidates: { cols: number; rows: number; waste: number }[] = [];
+  for (let c = 4; c <= 10; c++) {
+    const r = Math.ceil(count / c);
+    const waste = c * r - count;
+    candidates.push({ cols: c, rows: r, waste });
   }
-
-  for (let cols = 6; cols <= 10; cols++) {
-    const rows = Math.ceil(count / cols);
-    const lastRowItems = count - cols * (rows - 1);
-    if (lastRowItems > 0 && rows <= 5) return { cols, rows };
-  }
-
-  return { cols: 7, rows: Math.ceil(count / 7) };
+  candidates.sort((a, b) => {
+    if (a.waste !== b.waste) return a.waste - b.waste;
+    return Math.abs(a.cols - a.rows) - Math.abs(b.cols - b.rows);
+  });
+  return candidates[0];
 }
+
+const colsClass: Record<number, string> = {
+  4: "grid-cols-4",
+  5: "grid-cols-5",
+  6: "grid-cols-6",
+  7: "grid-cols-7",
+  8: "grid-cols-8",
+  9: "grid-cols-9",
+  10: "grid-cols-10",
+};
 
 export default function Page() {
   const [kasaData, setKasaData] = useState<KasaCardData[]>(() =>
@@ -55,30 +48,52 @@ export default function Page() {
     setKasaData(generateDemoData());
   }, []);
 
-  const handleVideoChange = useCallback((url: string) => {
-    setVideoUrl(url);
-  }, []);
-
   const grid = useMemo(() => computeGrid(kasaData.length), [kasaData.length]);
-  const gap = screenshotMode ? "gap-1" : "gap-1.5";
 
   return (
-    <>
+    <div className="flex h-full flex-col overflow-hidden">
+      {/* Video behind the dark section only */}
       <VideoBackground src={videoUrl} disabled={screenshotMode} />
 
-      <main className="relative z-10 flex h-screen flex-col overflow-hidden px-3 py-2 lg:px-5 lg:py-3">
-        {/* Top Bar */}
+      {/* Hamburger menu */}
+      <HamburgerMenu
+        onDataLoaded={handleDataLoaded}
+        onReset={handleReset}
+        onVideoChange={setVideoUrl}
+        videoUrl={videoUrl}
+        screenshotMode={screenshotMode}
+        onScreenshotToggle={() => setScreenshotMode((p) => !p)}
+      />
+
+      {/* White top section */}
+      <div
+        className={`relative z-10 flex-shrink-0 bg-white ${
+          screenshotMode ? "px-5 pt-3 pb-2" : "px-5 pt-3 pb-3"
+        }`}
+      >
         <TopBar data={kasaData} screenshotMode={screenshotMode} />
+      </div>
 
-        {/* Separator */}
-        <div className={`${screenshotMode ? "my-1.5" : "my-2"} h-px w-full bg-foreground/[0.06]`} />
+      {/* Gradient transition: white -> black */}
+      <div
+        className="relative z-10 h-8 flex-shrink-0"
+        style={{
+          background: "linear-gradient(to bottom, #ffffff 0%, #000000 100%)",
+        }}
+      />
 
-        {/* Card Grid - fills remaining height */}
+      {/* OLED Black grid section */}
+      <div
+        className="relative z-10 flex flex-1 flex-col overflow-hidden"
+        style={{ background: "#000000" }}
+      >
+        {/* Grid */}
         <div
-          className={`flex-1 grid ${gap}`}
+          className={`grid flex-1 ${colsClass[grid.cols] || "grid-cols-7"} ${
+            screenshotMode ? "gap-2 p-2 pt-0" : "gap-3 p-3 pt-0"
+          }`}
           style={{
-            gridTemplateColumns: `repeat(${grid.cols}, minmax(0, 1fr))`,
-            gridTemplateRows: `repeat(${grid.rows}, minmax(0, 1fr))`,
+            gridTemplateRows: `repeat(${grid.rows}, 1fr)`,
           }}
         >
           {kasaData.map((card) => (
@@ -89,17 +104,7 @@ export default function Page() {
             />
           ))}
         </div>
-      </main>
-
-      {/* Dropdown Menu */}
-      <HamburgerMenu
-        onDataLoaded={handleDataLoaded}
-        onReset={handleReset}
-        onVideoChange={handleVideoChange}
-        videoUrl={videoUrl}
-        screenshotMode={screenshotMode}
-        onScreenshotToggle={() => setScreenshotMode((p) => !p)}
-      />
-    </>
+      </div>
+    </div>
   );
 }
