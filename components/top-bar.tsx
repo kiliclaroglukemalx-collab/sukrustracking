@@ -35,6 +35,7 @@ interface TopBarProps {
 export function TopBar({ data }: TopBarProps) {
   const [roundedHour, setRoundedHour] = useState(getRoundedHour);
   const [dateStr, setDateStr] = useState("");
+  const genelToplam = data.reduce((sum, d) => sum + d.kalanKasa, 0);
 
   useEffect(() => {
     setDateStr(getFormattedDate());
@@ -48,7 +49,7 @@ export function TopBar({ data }: TopBarProps) {
   const toplamYatirim = data.reduce((sum, d) => sum + d.toplamBorc, 0);
   const toplamCekim = data.reduce((sum, d) => sum + d.toplamKredi, 0);
   const toplamKomisyon = data.reduce((sum, d) => sum + d.komisyon, 0);
-  const genelToplam = toplamYatirim - toplamKomisyon - toplamCekim;
+  const totalKasa = data.reduce((sum, d) => sum + d.kalanKasa, 0);
 
   return (
     <div className="flex h-[72px] items-center justify-between">
@@ -96,7 +97,7 @@ export function TopBar({ data }: TopBarProps) {
           }}
         >
           {"₺"}
-          {formatCurrency(genelToplam)}
+          {formatCurrency(totalKasa)}
         </span>
       </div>
 
