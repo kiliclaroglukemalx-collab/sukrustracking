@@ -9,9 +9,8 @@ function formatAmount(value: number): string {
   }).format(value);
 }
 
-// Pick a font size class based on how many digits the formatted string has
 function amountSizeClass(formatted: string): string {
-  const len = formatted.length; // includes dots and minus
+  const len = formatted.length;
   if (len >= 10) return "text-sm sm:text-base lg:text-lg";
   if (len >= 8) return "text-base sm:text-lg lg:text-xl";
   if (len >= 6) return "text-lg sm:text-xl lg:text-2xl";
@@ -20,13 +19,11 @@ function amountSizeClass(formatted: string): string {
 
 interface KasaCardProps {
   data: KasaCardData;
-  index: number;
 }
 
 export function KasaCard({ data }: KasaCardProps) {
   const isNegative = data.kalanKasa < 0;
 
-  // Split name: main part vs parenthetical
   const parenIdx = data.odemeTuruAdi.indexOf("(");
   const mainName =
     parenIdx > -1
@@ -39,12 +36,13 @@ export function KasaCard({ data }: KasaCardProps) {
     <div
       className="card-float flex flex-col overflow-hidden rounded-xl border border-neutral-500/50"
       style={{
-        background: "linear-gradient(180deg, #f0f0f0 0%, #e5e5e5 38%, #404040 50%, #0a0a0a 62%, #0a0a0a 100%)",
+        background:
+          "linear-gradient(180deg, #f0f0f0 0%, #e5e5e5 38%, #404040 50%, #0a0a0a 62%, #0a0a0a 100%)",
       }}
     >
       {/* Top half - method name */}
       <div className="flex flex-1 flex-col justify-center px-3 py-2">
-        <span className="text-xs font-extrabold uppercase leading-tight tracking-[0.12em] text-neutral-900 text-balance md:text-sm lg:text-base">
+        <span className="text-balance text-xs font-extrabold uppercase leading-tight tracking-[0.12em] text-neutral-900 md:text-sm lg:text-base">
           {mainName}
         </span>
         {subName && (
@@ -54,7 +52,7 @@ export function KasaCard({ data }: KasaCardProps) {
         )}
       </div>
 
-      {/* Bottom half - amount + komisyon */}
+      {/* Bottom half - amount */}
       <div className="flex flex-1 flex-col items-center justify-center px-2 py-2">
         {(() => {
           const formatted = formatAmount(data.kalanKasa);

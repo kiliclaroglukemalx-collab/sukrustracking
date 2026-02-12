@@ -63,7 +63,7 @@ export default function Page() {
         style={{ background: "#000000" }}
       >
         {/* Video background - scoped to dark section only */}
-        {videoUrl && (
+        {videoUrl && videoUrl.length > 0 && (
           <div className="absolute inset-0 z-0 overflow-hidden" aria-hidden="true">
             <video
               className="h-full w-full object-cover opacity-[0.06] blur-[2px]"
@@ -90,7 +90,7 @@ export default function Page() {
           }}
         >
           {visibleCards.map((card) => (
-            <KasaCard key={card.id} data={card} index={0} />
+            <KasaCard key={card.id} data={card} />
           ))}
         </div>
       </div>

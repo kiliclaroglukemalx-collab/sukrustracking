@@ -66,29 +66,62 @@ export const DEFAULT_METHODS: PaymentMethod[] = [
  *   3. name partial (icerir) eslesme
  * Eslesen yoksa null doner.
  */
+/**
+ * Normalize: kucuk harf, bosluk/alt cizgi/tire kaldir, Turkce karakterleri cevir
+ */
+function normalize(s: string): string {
+  return s
+    .toLowerCase()
+    .replace(/[\s_\-]+/g, "")
+    .replace(/[iİıI]/g, "i")
+    .replace(/[öÖ]/g, "o")
+    .replace(/[üÜ]/g, "u")
+    .replace(/[şŞ]/g, "s")
+    .replace(/[çÇ]/g, "c")
+    .replace(/[ğĞ]/g, "g");
+}
+
 function findMethodForExcel(
   odemeTuru: string,
   methods: PaymentMethod[],
 ): PaymentMethod | null {
   const lower = odemeTuru.toLowerCase().trim();
+  const norm = normalize(odemeTuru);
 
   // 1. excelKolonAdi ile tam eslesme (en oncelikli)
-  const byExcelName = methods.find(
+  const byExcelExact = methods.find(
     (m) => m.excelKolonAdi && m.excelKolonAdi.toLowerCase().trim() === lower,
   );
-  if (byExcelName) return byExcelName;
+  if (byExcelExact) return byExcelExact;
 
-  // 2. name ile tam eslesme
+  // 2. excelKolonAdi ile normalize eslesme (alt cizgi/bosluk farklari)
+  const byExcelNorm = methods.find(
+    (m) => m.excelKolonAdi && normalize(m.excelKolonAdi) === norm,
+  );
+  if (byExcelNorm) return byExcelNorm;
+
+  // 3. name ile tam eslesme
   const byName = methods.find(
     (m) => m.name.toLowerCase().trim() === lower,
   );
   if (byName) return byName;
 
-  // 3. name ile partial eslesme (fallback)
+  // 4. name ile normalize eslesme
+  const byNameNorm = methods.find(
+    (m) => normalize(m.name) === norm,
+  );
+  if (byNameNorm) return byNameNorm;
+
+  // 5. name veya excelKolonAdi ile partial eslesme (fallback)
   const byPartial = methods.find(
-    (m) =>
-      lower.includes(m.name.toLowerCase().trim()) ||
-      m.name.toLowerCase().trim().includes(lower),
+    (m) => {
+      const mNorm = normalize(m.name);
+      const eNorm = m.excelKolonAdi ? normalize(m.excelKolonAdi) : "";
+      return (
+        (mNorm.length > 3 && (norm.includes(mNorm) || mNorm.includes(norm))) ||
+        (eNorm.length > 3 && (norm.includes(eNorm) || eNorm.includes(norm)))
+      );
+    },
   );
   if (byPartial) return byPartial;
 
