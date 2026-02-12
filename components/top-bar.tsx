@@ -51,6 +51,13 @@ export function TopBar({ data }: TopBarProps) {
   const toplamKomisyon = data.reduce((sum, d) => sum + d.komisyon + d.cekimKomisyon, 0);
   const totalKasa = data.reduce((sum, d) => sum + d.kalanKasa, 0);
 
+  console.log("[v0] TopBar render: cards:", data.length, "yatirim:", toplamYatirim, "kasa:", totalKasa);
+  if (data.length > 0) {
+    const withBorc = data.filter(d => d.toplamBorc > 0);
+    console.log("[v0] TopBar: cards with borc>0:", withBorc.length, "cards with bakiye:", data.filter(d => d.baslangicBakiye > 0).length);
+    if (withBorc.length > 0) console.log("[v0] TopBar sample with borc:", withBorc[0].odemeTuruAdi, "borc:", withBorc[0].toplamBorc, "kredi:", withBorc[0].toplamKredi, "komisyon:", withBorc[0].komisyon);
+  }
+
   return (
     <div className="flex h-[72px] items-center justify-between">
       {/* LEFT: Hour + Kasasi + date */}
