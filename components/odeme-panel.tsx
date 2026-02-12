@@ -80,22 +80,24 @@ function OdemeOzetKarti({
     }
   }, [odeme.no, tarih, saving]);
 
+  const isCredit = odeme.islemTipi === "odeme-al";
+
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-sm">
-      <div className="relative flex w-full max-w-md flex-col gap-4 p-4">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+      <div className="relative flex w-full max-w-[720px] flex-col gap-4">
         {/* Close button */}
         <button
           type="button"
           onClick={onClose}
-          className="absolute -top-2 right-2 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-white/10 text-white/60 backdrop-blur-sm transition-colors hover:bg-white/20 hover:text-white"
+          className="absolute -top-2 right-0 z-10 flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-white/60 backdrop-blur-sm transition-colors hover:bg-white/20 hover:text-white"
         >
-          <X className="h-4 w-4" strokeWidth={2} />
+          <X className="h-5 w-5" strokeWidth={2} />
         </button>
 
-        {/* The card to screenshot */}
+        {/* The card to screenshot -- LANDSCAPE */}
         <div
           ref={cardRef}
-          className="overflow-hidden rounded-2xl border border-neutral-700/50 p-6"
+          className="overflow-hidden rounded-2xl border border-neutral-700/50 px-8 py-7"
           style={{
             background:
               "linear-gradient(145deg, #0a0a0a 0%, #111111 50%, #0a0a0a 100%)",
@@ -103,87 +105,88 @@ function OdemeOzetKarti({
               "0 0 60px rgba(0,255,0,0.08), 0 0 120px rgba(0,255,0,0.04), 0 25px 60px rgba(0,0,0,0.5)",
           }}
         >
-          {/* Header */}
+          {/* Top row: status + no */}
           <div className="mb-5 flex items-center justify-between">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3">
               <div
-                className="flex h-8 w-8 items-center justify-center rounded-lg"
+                className="flex h-10 w-10 items-center justify-center rounded-xl"
                 style={{
                   background: "rgba(0,255,0,0.1)",
-                  boxShadow: "0 0 12px rgba(0,255,0,0.15)",
+                  boxShadow: "0 0 16px rgba(0,255,0,0.2)",
                 }}
               >
-                <Check className="h-4 w-4" style={{ color: "#00ff00" }} />
+                <Check className="h-5 w-5" style={{ color: "#00ff00" }} />
               </div>
               <span
-                className="text-xs font-bold uppercase tracking-[0.2em]"
+                className="text-base font-black uppercase tracking-[0.2em]"
                 style={{
                   color: "#00ff00",
-                  textShadow: "0 0 10px rgba(0,255,0,0.3)",
+                  textShadow: "0 0 12px rgba(0,255,0,0.4)",
                 }}
               >
                 {islemLabel(odeme.islemTipi)}
               </span>
             </div>
-            <span className="font-mono text-xs font-bold text-neutral-500">
+            <span className="font-mono text-base font-bold text-neutral-400">
               {odeme.no}
             </span>
           </div>
 
-          {/* Amount - big, neon */}
-          <div className="mb-5 text-center">
-            <span
-              className="font-mono text-4xl font-black tabular-nums"
-              style={{
-                color: "#00ff00",
-                textShadow:
-                  "0 0 20px rgba(0,255,0,0.4), 0 0 40px rgba(0,255,0,0.2), 0 0 80px rgba(0,255,0,0.1)",
-              }}
-            >
-              {odeme.tutarTL >= 0 ? "+" : ""}{"₺"}
-              {formatCurrency(odeme.tutarTL)}
-            </span>
-            {odeme.dovizCinsi !== "TRY" && odeme.kur && (
-              <div className="mt-1 text-xs text-neutral-500">
-                {formatCurrency(odeme.tutar)} {odeme.dovizCinsi} x{" "}
-                {odeme.kur.toLocaleString("tr-TR")} {"₺"}
+          {/* Main content: 2 columns -- left: amount, right: details */}
+          <div className="flex gap-8">
+            {/* Left column: Amount */}
+            <div className="flex flex-col justify-center">
+              <span
+                className="font-mono text-5xl font-black tabular-nums whitespace-nowrap"
+                style={{
+                  color: "#00ff00",
+                  textShadow:
+                    "0 0 24px rgba(0,255,0,0.4), 0 0 48px rgba(0,255,0,0.2), 0 0 96px rgba(0,255,0,0.1)",
+                }}
+              >
+                {isCredit ? "+" : "-"}{"₺"}
+                {formatCurrency(odeme.tutarTL)}
+              </span>
+              {odeme.dovizCinsi !== "TRY" && odeme.kur && (
+                <p className="mt-2 text-sm font-medium text-neutral-400">
+                  {formatCurrency(odeme.tutar)} {odeme.dovizCinsi} x{" "}
+                  {odeme.kur.toLocaleString("tr-TR")} {"₺"}
+                </p>
+              )}
+              {/* Flow description under amount */}
+              <div className="mt-3 rounded-lg border border-neutral-800 bg-neutral-900/40 px-3 py-2">
+                <span className="text-xs font-bold uppercase tracking-wider text-neutral-300">
+                  {odeme.islemTipi === "transfer"
+                    ? `${odeme.yontem} → ${odeme.hedefYontem}`
+                    : odeme.islemTipi === "odeme-yap"
+                      ? `${odeme.yontem} → ${odeme.alici || "-"}`
+                      : `${odeme.gonderen || "-"} → ${odeme.yontem}`}
+                </span>
               </div>
-            )}
-          </div>
-
-          {/* Details grid */}
-          <div className="mb-4 grid grid-cols-2 gap-3">
-            <DetailItem label="Tarih" value={tarih} />
-            <DetailItem label="Saat" value={saat} />
-            <DetailItem label="Gonderen" value={odeme.gonderen || "-"} />
-            <DetailItem label="Alici" value={odeme.alici || "-"} />
-            <DetailItem label="Yontem" value={odeme.yontem} />
-            {odeme.hedefYontem && (
-              <DetailItem label="Hedef Kasa" value={odeme.hedefYontem} />
-            )}
-          </div>
-
-          {/* Description */}
-          {odeme.aciklama && (
-            <div className="rounded-lg border border-neutral-800 bg-neutral-900/50 px-3 py-2">
-              <p className="text-[10px] font-semibold uppercase tracking-wider text-neutral-500">
-                Aciklama
-              </p>
-              <p className="mt-0.5 text-xs text-neutral-300">
-                {odeme.aciklama}
-              </p>
             </div>
-          )}
 
-          {/* Flow description */}
-          <div className="mt-4 border-t border-neutral-800 pt-3 text-center">
-            <span className="text-[10px] font-medium uppercase tracking-wider text-neutral-600">
-              {odeme.islemTipi === "transfer"
-                ? `${odeme.yontem} → ${odeme.hedefYontem}`
-                : odeme.islemTipi === "odeme-yap"
-                  ? `${odeme.yontem} → ${odeme.alici}`
-                  : `${odeme.gonderen} → ${odeme.yontem}`}
-            </span>
+            {/* Right column: Details */}
+            <div className="flex-1 grid grid-cols-2 gap-x-6 gap-y-3 content-start">
+              <DetailItem label="Tarih" value={tarih} />
+              <DetailItem label="Saat" value={saat} />
+              <DetailItem label="Gonderen" value={odeme.gonderen || "-"} />
+              <DetailItem label="Alici" value={odeme.alici || "-"} />
+              <DetailItem label="Yontem" value={odeme.yontem} />
+              {odeme.hedefYontem && (
+                <DetailItem label="Hedef Kasa" value={odeme.hedefYontem} />
+              )}
+              {/* Description inside the grid */}
+              {odeme.aciklama && (
+                <div className="col-span-2 mt-1 rounded-lg border border-neutral-800 bg-neutral-900/50 px-4 py-3">
+                  <p className="text-[11px] font-bold uppercase tracking-wider text-neutral-400">
+                    Aciklama
+                  </p>
+                  <p className="mt-1 text-sm font-medium text-neutral-200">
+                    {odeme.aciklama}
+                  </p>
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
@@ -192,9 +195,9 @@ function OdemeOzetKarti({
           type="button"
           onClick={handleSave}
           disabled={saving}
-          className="mx-auto flex items-center gap-2 rounded-xl border border-neutral-700 bg-neutral-900 px-6 py-2.5 text-xs font-semibold text-white transition-all hover:border-neutral-600 hover:bg-neutral-800 disabled:opacity-50"
+          className="mx-auto flex items-center gap-2 rounded-xl border border-neutral-700 bg-neutral-900 px-8 py-3 text-sm font-bold text-white transition-all hover:border-neutral-600 hover:bg-neutral-800 disabled:opacity-50"
         >
-          <Download className="h-3.5 w-3.5" />
+          <Download className="h-4 w-4" />
           {saving ? "Kaydediliyor..." : "Goruntuyyu Kaydet"}
         </button>
       </div>
@@ -205,10 +208,10 @@ function OdemeOzetKarti({
 function DetailItem({ label, value }: { label: string; value: string }) {
   return (
     <div>
-      <p className="text-[9px] font-semibold uppercase tracking-wider text-neutral-600">
+      <p className="text-xs font-bold uppercase tracking-wider text-neutral-400">
         {label}
       </p>
-      <p className="text-xs font-medium text-neutral-300">{value}</p>
+      <p className="text-base font-semibold text-white">{value}</p>
     </div>
   );
 }
