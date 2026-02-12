@@ -205,31 +205,16 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     (async () => {
       // Load methods from Supabase (source of truth)
       const sbMethods = await fetchMethodsFromSupabase();
+      let activeMethods = sbMethods && sbMethods.length > 0 ? sbMethods : loadMethodsFromCache();
+
       if (sbMethods && sbMethods.length > 0) {
         setMethodsState(sbMethods);
         cacheMethodsLocally(sbMethods);
-        // Only reset to demo if no Excel data has been loaded yet
-        setRawRows((currentRawRows) => {
-          if (currentRawRows.length === 0) {
-            setKasaData(generateInitialData(sbMethods));
-          } else {
-            setKasaData(processExcelData(currentRawRows, sbMethods));
-          }
-          return currentRawRows;
-        });
       } else {
-        // Supabase has no methods yet -- localStorage'daki verileri kullan ve Supabase'e yedekle
         const localMethods = loadMethodsFromCache();
         if (localMethods.length > 0) {
           setMethodsState(localMethods);
-          setRawRows((currentRawRows) => {
-            if (currentRawRows.length === 0) {
-              setKasaData(generateInitialData(localMethods));
-            } else {
-              setKasaData(processExcelData(currentRawRows, localMethods));
-            }
-            return currentRawRows;
-          });
+          activeMethods = localMethods;
           // Supabase'e kaydet (arka planda)
           const hasCustomData = localMethods.some(
             (m) => (m.excelKolonAdi && m.excelKolonAdi.length > 0) || m.baslangicBakiye !== 0
@@ -238,6 +223,42 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
             syncMethodsToSupabase(localMethods);
           }
         }
+      }
+
+      // Bot tarafindan yuklenen kasa verisini kontrol et
+      let botDataLoaded = false;
+      try {
+        const botKasaJson = await loadSettingFromSupabase("bot_kasa_data");
+        const botRowsJson = await loadSettingFromSupabase("bot_raw_rows");
+        
+        if (botKasaJson) {
+          const botKasa = JSON.parse(botKasaJson);
+          if (Array.isArray(botKasa) && botKasa.length > 0) {
+            setKasaData(botKasa);
+            botDataLoaded = true;
+            
+            if (botRowsJson) {
+              const botRows = JSON.parse(botRowsJson);
+              if (Array.isArray(botRows)) {
+                setRawRows(botRows);
+              }
+            }
+          }
+        }
+      } catch {
+        /* bot data parse failed, continue with normal flow */
+      }
+
+      // Bot verisi yoksa normal akis
+      if (!botDataLoaded) {
+        setRawRows((currentRawRows) => {
+          if (currentRawRows.length === 0) {
+            setKasaData(generateInitialData(activeMethods));
+          } else {
+            setKasaData(processExcelData(currentRawRows, activeMethods));
+          }
+          return currentRawRows;
+        });
       }
 
       // Load video URL from Supabase
