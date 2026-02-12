@@ -2,12 +2,12 @@
 
 import React, { useCallback, useRef } from "react";
 import { FileSpreadsheet, Upload } from "lucide-react";
-import type { KasaCardData } from "@/lib/excel-processor";
+import type { KasaCardData, PaymentRow } from "@/lib/excel-processor";
 import { parseExcelFile, processExcelData } from "@/lib/excel-processor";
 import { useStore } from "@/lib/store";
 
 interface ExcelUploaderProps {
-  onDataLoaded: (data: KasaCardData[]) => void;
+  onDataLoaded: (data: KasaCardData[], rows: PaymentRow[]) => void;
 }
 
 export function ExcelUploader({ onDataLoaded }: ExcelUploaderProps) {
@@ -19,7 +19,7 @@ export function ExcelUploader({ onDataLoaded }: ExcelUploaderProps) {
       const buffer = await file.arrayBuffer();
       const rows = parseExcelFile(buffer);
       const processed = processExcelData(rows, methods);
-      onDataLoaded(processed);
+      onDataLoaded(processed, rows);
     },
     [onDataLoaded, methods],
   );

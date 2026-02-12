@@ -157,7 +157,7 @@ interface StoreContextValue {
   setMethods: (methods: PaymentMethod[]) => void;
 
   kasaData: KasaCardData[];
-  loadExcelData: (data: KasaCardData[]) => void;
+  loadExcelData: (data: KasaCardData[], rows?: PaymentRow[]) => void;
   resetToDemo: () => void;
 
   videoUrl: string;
@@ -226,8 +226,11 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   // --- Excel ---
-  const loadExcelData = useCallback((data: KasaCardData[]) => {
+  const loadExcelData = useCallback((data: KasaCardData[], rows?: PaymentRow[]) => {
     setKasaData(data);
+    if (rows) {
+      setRawRows(rows);
+    }
   }, []);
 
   const resetToDemo = useCallback(() => {

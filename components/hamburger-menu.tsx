@@ -343,8 +343,8 @@ export function HamburgerMenu() {
                 Menu
               </button>
               <ExcelUploader
-                onDataLoaded={(data) => {
-                  loadExcelData(data);
+                onDataLoaded={(data, rows) => {
+                  loadExcelData(data, rows);
                   close();
                 }}
               />

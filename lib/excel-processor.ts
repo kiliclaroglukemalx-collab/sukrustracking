@@ -140,30 +140,98 @@ export function processExcelData(
   return results.sort((a, b) => b.kalanKasa - a.kalanKasa);
 }
 
+/**
+ * Finds a column value by checking multiple possible header names.
+ * Uses case-insensitive + normalized matching to handle Turkish chars and
+ * slight naming differences across different Excel exports.
+ */
+function findColumn(
+  row: Record<string, unknown>,
+  candidates: string[],
+): unknown | undefined {
+  // First try exact match
+  for (const c of candidates) {
+    if (row[c] !== undefined) return row[c];
+  }
+  // Then try case-insensitive + whitespace-normalized match against all keys
+  const normalize = (s: string) =>
+    s
+      .toLowerCase()
+      .replace(/[\s_\-]+/g, "")
+      .replace(/[iİıI]/g, "i")
+      .replace(/[öÖ]/g, "o")
+      .replace(/[üÜ]/g, "u")
+      .replace(/[şŞ]/g, "s")
+      .replace(/[çÇ]/g, "c")
+      .replace(/[ğĞ]/g, "g");
+
+  const normalizedCandidates = candidates.map(normalize);
+  for (const key of Object.keys(row)) {
+    const nKey = normalize(key);
+    if (normalizedCandidates.includes(nKey)) return row[key];
+  }
+  return undefined;
+}
+
 export function parseExcelFile(buffer: ArrayBuffer): PaymentRow[] {
   const workbook = XLSX.read(buffer, { type: "array" });
   const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
   const jsonData =
     XLSX.utils.sheet_to_json<Record<string, unknown>>(firstSheet);
 
-  return jsonData.map((row) => {
-    const odemeTuruAdi =
-      (row["Odeme Turu Adi"] as string) ||
-      (row["OdemeTuruAdi"] as string) ||
-      (row["Odeme Turu"] as string) ||
-      (row["odeme_turu_adi"] as string) ||
-      "";
+  if (jsonData.length > 0) {
+    console.log("[v0] Excel columns detected:", Object.keys(jsonData[0]));
+    console.log("[v0] First row sample:", jsonData[0]);
+    console.log("[v0] Total rows:", jsonData.length);
+  }
 
-    const borc = Number(
-      row["Borc"] || row["borc"] || row["BORC"] || 0,
-    );
+  const odemeTuruCandidates = [
+    "Odeme Turu Adi",
+    "Ödeme Türü Adı",
+    "OdemeTuruAdi",
+    "Odeme Turu",
+    "Ödeme Türü",
+    "odeme_turu_adi",
+    "ODEME TURU ADI",
+    "Odeme turu adi",
+    "OdemeTuru",
+  ];
 
-    const kredi = Number(
-      row["Kredi"] || row["kredi"] || row["KREDI"] || 0,
-    );
+  const borcCandidates = [
+    "Borc",
+    "Borç",
+    "borc",
+    "BORC",
+    "Borc Tutari",
+    "Borç Tutarı",
+    "borc_tutari",
+  ];
+
+  const krediCandidates = [
+    "Kredi",
+    "kredi",
+    "KREDI",
+    "Kredi Tutari",
+    "Kredi Tutarı",
+    "kredi_tutari",
+  ];
+
+  const rows = jsonData.map((row) => {
+    const odemeTuruAdi = String(findColumn(row, odemeTuruCandidates) ?? "");
+    const borc = Number(findColumn(row, borcCandidates) ?? 0);
+    const kredi = Number(findColumn(row, krediCandidates) ?? 0);
 
     return { odemeTuruAdi, borc, kredi };
   });
+
+  console.log("[v0] Parsed payment rows:", rows.length);
+  if (rows.length > 0) {
+    console.log("[v0] First parsed row:", rows[0]);
+    const nonEmpty = rows.filter((r) => r.odemeTuruAdi.trim() !== "");
+    console.log("[v0] Non-empty odemeTuruAdi rows:", nonEmpty.length);
+  }
+
+  return rows;
 }
 
 export function generateDemoData(methods: PaymentMethod[]): KasaCardData[] {
