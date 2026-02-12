@@ -239,10 +239,18 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   // --- Methods (sync to both localStorage and Supabase) ---
+  const supabaseSyncTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   const setMethods = useCallback((newMethods: PaymentMethod[]) => {
+    // Instant: update React state + localStorage (non-blocking)
     setMethodsState(newMethods);
     cacheMethodsLocally(newMethods);
-    syncMethodsToSupabase(newMethods);
+
+    // Debounced: sync to Supabase after 500ms of inactivity
+    if (supabaseSyncTimer.current) clearTimeout(supabaseSyncTimer.current);
+    supabaseSyncTimer.current = setTimeout(() => {
+      syncMethodsToSupabase(newMethods);
+    }, 500);
 
     // Recalculate kasa data immediately
     setRawRows((currentRawRows) => {
