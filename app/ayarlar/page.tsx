@@ -21,6 +21,7 @@ export default function AyarlarPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState("");
   const [editKomisyon, setEditKomisyon] = useState("");
+  const [editCekimKomisyon, setEditCekimKomisyon] = useState("");
   const [editBakiye, setEditBakiye] = useState("");
   const [videoInput, setVideoInput] = useState(videoUrl);
 
@@ -29,6 +30,7 @@ export default function AyarlarPage() {
     setEditingId(m.id);
     setEditName(m.name);
     setEditKomisyon(String(m.komisyonOrani));
+    setEditCekimKomisyon(String(m.cekimKomisyonOrani ?? 0));
     setEditBakiye(String(m.baslangicBakiye));
   }, []);
 
@@ -44,13 +46,14 @@ export default function AyarlarPage() {
             ...m,
             name: editName.trim(),
             komisyonOrani: Number.parseFloat(editKomisyon) || 0,
+            cekimKomisyonOrani: Number.parseFloat(editCekimKomisyon) || 0,
             baslangicBakiye: Number.parseFloat(editBakiye) || 0,
           }
         : m,
     );
     setMethods(updated);
     setEditingId(null);
-  }, [editingId, editName, editKomisyon, editBakiye, methods, setMethods]);
+  }, [editingId, editName, editKomisyon, editCekimKomisyon, editBakiye, methods, setMethods]);
 
   // --- Add ---
   const addMethod = useCallback(() => {
@@ -58,6 +61,7 @@ export default function AyarlarPage() {
       id: `m-${Date.now()}`,
       name: "Yeni Yontem",
       komisyonOrani: 0,
+      cekimKomisyonOrani: 0,
       baslangicBakiye: 0,
     };
     setMethods([...methods, newMethod]);
@@ -65,6 +69,7 @@ export default function AyarlarPage() {
     setEditingId(newMethod.id);
     setEditName(newMethod.name);
     setEditKomisyon("0");
+    setEditCekimKomisyon("0");
     setEditBakiye("0");
   }, [methods, setMethods]);
 
@@ -159,12 +164,15 @@ export default function AyarlarPage() {
 
           <div className="overflow-hidden rounded-xl border border-neutral-200 bg-white">
             {/* Table header */}
-            <div className="grid grid-cols-[1fr_100px_120px_72px] gap-3 border-b border-neutral-100 bg-neutral-50 px-4 py-2.5">
+            <div className="grid grid-cols-[1fr_90px_110px_120px_72px] gap-3 border-b border-neutral-100 bg-neutral-50 px-4 py-2.5">
               <span className="text-[9px] font-bold uppercase tracking-[0.15em] text-neutral-400">
                 Yontem Adi
               </span>
               <span className="text-[9px] font-bold uppercase tracking-[0.15em] text-neutral-400">
                 Komisyon %
+              </span>
+              <span className="text-[9px] font-bold uppercase tracking-[0.15em] text-neutral-400">
+                Cekim Kom. %
               </span>
               <span className="text-[9px] font-bold uppercase tracking-[0.15em] text-neutral-400">
                 Baslangic Bakiye
@@ -178,7 +186,7 @@ export default function AyarlarPage() {
             {methods.map((method) => (
               <div
                 key={method.id}
-                className="group grid grid-cols-[1fr_100px_120px_72px] items-center gap-3 border-b border-neutral-50 px-4 py-2.5 transition-colors last:border-0 hover:bg-neutral-50/50"
+                className="group grid grid-cols-[1fr_90px_110px_120px_72px] items-center gap-3 border-b border-neutral-50 px-4 py-2.5 transition-colors last:border-0 hover:bg-neutral-50/50"
               >
                 {editingId === method.id ? (
                   <>
@@ -195,6 +203,14 @@ export default function AyarlarPage() {
                       min="0"
                       value={editKomisyon}
                       onChange={(e) => setEditKomisyon(e.target.value)}
+                      className="rounded-md border border-neutral-300 bg-white px-2 py-1 font-mono text-sm text-neutral-900 outline-none focus:border-neutral-500"
+                    />
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={editCekimKomisyon}
+                      onChange={(e) => setEditCekimKomisyon(e.target.value)}
                       className="rounded-md border border-neutral-300 bg-white px-2 py-1 font-mono text-sm text-neutral-900 outline-none focus:border-neutral-500"
                     />
                     <input
@@ -230,6 +246,9 @@ export default function AyarlarPage() {
                     </span>
                     <span className="font-mono text-sm text-neutral-500">
                       %{method.komisyonOrani}
+                    </span>
+                    <span className="font-mono text-sm text-neutral-500">
+                      {(method.cekimKomisyonOrani ?? 0) > 0 ? `%${method.cekimKomisyonOrani}` : "-"}
                     </span>
                     <span className={`font-mono text-sm ${method.baslangicBakiye < 0 ? "text-red-500" : "text-neutral-500"}`}>
                       {method.baslangicBakiye !== 0

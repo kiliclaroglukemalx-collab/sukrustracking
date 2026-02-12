@@ -59,6 +59,7 @@ export function TopBar({ data }: TopBarProps) {
           <span
             className="font-mono text-xl font-black tracking-wide lg:text-2xl"
             style={{ color: "#d946a8" }}
+            suppressHydrationWarning
           >
             {roundedHour}
           </span>

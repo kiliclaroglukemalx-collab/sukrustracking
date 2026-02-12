@@ -83,6 +83,7 @@ async function fetchMethodsFromSupabase(): Promise<PaymentMethod[] | null> {
       id: row.id as string,
       name: row.name as string,
       komisyonOrani: (row.komisyon_orani as number) || 0,
+      cekimKomisyonOrani: (row.cekim_komisyon_orani as number) || 0,
       baslangicBakiye: (row.baslangic_bakiye as number) || 0,
     }));
   } catch {
@@ -101,6 +102,7 @@ async function syncMethodsToSupabase(methods: PaymentMethod[]) {
       id: m.id,
       name: m.name,
       komisyon_orani: m.komisyonOrani,
+      cekim_komisyon_orani: m.cekimKomisyonOrani ?? 0,
       baslangic_bakiye: m.baslangicBakiye,
       sort_order: i,
     }));
