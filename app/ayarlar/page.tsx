@@ -1,64 +1,37 @@
 "use client";
 
-import React, { useState, useCallback } from "react";
+import React, { useCallback, useRef } from "react";
 import Link from "next/link";
-import {
-  ArrowLeft,
-  Plus,
-  Trash2,
-  Pencil,
-  Check,
-  X,
-  Layers,
-  Film,
-} from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Layers, Film } from "lucide-react";
 import { useStore } from "@/lib/store";
 import type { PaymentMethod } from "@/lib/excel-processor";
 
 export default function AyarlarPage() {
   const { methods, setMethods, videoUrl, setVideoUrl } = useStore();
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [editName, setEditName] = useState("");
-  const [editExcelAdi, setEditExcelAdi] = useState("");
-  const [editKomisyon, setEditKomisyon] = useState("");
-  const [editCekimKomisyon, setEditCekimKomisyon] = useState("");
-  const [editBakiye, setEditBakiye] = useState("");
-  const [videoInput, setVideoInput] = useState(videoUrl);
+  /* ---- Otomatik kaydet: her degisiklikte 400ms debounce ile setMethods ---- */
+  const autoSave = useCallback(
+    (updated: PaymentMethod[]) => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+      debounceRef.current = setTimeout(() => {
+        setMethods(updated);
+      }, 400);
+    },
+    [setMethods],
+  );
 
-  // --- Edit ---
-  const startEdit = useCallback((m: PaymentMethod) => {
-    setEditingId(m.id);
-    setEditName(m.name);
-    setEditExcelAdi(m.excelKolonAdi ?? "");
-    setEditKomisyon(String(m.komisyonOrani));
-    setEditCekimKomisyon(String(m.cekimKomisyonOrani ?? 0));
-    setEditBakiye(String(m.baslangicBakiye));
-  }, []);
+  const updateField = useCallback(
+    (id: string, field: keyof PaymentMethod, value: string | number) => {
+      const updated = methods.map((m) =>
+        m.id === id ? { ...m, [field]: value } : m,
+      );
+      autoSave(updated);
+    },
+    [methods, autoSave],
+  );
 
-  const cancelEdit = useCallback(() => {
-    setEditingId(null);
-  }, []);
-
-  const saveEdit = useCallback(() => {
-    if (!editingId || !editName.trim()) return;
-    const updated = methods.map((m) =>
-      m.id === editingId
-        ? {
-            ...m,
-            name: editName.trim(),
-            excelKolonAdi: editExcelAdi.trim(),
-            komisyonOrani: Number.parseFloat(editKomisyon) || 0,
-            cekimKomisyonOrani: Number.parseFloat(editCekimKomisyon) || 0,
-            baslangicBakiye: Number.parseFloat(editBakiye) || 0,
-          }
-        : m,
-    );
-    setMethods(updated);
-    setEditingId(null);
-  }, [editingId, editName, editExcelAdi, editKomisyon, editCekimKomisyon, editBakiye, methods, setMethods]);
-
-  // --- Add ---
+  /* ---- Yeni yontem ekle ---- */
   const addMethod = useCallback(() => {
     const newMethod: PaymentMethod = {
       id: `m-${Date.now()}`,
@@ -69,22 +42,22 @@ export default function AyarlarPage() {
       baslangicBakiye: 0,
     };
     setMethods([...methods, newMethod]);
-    // Start editing the new method immediately
-    setEditingId(newMethod.id);
-    setEditName(newMethod.name);
-    setEditExcelAdi("");
-    setEditKomisyon("0");
-    setEditCekimKomisyon("0");
-    setEditBakiye("0");
   }, [methods, setMethods]);
 
-  // --- Delete ---
+  /* ---- Sil ---- */
   const deleteMethod = useCallback(
     (id: string) => {
       setMethods(methods.filter((m) => m.id !== id));
-      if (editingId === id) setEditingId(null);
     },
-    [methods, setMethods, editingId],
+    [methods, setMethods],
+  );
+
+  /* ---- Video URL ---- */
+  const handleVideoSave = useCallback(
+    (val: string) => {
+      setVideoUrl(val);
+    },
+    [setVideoUrl],
   );
 
   return (
@@ -104,7 +77,7 @@ export default function AyarlarPage() {
         <div className="w-20" />
       </div>
 
-      <div className="mx-auto max-w-2xl px-5 py-6">
+      <div className="mx-auto max-w-3xl px-5 py-6">
         {/* Video Settings */}
         <section className="mb-8">
           <div className="mb-3 flex items-center gap-2">
@@ -120,23 +93,15 @@ export default function AyarlarPage() {
             <div className="flex gap-2">
               <input
                 type="text"
-                value={videoInput}
-                onChange={(e) => setVideoInput(e.target.value)}
+                defaultValue={videoUrl}
+                onBlur={(e) => handleVideoSave(e.target.value)}
                 placeholder="https://example.com/video.mp4"
                 className="flex-1 rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2 text-sm text-neutral-800 placeholder-neutral-300 outline-none transition-colors focus:border-neutral-400"
               />
-              <button
-                type="button"
-                onClick={() => setVideoUrl(videoInput)}
-                className="rounded-lg bg-neutral-900 px-4 py-2 text-xs font-medium text-white transition-colors hover:bg-neutral-800"
-              >
-                Uygula
-              </button>
               {videoUrl && (
                 <button
                   type="button"
                   onClick={() => {
-                    setVideoInput("");
                     setVideoUrl("");
                   }}
                   className="rounded-lg border border-neutral-200 px-3 py-2 text-xs text-neutral-400 transition-colors hover:text-neutral-700"
@@ -169,7 +134,7 @@ export default function AyarlarPage() {
 
           <div className="overflow-hidden rounded-xl border border-neutral-200 bg-white">
             {/* Table header */}
-            <div className="grid grid-cols-[1fr_1fr_80px_90px_110px_64px] gap-2 border-b border-neutral-100 bg-neutral-50 px-4 py-2.5">
+            <div className="grid grid-cols-[1.2fr_1fr_70px_80px_110px_40px] gap-2 border-b border-neutral-100 bg-neutral-50 px-4 py-2.5">
               <span className="text-[9px] font-bold uppercase tracking-[0.15em] text-neutral-400">
                 Yontem Adi
               </span>
@@ -185,146 +150,65 @@ export default function AyarlarPage() {
               <span className="text-[9px] font-bold uppercase tracking-[0.15em] text-neutral-400">
                 Bsl. Bakiye
               </span>
-              <span className="text-[9px] font-bold uppercase tracking-[0.15em] text-neutral-400">
-                Islem
-              </span>
+              <span />
             </div>
 
-            {/* Method rows */}
+            {/* Method rows -- all fields inline editable */}
             {methods.map((method) => (
-              <div key={method.id}>
-                {editingId === method.id ? (
-                  <div className="border-b border-neutral-100 bg-neutral-50/80 px-4 py-3">
-                    {/* Row 1: Name + Excel Adi */}
-                    <div className="mb-2 grid grid-cols-2 gap-2">
-                      <div>
-                        <label className="mb-1 block text-[9px] font-bold uppercase tracking-widest text-neutral-400">
-                          Yontem Adi
-                        </label>
-                        <input
-                          type="text"
-                          value={editName}
-                          onChange={(e) => setEditName(e.target.value)}
-                          className="w-full rounded-md border border-neutral-300 bg-white px-2 py-1.5 text-sm text-neutral-900 outline-none focus:border-neutral-500"
-                          autoFocus
-                        />
-                      </div>
-                      <div>
-                        <label className="mb-1 block text-[9px] font-bold uppercase tracking-widest text-neutral-400">
-                          Excel Adi
-                        </label>
-                        <input
-                          type="text"
-                          value={editExcelAdi}
-                          onChange={(e) => setEditExcelAdi(e.target.value)}
-                          placeholder="Excel kolon adi"
-                          className="w-full rounded-md border border-neutral-300 bg-white px-2 py-1.5 text-sm text-neutral-500 outline-none focus:border-neutral-500"
-                        />
-                      </div>
-                    </div>
-                    {/* Row 2: Komisyon + Cekim Kom + Bakiye + Buttons */}
-                    <div className="flex items-end gap-2">
-                      <div className="flex-1">
-                        <label className="mb-1 block text-[9px] font-bold uppercase tracking-widest text-neutral-400">
-                          Kom. %
-                        </label>
-                        <input
-                          type="number"
-                          step="0.01"
-                          min="0"
-                          value={editKomisyon}
-                          onChange={(e) => setEditKomisyon(e.target.value)}
-                          className="w-full rounded-md border border-neutral-300 bg-white px-2 py-1.5 font-mono text-sm text-neutral-900 outline-none focus:border-neutral-500"
-                        />
-                      </div>
-                      <div className="flex-1">
-                        <label className="mb-1 block text-[9px] font-bold uppercase tracking-widest text-neutral-400">
-                          Cekim K. %
-                        </label>
-                        <input
-                          type="number"
-                          step="0.01"
-                          min="0"
-                          value={editCekimKomisyon}
-                          onChange={(e) => setEditCekimKomisyon(e.target.value)}
-                          className="w-full rounded-md border border-neutral-300 bg-white px-2 py-1.5 font-mono text-sm text-neutral-900 outline-none focus:border-neutral-500"
-                        />
-                      </div>
-                      <div className="flex-1">
-                        <label className="mb-1 block text-[9px] font-bold uppercase tracking-widest text-neutral-400">
-                          Bsl. Bakiye
-                        </label>
-                        <input
-                          type="number"
-                          step="1"
-                          value={editBakiye}
-                          onChange={(e) => setEditBakiye(e.target.value)}
-                          className="w-full rounded-md border border-neutral-300 bg-white px-2 py-1.5 font-mono text-sm text-neutral-900 outline-none focus:border-neutral-500"
-                        />
-                      </div>
-                      <div className="flex items-center gap-1 pb-0.5">
-                        <button
-                          type="button"
-                          onClick={saveEdit}
-                          className="rounded-md bg-emerald-600 p-1.5 text-white transition-colors hover:bg-emerald-700"
-                          aria-label="Onayla"
-                        >
-                          <Check className="h-4 w-4" strokeWidth={2} />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={cancelEdit}
-                          className="rounded-md bg-neutral-200 p-1.5 text-neutral-600 transition-colors hover:bg-neutral-300"
-                          aria-label="Iptal"
-                        >
-                          <X className="h-4 w-4" strokeWidth={2} />
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                <div
-                  className="group grid grid-cols-[1fr_1fr_80px_90px_110px_64px] items-center gap-2 border-b border-neutral-50 px-4 py-2.5 transition-colors last:border-0 hover:bg-neutral-50/50"
+              <div
+                key={method.id}
+                className="group grid grid-cols-[1.2fr_1fr_70px_80px_110px_40px] items-center gap-2 border-b border-neutral-50 px-4 py-1.5 transition-colors last:border-0 hover:bg-neutral-50/50"
+              >
+                {/* Yontem Adi */}
+                <input
+                  type="text"
+                  defaultValue={method.name}
+                  onBlur={(e) => updateField(method.id, "name", e.target.value.trim())}
+                  className="rounded-md border border-transparent bg-transparent px-1.5 py-1 text-sm font-medium text-neutral-800 outline-none transition-colors focus:border-neutral-300 focus:bg-white"
+                />
+                {/* Excel Adi */}
+                <input
+                  type="text"
+                  defaultValue={method.excelKolonAdi || ""}
+                  onBlur={(e) => updateField(method.id, "excelKolonAdi", e.target.value.trim())}
+                  placeholder="-"
+                  className="rounded-md border border-transparent bg-transparent px-1.5 py-1 text-xs text-neutral-500 italic outline-none transition-colors placeholder:text-neutral-300 focus:border-neutral-300 focus:bg-white focus:not-italic"
+                />
+                {/* Komisyon % */}
+                <input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  defaultValue={method.komisyonOrani}
+                  onBlur={(e) => updateField(method.id, "komisyonOrani", Number.parseFloat(e.target.value) || 0)}
+                  className="rounded-md border border-transparent bg-transparent px-1.5 py-1 font-mono text-sm text-neutral-600 outline-none transition-colors focus:border-neutral-300 focus:bg-white"
+                />
+                {/* Cekim Komisyon % */}
+                <input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  defaultValue={method.cekimKomisyonOrani ?? 0}
+                  onBlur={(e) => updateField(method.id, "cekimKomisyonOrani", Number.parseFloat(e.target.value) || 0)}
+                  className="rounded-md border border-transparent bg-transparent px-1.5 py-1 font-mono text-sm text-neutral-600 outline-none transition-colors focus:border-neutral-300 focus:bg-white"
+                />
+                {/* Baslangic Bakiye */}
+                <input
+                  type="number"
+                  step="1"
+                  defaultValue={method.baslangicBakiye}
+                  onBlur={(e) => updateField(method.id, "baslangicBakiye", Number.parseFloat(e.target.value) || 0)}
+                  className="rounded-md border border-transparent bg-transparent px-1.5 py-1 font-mono text-sm text-neutral-600 outline-none transition-colors focus:border-neutral-300 focus:bg-white"
+                />
+                {/* Sil */}
+                <button
+                  type="button"
+                  onClick={() => deleteMethod(method.id)}
+                  className="flex h-7 w-7 items-center justify-center rounded-md text-neutral-300 opacity-0 transition-all group-hover:opacity-100 hover:bg-red-50 hover:text-red-500"
+                  aria-label="Sil"
                 >
-                  <>
-                    <span className="text-sm font-medium text-neutral-800">
-                      {method.name}
-                    </span>
-                    <span className="truncate text-xs text-neutral-400 italic">
-                      {method.excelKolonAdi || "-"}
-                    </span>
-                    <span className="font-mono text-sm text-neutral-500">
-                      %{method.komisyonOrani}
-                    </span>
-                    <span className="font-mono text-sm text-neutral-500">
-                      {(method.cekimKomisyonOrani ?? 0) > 0 ? `%${method.cekimKomisyonOrani}` : "-"}
-                    </span>
-                    <span className={`font-mono text-sm ${method.baslangicBakiye < 0 ? "text-red-500" : "text-neutral-500"}`}>
-                      {method.baslangicBakiye !== 0
-                        ? `${method.baslangicBakiye.toLocaleString("tr-TR")} TL`
-                        : "-"}
-                    </span>
-                    <div className="flex items-center gap-0.5 opacity-0 transition-opacity group-hover:opacity-100">
-                      <button
-                        type="button"
-                        onClick={() => startEdit(method)}
-                        className="rounded-md p-1.5 text-neutral-400 transition-colors hover:bg-neutral-100 hover:text-neutral-700"
-                        aria-label="Duzenle"
-                      >
-                        <Pencil className="h-3.5 w-3.5" strokeWidth={1.5} />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => deleteMethod(method.id)}
-                        className="rounded-md p-1.5 text-neutral-300 transition-colors hover:bg-red-50 hover:text-red-500"
-                        aria-label="Sil"
-                      >
-                        <Trash2 className="h-3.5 w-3.5" strokeWidth={1.5} />
-                      </button>
-                    </div>
-                  </>
-                </div>
-                )}
+                  <Trash2 className="h-3.5 w-3.5" strokeWidth={1.5} />
+                </button>
               </div>
             ))}
 
@@ -337,7 +221,7 @@ export default function AyarlarPage() {
           </div>
 
           <p className="mt-2 text-center text-[10px] text-neutral-400">
-            Degisiklikler aninda kaydedilir
+            Alandan ciktiginizda otomatik kaydedilir
           </p>
         </section>
       </div>
