@@ -134,6 +134,25 @@ async function loadSettingFromSupabase(
   }
 }
 
+// --- Payment (Odeme) Types ---
+export type IslemTipi = "odeme-yap" | "odeme-al" | "transfer";
+
+export interface OdemeKaydi {
+  id: string;
+  no: string; // #001, #002, ...
+  tarih: string; // ISO string
+  islemTipi: IslemTipi;
+  yontem: string; // kasa adi veya "Dis Kasa"
+  hedefYontem?: string; // sadece transfer icin
+  tutar: number;
+  dovizCinsi: string; // "TRY", "USDT", vs.
+  kur?: number; // doviz kuru (opsiyonel)
+  tutarTL: number; // TL karsiligi
+  gonderen: string;
+  alici: string;
+  aciklama: string;
+}
+
 // --- Types ---
 export type UserRole = "basic" | "master";
 const MASTER_PASSWORD = "Kk028200";
@@ -157,6 +176,10 @@ interface StoreContextValue {
   setRawRows: (rows: PaymentRow[]) => void;
 
   supabaseReady: boolean;
+
+  // Odeme sistemi
+  odemeler: OdemeKaydi[];
+  odemeEkle: (odeme: Omit<OdemeKaydi, "id" | "no" | "tarih">) => OdemeKaydi;
 }
 
 const StoreContext = createContext<StoreContextValue | null>(null);
@@ -170,6 +193,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const [videoUrl, setVideoUrlState] = useState(loadVideo);
   const [rawRows, setRawRows] = useState<PaymentRow[]>([]);
   const [supabaseReady, setSupabaseReady] = useState(false);
+  const [odemeler, setOdemeler] = useState<OdemeKaydi[]>([]);
   const initDone = useRef(false);
 
   // --- On mount: fetch from Supabase (source of truth) ---
@@ -245,6 +269,41 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     });
   }, []);
 
+  // --- Odeme sistemi ---
+  const odemeEkle = useCallback(
+    (input: Omit<OdemeKaydi, "id" | "no" | "tarih">): OdemeKaydi => {
+      const now = new Date();
+      const yeniOdeme: OdemeKaydi = {
+        ...input,
+        id: `odeme-${Date.now()}`,
+        no: `#${String((odemeler.length + 1)).padStart(3, "0")}`,
+        tarih: now.toISOString(),
+      };
+
+      setOdemeler((prev) => [yeniOdeme, ...prev]);
+
+      // Kasa bakiyesini guncelle
+      setKasaData((prev) =>
+        prev.map((kasa) => {
+          let delta = 0;
+          if (input.islemTipi === "odeme-yap" && kasa.odemeTuruAdi === input.yontem) {
+            delta = -input.tutarTL; // kasadan cikis
+          } else if (input.islemTipi === "odeme-al" && kasa.odemeTuruAdi === input.yontem) {
+            delta = input.tutarTL; // kasaya giris
+          } else if (input.islemTipi === "transfer") {
+            if (kasa.odemeTuruAdi === input.yontem) delta = -input.tutarTL;
+            if (kasa.odemeTuruAdi === input.hedefYontem) delta = input.tutarTL;
+          }
+          if (delta === 0) return kasa;
+          return { ...kasa, kalanKasa: kasa.kalanKasa + delta };
+        }),
+      );
+
+      return yeniOdeme;
+    },
+    [odemeler.length],
+  );
+
   // --- Methods (sync to both localStorage and Supabase) ---
   const supabaseSyncTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -286,6 +345,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       rawRows,
       setRawRows,
       supabaseReady,
+      odemeler,
+      odemeEkle,
     }),
     [
       role,
@@ -300,6 +361,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       setVideoUrl,
       rawRows,
       supabaseReady,
+      odemeler,
+      odemeEkle,
     ],
   );
 

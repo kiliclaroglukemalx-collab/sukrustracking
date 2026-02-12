@@ -15,10 +15,12 @@ import {
   User,
   ArrowLeft,
   Lock,
+  Wallet,
 } from "lucide-react";
 import { useStore } from "@/lib/store";
 import type { UserRole } from "@/lib/store";
 import { ExcelUploader } from "./excel-uploader";
+import { OdemePanel } from "./odeme-panel";
 
 type Panel = "main" | "excel" | "password";
 
@@ -26,6 +28,7 @@ export function HamburgerMenu() {
   const { role, setRole, verifyMasterPassword, loadExcelData, resetToDemo } =
     useStore();
   const [isOpen, setIsOpen] = useState(false);
+  const [odemeOpen, setOdemeOpen] = useState(false);
   const [activePanel, setActivePanel] = useState<Panel>("main");
   const [password, setPassword] = useState("");
   const [passwordError, setPasswordError] = useState(false);
@@ -220,6 +223,32 @@ export function HamburgerMenu() {
                   </Link>
                 )}
 
+                {/* Odemeler - Master only */}
+                {role === "master" && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setOdemeOpen(true);
+                      close();
+                    }}
+                    className="flex w-full items-center justify-between px-4 py-2.5 text-left transition-colors hover:bg-neutral-50"
+                  >
+                    <span className="flex items-center gap-2.5">
+                      <Wallet
+                        className="h-3.5 w-3.5 text-neutral-400"
+                        strokeWidth={1.5}
+                      />
+                      <span className="text-[11px] text-neutral-600">
+                        Odemeler
+                      </span>
+                    </span>
+                    <ChevronRight
+                      className="h-3 w-3 text-neutral-300"
+                      strokeWidth={1.5}
+                    />
+                  </button>
+                )}
+
                 {/* Ayarlar - Always visible */}
                 <Link
                   href="/ayarlar"
@@ -350,6 +379,35 @@ export function HamburgerMenu() {
               />
             </div>
           )}
+        </div>
+      )}
+      {/* Odeme Panel - Full screen drawer from right */}
+      {odemeOpen && (
+        <div className="fixed inset-0 z-[60] flex">
+          {/* Backdrop */}
+          <div
+            className="flex-1 bg-black/50 backdrop-blur-sm"
+            onClick={() => setOdemeOpen(false)}
+            onKeyDown={() => {}}
+            role="button"
+            tabIndex={-1}
+            aria-label="Kapat"
+          />
+          {/* Panel */}
+          <div
+            className="h-full w-full max-w-md overflow-hidden shadow-2xl"
+            style={{
+              animation: "slideInRight 0.3s ease-out",
+            }}
+          >
+            <OdemePanel onClose={() => setOdemeOpen(false)} />
+          </div>
+          <style>{`
+            @keyframes slideInRight {
+              from { transform: translateX(100%); }
+              to { transform: translateX(0); }
+            }
+          `}</style>
         </div>
       )}
     </div>
