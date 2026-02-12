@@ -23,7 +23,7 @@ interface KasaCardProps {
   index: number;
 }
 
-export function KasaCard({ data, index }: KasaCardProps) {
+export function KasaCard({ data }: KasaCardProps) {
   const isNegative = data.kalanKasa < 0;
 
   // Split name: main part vs parenthetical

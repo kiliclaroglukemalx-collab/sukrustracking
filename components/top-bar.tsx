@@ -33,16 +33,19 @@ interface TopBarProps {
 }
 
 export function TopBar({ data }: TopBarProps) {
+  // Hydration-safe: render empty on server, fill on client
+  const [mounted, setMounted] = useState(false);
   const [roundedHour, setRoundedHour] = useState("");
   const [dateStr, setDateStr] = useState("");
 
   useEffect(() => {
+    setMounted(true);
     setRoundedHour(getRoundedHour());
     setDateStr(getFormattedDate());
     const timer = setInterval(() => {
       setRoundedHour(getRoundedHour());
       setDateStr(getFormattedDate());
-    }, 30000);
+    }, 30_000);
     return () => clearInterval(timer);
   }, []);
 
@@ -50,13 +53,6 @@ export function TopBar({ data }: TopBarProps) {
   const toplamCekim = data.reduce((sum, d) => sum + d.toplamKredi, 0);
   const toplamKomisyon = data.reduce((sum, d) => sum + d.komisyon + d.cekimKomisyon, 0);
   const totalKasa = data.reduce((sum, d) => sum + d.kalanKasa, 0);
-
-  console.log("[v0] TopBar render: cards:", data.length, "yatirim:", toplamYatirim, "kasa:", totalKasa);
-  if (data.length > 0) {
-    const withBorc = data.filter(d => d.toplamBorc > 0);
-    console.log("[v0] TopBar: cards with borc>0:", withBorc.length, "cards with bakiye:", data.filter(d => d.baslangicBakiye > 0).length);
-    if (withBorc.length > 0) console.log("[v0] TopBar sample with borc:", withBorc[0].odemeTuruAdi, "borc:", withBorc[0].toplamBorc, "kredi:", withBorc[0].toplamKredi, "komisyon:", withBorc[0].komisyon);
-  }
 
   return (
     <div className="flex h-[72px] items-center justify-between">
@@ -68,7 +64,7 @@ export function TopBar({ data }: TopBarProps) {
             style={{ color: "#d946a8" }}
             suppressHydrationWarning
           >
-            {roundedHour}
+            {mounted ? roundedHour : "--:--"}
           </span>
           <span
             className="text-sm font-bold tracking-[0.15em] uppercase lg:text-base"

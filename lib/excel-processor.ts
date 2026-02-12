@@ -1,3 +1,4 @@
+// Excel processing and kasa calculation engine
 import * as XLSX from "xlsx";
 
 export interface PaymentMethod {
@@ -251,38 +252,26 @@ export function parseExcelFile(buffer: ArrayBuffer): PaymentRow[] {
   return rows;
 }
 
-export function generateDemoData(methods: PaymentMethod[]): KasaCardData[] {
-  const demoRowsMap: Record<string, { borc: number; kredi: number }> = {
-    "Nakit": { borc: 45200, kredi: 12300 },
-    "Kredi Karti": { borc: 128750, kredi: 35600 },
-    "Banka Karti": { borc: 67400, kredi: 18200 },
-    "Havale/EFT": { borc: 89100, kredi: 42500 },
-    "Yemek Karti": { borc: 23400, kredi: 5600 },
-    "Online Odeme": { borc: 56300, kredi: 15800 },
-    "Multinet": { borc: 18700, kredi: 4200 },
-    "Sodexo": { borc: 22100, kredi: 6100 },
-    "Ticket": { borc: 15300, kredi: 3800 },
-    "Metropol": { borc: 9800, kredi: 2100 },
-    "Setcard": { borc: 12600, kredi: 3400 },
-    "iyzico": { borc: 34500, kredi: 9700 },
-    "PayPal": { borc: 8200, kredi: 1900 },
-    "Param": { borc: 19400, kredi: 5200 },
-    "Paycell": { borc: 11300, kredi: 2800 },
-    "Hopi": { borc: 7600, kredi: 1500 },
-    "Tosla": { borc: 6400, kredi: 1200 },
-    "Papara": { borc: 28900, kredi: 7300 },
-    "Cuzdan": { borc: 4100, kredi: 800 },
-    "Acik Hesap": { borc: 52000, kredi: 31000 },
-    "Fis/Cek": { borc: 37800, kredi: 14600 },
-    "Garanti Pay": { borc: 14200, kredi: 3900 },
-    "QR Odeme": { borc: 5600, kredi: 1100 },
-    "Puan": { borc: 3200, kredi: 700 },
-  };
+/**
+ * Deterministic seed from a string -- produces the same "random" number
+ * for the same method name across renders so demo data is stable.
+ */
+function seedFromString(s: string): number {
+  let h = 0;
+  for (let i = 0; i < s.length; i++) {
+    h = ((h << 5) - h + s.charCodeAt(i)) | 0;
+  }
+  return Math.abs(h);
+}
 
-  // Build rows based on the current methods list so added/removed methods are reflected
+export function generateDemoData(methods: PaymentMethod[]): KasaCardData[] {
+  // Build rows based on the current methods list.
+  // Uses seeded values so custom method names also get demo data.
   const demoRows: PaymentRow[] = methods.map((m) => {
-    const data = demoRowsMap[m.name] || { borc: 0, kredi: 0 };
-    return { odemeTuruAdi: m.name, borc: data.borc, kredi: data.kredi };
+    const seed = seedFromString(m.name);
+    const borc = 5000 + (seed % 120000);
+    const kredi = 1000 + ((seed >> 4) % 30000);
+    return { odemeTuruAdi: m.name, borc, kredi };
   });
 
   return processExcelData(demoRows, methods);

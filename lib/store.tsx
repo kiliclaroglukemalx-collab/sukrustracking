@@ -22,6 +22,7 @@ import type {
 import { createClient } from "@/lib/supabase/client";
 
 // --- localStorage helpers (fast cache / offline fallback) ---
+// Local storage keys for offline cache
 const LS_METHODS = "kasa-methods";
 const LS_VIDEO = "kasa-video";
 const LS_ROLE = "kasa-role";
@@ -179,29 +180,22 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     (async () => {
       // Load methods from Supabase (source of truth)
       const sbMethods = await fetchMethodsFromSupabase();
-      console.log("[v0] Init: sbMethods from Supabase:", sbMethods?.length ?? "null");
       if (sbMethods && sbMethods.length > 0) {
         setMethodsState(sbMethods);
         cacheMethodsLocally(sbMethods);
         // Only reset to demo if no Excel data has been loaded yet
         setRawRows((currentRawRows) => {
-          console.log("[v0] Init: rawRows.length =", currentRawRows.length);
           if (currentRawRows.length === 0) {
-            const demo = generateDemoData(sbMethods);
-            console.log("[v0] Init: generating demo data, cards:", demo.length, "sample borc:", demo.slice(0, 3).map(d => d.toplamBorc));
-            setKasaData(demo);
+            setKasaData(generateDemoData(sbMethods));
           } else {
-            const processed = processExcelData(currentRawRows, sbMethods);
-            console.log("[v0] Init: re-processing Excel, cards:", processed.length, "total borc:", processed.reduce((s, d) => s + d.toplamBorc, 0));
-            setKasaData(processed);
+            setKasaData(processExcelData(currentRawRows, sbMethods));
           }
           return currentRawRows;
         });
       } else {
-        console.log("[v0] Init: no Supabase methods, using localStorage");
         // Supabase has no methods yet -- push current localStorage methods to Supabase
         const localMethods = loadMethodsFromCache();
-        if (localMethods.length > 0 && localMethods !== DEFAULT_METHODS) {
+        if (localMethods.length > 0 && localMethods[0].id !== DEFAULT_METHODS[0].id) {
           syncMethodsToSupabase(localMethods);
         }
       }
@@ -237,7 +231,6 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
 
   // --- Excel ---
   const loadExcelData = useCallback((data: KasaCardData[], rows?: PaymentRow[]) => {
-    console.log("[v0] loadExcelData: cards:", data.length, "totalBorc:", data.reduce((s, d) => s + d.toplamBorc, 0), "totalKom:", data.reduce((s, d) => s + d.komisyon, 0));
     setKasaData(data);
     if (rows) {
       setRawRows(rows);

@@ -89,8 +89,8 @@ export default function Page() {
             gridTemplateRows: `repeat(${grid.rows}, 1fr)`,
           }}
         >
-          {visibleCards.map((card, i) => (
-            <KasaCard key={card.id} data={card} index={i} />
+          {visibleCards.map((card) => (
+            <KasaCard key={card.id} data={card} index={0} />
           ))}
         </div>
       </div>
