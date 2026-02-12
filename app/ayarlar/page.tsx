@@ -231,8 +231,8 @@ export default function AyarlarPage() {
                     <span className="font-mono text-sm text-neutral-500">
                       %{method.komisyonOrani}
                     </span>
-                    <span className="font-mono text-sm text-neutral-500">
-                      {method.baslangicBakiye > 0
+                    <span className={`font-mono text-sm ${method.baslangicBakiye < 0 ? "text-red-500" : "text-neutral-500"}`}>
+                      {method.baslangicBakiye !== 0
                         ? `${method.baslangicBakiye.toLocaleString("tr-TR")} TL`
                         : "-"}
                     </span>
