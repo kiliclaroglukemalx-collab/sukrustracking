@@ -253,26 +253,24 @@ export function parseExcelFile(buffer: ArrayBuffer): PaymentRow[] {
 }
 
 /**
- * Deterministic seed from a string -- produces the same "random" number
- * for the same method name across renders so demo data is stable.
+ * Excel yuklenmeden once sadece baslangic bakiyeleri gosterir.
+ * Borc, kredi, komisyon hepsi 0 olur.
  */
-function seedFromString(s: string): number {
-  let h = 0;
-  for (let i = 0; i < s.length; i++) {
-    h = ((h << 5) - h + s.charCodeAt(i)) | 0;
-  }
-  return Math.abs(h);
-}
-
-export function generateDemoData(methods: PaymentMethod[]): KasaCardData[] {
-  // Build rows based on the current methods list.
-  // Uses seeded values so custom method names also get demo data.
-  const demoRows: PaymentRow[] = methods.map((m) => {
-    const seed = seedFromString(m.name);
-    const borc = 5000 + (seed % 120000);
-    const kredi = 1000 + ((seed >> 4) % 30000);
-    return { odemeTuruAdi: m.name, borc, kredi };
-  });
-
-  return processExcelData(demoRows, methods);
+export function generateInitialData(methods: PaymentMethod[]): KasaCardData[] {
+  return methods
+    .filter((m) => m.baslangicBakiye !== 0)
+    .map((m, i) => ({
+      id: `kasa-${i}`,
+      odemeTuruAdi: m.name,
+      toplamBorc: 0,
+      toplamKredi: 0,
+      komisyon: 0,
+      komisyonOrani: m.komisyonOrani,
+      cekimKomisyon: 0,
+      cekimKomisyonOrani: m.cekimKomisyonOrani,
+      netBorc: 0,
+      kalanKasa: m.baslangicBakiye,
+      baslangicBakiye: m.baslangicBakiye,
+    }))
+    .sort((a, b) => b.kalanKasa - a.kalanKasa);
 }

@@ -11,7 +11,7 @@ import React, {
 } from "react";
 import {
   DEFAULT_METHODS,
-  generateDemoData,
+  generateInitialData,
   processExcelData,
 } from "@/lib/excel-processor";
 import type {
@@ -189,7 +189,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const [role, setRoleState] = useState<UserRole>(loadRole);
   const [methods, setMethodsState] = useState<PaymentMethod[]>(loadMethodsFromCache);
   const [kasaData, setKasaData] = useState<KasaCardData[]>(() =>
-    generateDemoData(loadMethodsFromCache()),
+    generateInitialData(loadMethodsFromCache()),
   );
   const [videoUrl, setVideoUrlState] = useState(loadVideo);
   const [rawRows, setRawRows] = useState<PaymentRow[]>([]);
@@ -211,7 +211,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         // Only reset to demo if no Excel data has been loaded yet
         setRawRows((currentRawRows) => {
           if (currentRawRows.length === 0) {
-            setKasaData(generateDemoData(sbMethods));
+            setKasaData(generateInitialData(sbMethods));
           } else {
             setKasaData(processExcelData(currentRawRows, sbMethods));
           }
@@ -265,7 +265,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const resetToDemo = useCallback(() => {
     setRawRows([]);
     setMethodsState((currentMethods) => {
-      setKasaData(generateDemoData(currentMethods));
+      setKasaData(generateInitialData(currentMethods));
       return currentMethods;
     });
   }, []);
@@ -353,7 +353,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       if (currentRawRows.length > 0) {
         setKasaData(processExcelData(currentRawRows, newMethods));
       } else {
-        setKasaData(generateDemoData(newMethods));
+        setKasaData(generateInitialData(newMethods));
       }
       return currentRawRows;
     });
