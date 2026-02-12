@@ -192,69 +192,100 @@ export default function AyarlarPage() {
 
             {/* Method rows */}
             {methods.map((method) => (
-              <div
-                key={method.id}
-                className="group grid grid-cols-[1fr_1fr_80px_90px_110px_64px] items-center gap-2 border-b border-neutral-50 px-4 py-2.5 transition-colors last:border-0 hover:bg-neutral-50/50"
-              >
+              <div key={method.id}>
                 {editingId === method.id ? (
-                  <>
-                    <input
-                      type="text"
-                      value={editName}
-                      onChange={(e) => setEditName(e.target.value)}
-                      className="rounded-md border border-neutral-300 bg-white px-2 py-1 text-sm text-neutral-900 outline-none focus:border-neutral-500"
-                      autoFocus
-                    />
-                    <input
-                      type="text"
-                      value={editExcelAdi}
-                      onChange={(e) => setEditExcelAdi(e.target.value)}
-                      placeholder="Excel kolon adi"
-                      className="rounded-md border border-neutral-300 bg-white px-2 py-1 text-sm text-neutral-500 outline-none focus:border-neutral-500"
-                    />
-                    <input
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      value={editKomisyon}
-                      onChange={(e) => setEditKomisyon(e.target.value)}
-                      className="rounded-md border border-neutral-300 bg-white px-2 py-1 font-mono text-sm text-neutral-900 outline-none focus:border-neutral-500"
-                    />
-                    <input
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      value={editCekimKomisyon}
-                      onChange={(e) => setEditCekimKomisyon(e.target.value)}
-                      className="rounded-md border border-neutral-300 bg-white px-2 py-1 font-mono text-sm text-neutral-900 outline-none focus:border-neutral-500"
-                    />
-                    <input
-                      type="number"
-                      step="1"
-                      value={editBakiye}
-                      onChange={(e) => setEditBakiye(e.target.value)}
-                      className="rounded-md border border-neutral-300 bg-white px-2 py-1 font-mono text-sm text-neutral-900 outline-none focus:border-neutral-500"
-                    />
-                    <div className="flex items-center gap-1">
-                      <button
-                        type="button"
-                        onClick={saveEdit}
-                        className="rounded-md p-1.5 text-emerald-600 transition-colors hover:bg-emerald-50"
-                        aria-label="Onayla"
-                      >
-                        <Check className="h-3.5 w-3.5" strokeWidth={2} />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={cancelEdit}
-                        className="rounded-md p-1.5 text-neutral-400 transition-colors hover:bg-neutral-100"
-                        aria-label="Iptal"
-                      >
-                        <X className="h-3.5 w-3.5" strokeWidth={2} />
-                      </button>
+                  <div className="border-b border-neutral-100 bg-neutral-50/80 px-4 py-3">
+                    {/* Row 1: Name + Excel Adi */}
+                    <div className="mb-2 grid grid-cols-2 gap-2">
+                      <div>
+                        <label className="mb-1 block text-[9px] font-bold uppercase tracking-widest text-neutral-400">
+                          Yontem Adi
+                        </label>
+                        <input
+                          type="text"
+                          value={editName}
+                          onChange={(e) => setEditName(e.target.value)}
+                          className="w-full rounded-md border border-neutral-300 bg-white px-2 py-1.5 text-sm text-neutral-900 outline-none focus:border-neutral-500"
+                          autoFocus
+                        />
+                      </div>
+                      <div>
+                        <label className="mb-1 block text-[9px] font-bold uppercase tracking-widest text-neutral-400">
+                          Excel Adi
+                        </label>
+                        <input
+                          type="text"
+                          value={editExcelAdi}
+                          onChange={(e) => setEditExcelAdi(e.target.value)}
+                          placeholder="Excel kolon adi"
+                          className="w-full rounded-md border border-neutral-300 bg-white px-2 py-1.5 text-sm text-neutral-500 outline-none focus:border-neutral-500"
+                        />
+                      </div>
                     </div>
-                  </>
+                    {/* Row 2: Komisyon + Cekim Kom + Bakiye + Buttons */}
+                    <div className="flex items-end gap-2">
+                      <div className="flex-1">
+                        <label className="mb-1 block text-[9px] font-bold uppercase tracking-widest text-neutral-400">
+                          Kom. %
+                        </label>
+                        <input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          value={editKomisyon}
+                          onChange={(e) => setEditKomisyon(e.target.value)}
+                          className="w-full rounded-md border border-neutral-300 bg-white px-2 py-1.5 font-mono text-sm text-neutral-900 outline-none focus:border-neutral-500"
+                        />
+                      </div>
+                      <div className="flex-1">
+                        <label className="mb-1 block text-[9px] font-bold uppercase tracking-widest text-neutral-400">
+                          Cekim K. %
+                        </label>
+                        <input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          value={editCekimKomisyon}
+                          onChange={(e) => setEditCekimKomisyon(e.target.value)}
+                          className="w-full rounded-md border border-neutral-300 bg-white px-2 py-1.5 font-mono text-sm text-neutral-900 outline-none focus:border-neutral-500"
+                        />
+                      </div>
+                      <div className="flex-1">
+                        <label className="mb-1 block text-[9px] font-bold uppercase tracking-widest text-neutral-400">
+                          Bsl. Bakiye
+                        </label>
+                        <input
+                          type="number"
+                          step="1"
+                          value={editBakiye}
+                          onChange={(e) => setEditBakiye(e.target.value)}
+                          className="w-full rounded-md border border-neutral-300 bg-white px-2 py-1.5 font-mono text-sm text-neutral-900 outline-none focus:border-neutral-500"
+                        />
+                      </div>
+                      <div className="flex items-center gap-1 pb-0.5">
+                        <button
+                          type="button"
+                          onClick={saveEdit}
+                          className="rounded-md bg-emerald-600 p-1.5 text-white transition-colors hover:bg-emerald-700"
+                          aria-label="Onayla"
+                        >
+                          <Check className="h-4 w-4" strokeWidth={2} />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={cancelEdit}
+                          className="rounded-md bg-neutral-200 p-1.5 text-neutral-600 transition-colors hover:bg-neutral-300"
+                          aria-label="Iptal"
+                        >
+                          <X className="h-4 w-4" strokeWidth={2} />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
                 ) : (
+                <div
+                  className="group grid grid-cols-[1fr_1fr_80px_90px_110px_64px] items-center gap-2 border-b border-neutral-50 px-4 py-2.5 transition-colors last:border-0 hover:bg-neutral-50/50"
+                >
                   <>
                     <span className="text-sm font-medium text-neutral-800">
                       {method.name}
@@ -292,6 +323,7 @@ export default function AyarlarPage() {
                       </button>
                     </div>
                   </>
+                </div>
                 )}
               </div>
             ))}
