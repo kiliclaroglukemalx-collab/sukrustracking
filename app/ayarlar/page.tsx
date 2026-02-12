@@ -20,6 +20,7 @@ export default function AyarlarPage() {
 
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState("");
+  const [editExcelAdi, setEditExcelAdi] = useState("");
   const [editKomisyon, setEditKomisyon] = useState("");
   const [editCekimKomisyon, setEditCekimKomisyon] = useState("");
   const [editBakiye, setEditBakiye] = useState("");
@@ -29,6 +30,7 @@ export default function AyarlarPage() {
   const startEdit = useCallback((m: PaymentMethod) => {
     setEditingId(m.id);
     setEditName(m.name);
+    setEditExcelAdi(m.excelKolonAdi ?? "");
     setEditKomisyon(String(m.komisyonOrani));
     setEditCekimKomisyon(String(m.cekimKomisyonOrani ?? 0));
     setEditBakiye(String(m.baslangicBakiye));
@@ -45,6 +47,7 @@ export default function AyarlarPage() {
         ? {
             ...m,
             name: editName.trim(),
+            excelKolonAdi: editExcelAdi.trim(),
             komisyonOrani: Number.parseFloat(editKomisyon) || 0,
             cekimKomisyonOrani: Number.parseFloat(editCekimKomisyon) || 0,
             baslangicBakiye: Number.parseFloat(editBakiye) || 0,
@@ -53,13 +56,14 @@ export default function AyarlarPage() {
     );
     setMethods(updated);
     setEditingId(null);
-  }, [editingId, editName, editKomisyon, editCekimKomisyon, editBakiye, methods, setMethods]);
+  }, [editingId, editName, editExcelAdi, editKomisyon, editCekimKomisyon, editBakiye, methods, setMethods]);
 
   // --- Add ---
   const addMethod = useCallback(() => {
     const newMethod: PaymentMethod = {
       id: `m-${Date.now()}`,
       name: "Yeni Yontem",
+      excelKolonAdi: "",
       komisyonOrani: 0,
       cekimKomisyonOrani: 0,
       baslangicBakiye: 0,
@@ -68,6 +72,7 @@ export default function AyarlarPage() {
     // Start editing the new method immediately
     setEditingId(newMethod.id);
     setEditName(newMethod.name);
+    setEditExcelAdi("");
     setEditKomisyon("0");
     setEditCekimKomisyon("0");
     setEditBakiye("0");
@@ -164,18 +169,21 @@ export default function AyarlarPage() {
 
           <div className="overflow-hidden rounded-xl border border-neutral-200 bg-white">
             {/* Table header */}
-            <div className="grid grid-cols-[1fr_90px_110px_120px_72px] gap-3 border-b border-neutral-100 bg-neutral-50 px-4 py-2.5">
+            <div className="grid grid-cols-[1fr_1fr_80px_90px_110px_64px] gap-2 border-b border-neutral-100 bg-neutral-50 px-4 py-2.5">
               <span className="text-[9px] font-bold uppercase tracking-[0.15em] text-neutral-400">
                 Yontem Adi
               </span>
               <span className="text-[9px] font-bold uppercase tracking-[0.15em] text-neutral-400">
-                Komisyon %
+                Excel Adi
               </span>
               <span className="text-[9px] font-bold uppercase tracking-[0.15em] text-neutral-400">
-                Cekim Kom. %
+                Kom. %
               </span>
               <span className="text-[9px] font-bold uppercase tracking-[0.15em] text-neutral-400">
-                Baslangic Bakiye
+                Cekim K. %
+              </span>
+              <span className="text-[9px] font-bold uppercase tracking-[0.15em] text-neutral-400">
+                Bsl. Bakiye
               </span>
               <span className="text-[9px] font-bold uppercase tracking-[0.15em] text-neutral-400">
                 Islem
@@ -186,7 +194,7 @@ export default function AyarlarPage() {
             {methods.map((method) => (
               <div
                 key={method.id}
-                className="group grid grid-cols-[1fr_90px_110px_120px_72px] items-center gap-3 border-b border-neutral-50 px-4 py-2.5 transition-colors last:border-0 hover:bg-neutral-50/50"
+                className="group grid grid-cols-[1fr_1fr_80px_90px_110px_64px] items-center gap-2 border-b border-neutral-50 px-4 py-2.5 transition-colors last:border-0 hover:bg-neutral-50/50"
               >
                 {editingId === method.id ? (
                   <>
@@ -196,6 +204,13 @@ export default function AyarlarPage() {
                       onChange={(e) => setEditName(e.target.value)}
                       className="rounded-md border border-neutral-300 bg-white px-2 py-1 text-sm text-neutral-900 outline-none focus:border-neutral-500"
                       autoFocus
+                    />
+                    <input
+                      type="text"
+                      value={editExcelAdi}
+                      onChange={(e) => setEditExcelAdi(e.target.value)}
+                      placeholder="Excel kolon adi"
+                      className="rounded-md border border-neutral-300 bg-white px-2 py-1 text-sm text-neutral-500 outline-none focus:border-neutral-500"
                     />
                     <input
                       type="number"
@@ -243,6 +258,9 @@ export default function AyarlarPage() {
                   <>
                     <span className="text-sm font-medium text-neutral-800">
                       {method.name}
+                    </span>
+                    <span className="truncate text-xs text-neutral-400 italic">
+                      {method.excelKolonAdi || "-"}
                     </span>
                     <span className="font-mono text-sm text-neutral-500">
                       %{method.komisyonOrani}

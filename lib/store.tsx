@@ -82,6 +82,7 @@ async function fetchMethodsFromSupabase(): Promise<PaymentMethod[] | null> {
     return data.map((row: Record<string, unknown>) => ({
       id: row.id as string,
       name: row.name as string,
+      excelKolonAdi: (row.excel_kolon_adi as string) || "",
       komisyonOrani: (row.komisyon_orani as number) || 0,
       cekimKomisyonOrani: (row.cekim_komisyon_orani as number) || 0,
       baslangicBakiye: (row.baslangic_bakiye as number) || 0,
@@ -101,6 +102,7 @@ async function syncMethodsToSupabase(methods: PaymentMethod[]) {
     const rows = methods.map((m, i) => ({
       id: m.id,
       name: m.name,
+      excel_kolon_adi: m.excelKolonAdi ?? "",
       komisyon_orani: m.komisyonOrani,
       cekim_komisyon_orani: m.cekimKomisyonOrani ?? 0,
       baslangic_bakiye: m.baslangicBakiye,
