@@ -82,10 +82,10 @@ async function fetchMethodsFromSupabase(): Promise<PaymentMethod[] | null> {
     return data.map((row: Record<string, unknown>) => ({
       id: row.id as string,
       name: row.name as string,
-      excelKolonAdi: (row.excel_kolon_adi as string) || "",
-      komisyonOrani: (row.komisyon_orani as number) || 0,
-      cekimKomisyonOrani: (row.cekim_komisyon_orani as number) || 0,
-      baslangicBakiye: (row.baslangic_bakiye as number) || 0,
+      excelKolonAdi: (row.excel_kolon_adi as string) ?? "",
+      komisyonOrani: (row.komisyon_orani as number) ?? 0,
+      cekimKomisyonOrani: (row.cekim_komisyon_orani as number) ?? 0,
+      baslangicBakiye: (row.baslangic_bakiye as number) ?? 0,
     }));
   } catch {
     return null;
@@ -99,7 +99,7 @@ async function syncMethodsToSupabase(methods: PaymentMethod[]) {
     // Delete all existing methods and re-insert (simple full sync)
     await supabase.from("payment_methods").delete().neq("id", "__never__");
 
-    const rows = methods.map((m, i) => ({
+    const fullRows = methods.map((m, i) => ({
       id: m.id,
       name: m.name,
       excel_kolon_adi: m.excelKolonAdi ?? "",
@@ -109,8 +109,21 @@ async function syncMethodsToSupabase(methods: PaymentMethod[]) {
       sort_order: i,
     }));
 
-    if (rows.length > 0) {
-      await supabase.from("payment_methods").insert(rows);
+    if (fullRows.length > 0) {
+      const { error } = await supabase.from("payment_methods").insert(fullRows);
+
+      // If insert fails (e.g. missing columns), retry without new columns
+      if (error) {
+        console.log("[v0] Full sync failed, retrying without new columns:", error.message);
+        const fallbackRows = methods.map((m, i) => ({
+          id: m.id,
+          name: m.name,
+          komisyon_orani: m.komisyonOrani,
+          baslangic_bakiye: m.baslangicBakiye,
+          sort_order: i,
+        }));
+        await supabase.from("payment_methods").insert(fallbackRows);
+      }
     }
   } catch {
     // Silently fail - localStorage still works as fallback
