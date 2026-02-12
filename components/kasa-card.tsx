@@ -77,11 +77,11 @@ export function KasaCard({ data }: KasaCardProps) {
         })()}
         {/* Accent underline */}
         <div
-          className="mt-1.5 h-[2px] w-3/5 rounded-full"
+          className="mt-2 h-[3px] w-4/5 rounded-full"
           style={{
             background: isNegative
-              ? "linear-gradient(90deg, transparent, rgba(239,68,68,0.5), transparent)"
-              : "linear-gradient(90deg, transparent, rgba(255,255,255,0.25), transparent)",
+              ? "linear-gradient(90deg, transparent 5%, rgba(239,68,68,0.7) 50%, transparent 95%)"
+              : "linear-gradient(90deg, transparent 5%, rgba(255,255,255,0.45) 50%, transparent 95%)",
           }}
         />
       </div>
