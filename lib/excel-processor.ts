@@ -109,10 +109,8 @@ export function processExcelData(
     grouped.set(key, existing);
   }
 
-  console.log("[v0] Grouped payment types:", Array.from(grouped.keys()));
-  console.log("[v0] Available methods:", methods.map(m => `${m.name}${m.excelKolonAdi ? ` (excel: ${m.excelKolonAdi})` : ""} k:${m.komisyonOrani}%`));
-
   const results: KasaCardData[] = [];
+  const matchedMethodIds = new Set<string>();
   let index = 0;
 
   for (const [odemeTuru, totals] of grouped.entries()) {
@@ -125,11 +123,14 @@ export function processExcelData(
     const netBorc = totals.borc - komisyon;
     const kalanKasa = baslangicBakiye + netBorc - totals.kredi - cekimKomisyon;
 
-    console.log(`[v0] ${odemeTuru} -> matched: ${matched?.name ?? "NONE"}, komOrani: ${komisyonOrani}%, borc: ${totals.borc}, komisyon: ${komisyon}, cekim: ${totals.kredi}, cekimKom: ${cekimKomisyon}, bakiye: ${baslangicBakiye}, kalan: ${kalanKasa}`);
+    // Display name: use Ayarlar method name if matched, otherwise raw Excel name
+    const displayName = matched ? matched.name : odemeTuru;
+    // Track which methods got matched so we can add unmatched ones later
+    if (matched) matchedMethodIds.add(matched.id);
 
     results.push({
       id: `kasa-${index++}`,
-      odemeTuruAdi: odemeTuru,
+      odemeTuruAdi: displayName,
       toplamBorc: totals.borc,
       toplamKredi: totals.kredi,
       komisyon,
@@ -140,6 +141,28 @@ export function processExcelData(
       kalanKasa,
       baslangicBakiye,
     });
+  }
+
+  // Add methods from Ayarlar that had no Excel data (show with baslangicBakiye)
+  for (const m of methods) {
+    if (!matchedMethodIds.has(m.id)) {
+      // Only add if the method has a non-zero baslangicBakiye
+      if (m.baslangicBakiye !== 0) {
+        results.push({
+          id: `kasa-${index++}`,
+          odemeTuruAdi: m.name,
+          toplamBorc: 0,
+          toplamKredi: 0,
+          komisyon: 0,
+          komisyonOrani: m.komisyonOrani,
+          cekimKomisyon: 0,
+          cekimKomisyonOrani: m.cekimKomisyonOrani,
+          netBorc: 0,
+          kalanKasa: m.baslangicBakiye,
+          baslangicBakiye: m.baslangicBakiye,
+        });
+      }
+    }
   }
 
   return results.sort((a, b) => b.kalanKasa - a.kalanKasa);
@@ -184,11 +207,7 @@ export function parseExcelFile(buffer: ArrayBuffer): PaymentRow[] {
   const jsonData =
     XLSX.utils.sheet_to_json<Record<string, unknown>>(firstSheet);
 
-  if (jsonData.length > 0) {
-    console.log("[v0] Excel columns detected:", Object.keys(jsonData[0]));
-    console.log("[v0] First row sample:", jsonData[0]);
-    console.log("[v0] Total rows:", jsonData.length);
-  }
+
 
   const odemeTuruCandidates = [
     "Odeme Turu Adi",
@@ -228,13 +247,6 @@ export function parseExcelFile(buffer: ArrayBuffer): PaymentRow[] {
 
     return { odemeTuruAdi, borc, kredi };
   });
-
-  console.log("[v0] Parsed payment rows:", rows.length);
-  if (rows.length > 0) {
-    console.log("[v0] First parsed row:", rows[0]);
-    const nonEmpty = rows.filter((r) => r.odemeTuruAdi.trim() !== "");
-    console.log("[v0] Non-empty odemeTuruAdi rows:", nonEmpty.length);
-  }
 
   return rows;
 }
