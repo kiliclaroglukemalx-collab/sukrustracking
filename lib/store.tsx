@@ -100,7 +100,7 @@ async function syncMethodsToSupabase(methods: PaymentMethod[]) {
         { onConflict: "key" },
       );
     if (error) {
-      console.log("[v0] Supabase methods sync failed:", error.message);
+      // Supabase sync failed - localStorage still works
     }
   } catch {
     // Silently fail - localStorage still works as fallback
@@ -218,10 +218,25 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
           return currentRawRows;
         });
       } else {
-        // Supabase has no methods yet -- push current localStorage methods to Supabase
+        // Supabase has no methods yet -- localStorage'daki verileri kullan ve Supabase'e yedekle
         const localMethods = loadMethodsFromCache();
-        if (localMethods.length > 0 && localMethods[0].id !== DEFAULT_METHODS[0].id) {
-          syncMethodsToSupabase(localMethods);
+        if (localMethods.length > 0) {
+          setMethodsState(localMethods);
+          setRawRows((currentRawRows) => {
+            if (currentRawRows.length === 0) {
+              setKasaData(generateInitialData(localMethods));
+            } else {
+              setKasaData(processExcelData(currentRawRows, localMethods));
+            }
+            return currentRawRows;
+          });
+          // Supabase'e kaydet (arka planda)
+          const hasCustomData = localMethods.some(
+            (m) => (m.excelKolonAdi && m.excelKolonAdi.length > 0) || m.baslangicBakiye !== 0
+          );
+          if (hasCustomData) {
+            syncMethodsToSupabase(localMethods);
+          }
         }
       }
 

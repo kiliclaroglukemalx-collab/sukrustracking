@@ -154,7 +154,6 @@ export function processExcelData(
     const baslangicBakiye = matched?.baslangicBakiye ?? 0;
     const komisyon = totals.borc * (komisyonOrani / 100);
     const cekimKomisyon = totals.kredi * (cekimKomisyonOrani / 100);
-    console.log(`[v0] Excel eslestirme: "${odemeTuru}" -> ${matched ? `"${matched.name}" (excelAdi: "${matched.excelKolonAdi}", kom: %${komisyonOrani})` : "ESLESMEDI (kom: %0)"} | borc: ${totals.borc}, komisyon: ${komisyon}`);
     const netBorc = totals.borc - komisyon;
     const kalanKasa = baslangicBakiye + netBorc - totals.kredi - cekimKomisyon;
 
