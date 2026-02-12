@@ -180,6 +180,7 @@ interface StoreContextValue {
   // Odeme sistemi
   odemeler: OdemeKaydi[];
   odemeEkle: (odeme: Omit<OdemeKaydi, "id" | "no" | "tarih">) => OdemeKaydi;
+  odemeSil: (id: string) => void;
 }
 
 const StoreContext = createContext<StoreContextValue | null>(null);
@@ -304,6 +305,35 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     [odemeler.length],
   );
 
+  const odemeSil = useCallback(
+    (id: string) => {
+      setOdemeler((prev) => {
+        const silinecek = prev.find((o) => o.id === id);
+        if (!silinecek) return prev;
+
+        // Kasa bakiyesini geri al (ters islem)
+        setKasaData((prevKasa) =>
+          prevKasa.map((kasa) => {
+            let delta = 0;
+            if (silinecek.islemTipi === "odeme-yap" && kasa.odemeTuruAdi === silinecek.yontem) {
+              delta = silinecek.tutarTL; // geri ekle
+            } else if (silinecek.islemTipi === "odeme-al" && kasa.odemeTuruAdi === silinecek.yontem) {
+              delta = -silinecek.tutarTL; // geri cikar
+            } else if (silinecek.islemTipi === "transfer") {
+              if (kasa.odemeTuruAdi === silinecek.yontem) delta = silinecek.tutarTL;
+              if (kasa.odemeTuruAdi === silinecek.hedefYontem) delta = -silinecek.tutarTL;
+            }
+            if (delta === 0) return kasa;
+            return { ...kasa, kalanKasa: kasa.kalanKasa + delta };
+          }),
+        );
+
+        return prev.filter((o) => o.id !== id);
+      });
+    },
+    [],
+  );
+
   // --- Methods (sync to both localStorage and Supabase) ---
   const supabaseSyncTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -347,6 +377,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       supabaseReady,
       odemeler,
       odemeEkle,
+      odemeSil,
     }),
     [
       role,
@@ -363,6 +394,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       supabaseReady,
       odemeler,
       odemeEkle,
+      odemeSil,
     ],
   );
 

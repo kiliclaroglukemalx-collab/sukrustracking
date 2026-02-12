@@ -9,6 +9,7 @@ import {
   Check,
   X,
   ChevronDown,
+  Trash2,
 } from "lucide-react";
 import { useStore } from "@/lib/store";
 import type { IslemTipi, OdemeKaydi } from "@/lib/store";
@@ -278,7 +279,8 @@ function CustomSelect({
 
 // ---- Ana Odeme Paneli ----
 export function OdemePanel({ onClose }: { onClose: () => void }) {
-  const { kasaData, odemeEkle, odemeler } = useStore();
+  const { kasaData, odemeEkle, odemeler, odemeSil } = useStore();
+  const [silOnay, setSilOnay] = useState<string | null>(null);
   const [islemTipi, setIslemTipi] = useState<IslemTipi>("odeme-yap");
   const [yontem, setYontem] = useState("");
   const [hedefYontem, setHedefYontem] = useState("");
@@ -568,39 +570,77 @@ export function OdemePanel({ onClose }: { onClose: () => void }) {
               <div className="flex flex-col gap-2">
                 {odemeler.map((o) => {
                   const { tarih: t, saat: s } = formatDateTime(o.tarih);
+                  const isSilOnay = silOnay === o.id;
                   return (
-                    <button
+                    <div
                       key={o.id}
-                      type="button"
-                      onClick={() => setOzetOdeme(o)}
-                      className="flex items-center justify-between rounded-lg border border-neutral-800 bg-neutral-900/50 px-3 py-2.5 text-left transition-colors hover:border-neutral-700"
+                      className="flex items-center gap-2 rounded-lg border border-neutral-800 bg-neutral-900/50 transition-colors hover:border-neutral-700"
                     >
-                      <div className="flex flex-col gap-0.5">
-                        <div className="flex items-center gap-2">
-                          <span className="font-mono text-[10px] font-bold text-neutral-500">
-                            {o.no}
-                          </span>
-                          <span className="text-[10px] font-semibold uppercase text-neutral-400">
-                            {islemLabel(o.islemTipi)}
+                      {/* Tiklanabilir alan -- ozet karti acar */}
+                      <button
+                        type="button"
+                        onClick={() => setOzetOdeme(o)}
+                        className="flex flex-1 items-center justify-between px-3 py-2.5 text-left"
+                      >
+                        <div className="flex flex-col gap-0.5">
+                          <div className="flex items-center gap-2">
+                            <span className="font-mono text-[10px] font-bold text-neutral-500">
+                              {o.no}
+                            </span>
+                            <span className="text-[10px] font-semibold uppercase text-neutral-400">
+                              {islemLabel(o.islemTipi)}
+                            </span>
+                          </div>
+                          <span className="text-[10px] text-neutral-600">
+                            {o.yontem}
+                            {o.hedefYontem ? ` → ${o.hedefYontem}` : ""} | {t}{" "}
+                            {s}
                           </span>
                         </div>
-                        <span className="text-[10px] text-neutral-600">
-                          {o.yontem}
-                          {o.hedefYontem ? ` → ${o.hedefYontem}` : ""} | {t}{" "}
-                          {s}
+                        <span
+                          className={`font-mono text-xs font-bold ${
+                            o.islemTipi === "odeme-al"
+                              ? "text-green-400"
+                              : "text-red-400"
+                          }`}
+                        >
+                          {o.islemTipi === "odeme-al" ? "+" : "-"}{"₺"}
+                          {formatCurrency(o.tutarTL)}
                         </span>
-                      </div>
-                      <span
-                        className={`font-mono text-xs font-bold ${
-                          o.islemTipi === "odeme-al"
-                            ? "text-green-400"
-                            : "text-red-400"
-                        }`}
-                      >
-                        {o.islemTipi === "odeme-al" ? "+" : "-"}{"₺"}
-                        {formatCurrency(o.tutarTL)}
-                      </span>
-                    </button>
+                      </button>
+
+                      {/* Sil butonu */}
+                      {isSilOnay ? (
+                        <div className="flex items-center gap-1 pr-2">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              odemeSil(o.id);
+                              setSilOnay(null);
+                            }}
+                            className="rounded-md bg-red-500/20 px-2 py-1 text-[9px] font-bold uppercase text-red-400 transition-colors hover:bg-red-500/30"
+                          >
+                            Evet
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setSilOnay(null)}
+                            className="rounded-md bg-neutral-800 px-2 py-1 text-[9px] font-bold uppercase text-neutral-400 transition-colors hover:bg-neutral-700"
+                          >
+                            Iptal
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => setSilOnay(o.id)}
+                          className="mr-2 flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-neutral-600 transition-colors hover:bg-red-500/10 hover:text-red-400"
+                          title="Islemi sil"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      )}
+                    </div>
                   );
                 })}
               </div>
