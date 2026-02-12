@@ -33,7 +33,11 @@ const colsClass: Record<number, string> = {
 
 export default function Page() {
   const { kasaData, videoUrl } = useStore();
-  const grid = useMemo(() => computeGrid(kasaData.length), [kasaData.length]);
+  const visibleCards = useMemo(
+    () => kasaData.filter((c) => c.kalanKasa !== 0),
+    [kasaData],
+  );
+  const grid = useMemo(() => computeGrid(visibleCards.length), [visibleCards.length]);
 
   return (
     <div className="flex h-full flex-col overflow-hidden">
@@ -85,7 +89,7 @@ export default function Page() {
             gridTemplateRows: `repeat(${grid.rows}, 1fr)`,
           }}
         >
-          {kasaData.map((card, i) => (
+          {visibleCards.map((card, i) => (
             <KasaCard key={card.id} data={card} index={i} />
           ))}
         </div>
