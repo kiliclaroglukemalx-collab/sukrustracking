@@ -69,97 +69,37 @@ function saveRole(r: UserRole) {
 }
 
 // --- Supabase helpers ---
+// Store methods as JSON in app_settings to avoid column mismatch issues
 async function fetchMethodsFromSupabase(): Promise<PaymentMethod[] | null> {
   try {
     const supabase = createClient();
     const { data, error } = await supabase
-      .from("payment_methods")
-      .select("*")
-      .order("sort_order", { ascending: true });
+      .from("app_settings")
+      .select("value")
+      .eq("key", "methods_json")
+      .single();
 
-    if (error) {
-      console.log("[v0] Supabase fetch error:", error.message);
-      return null;
-    }
-    if (!data || data.length === 0) return null;
+    if (error || !data?.value) return null;
 
-    // Cache detected columns
-    detectedColumns = Object.keys(data[0]);
-
-    return data.map((row: Record<string, unknown>) => ({
-      id: row.id as string,
-      name: row.name as string,
-      excelKolonAdi: typeof row.excel_kolon_adi === "string" ? row.excel_kolon_adi : "",
-      komisyonOrani: typeof row.komisyon_orani === "number" ? row.komisyon_orani : 0,
-      cekimKomisyonOrani: typeof row.cekim_komisyon_orani === "number" ? row.cekim_komisyon_orani : 0,
-      baslangicBakiye: typeof row.baslangic_bakiye === "number" ? row.baslangic_bakiye : 0,
-    }));
+    const parsed = JSON.parse(data.value);
+    if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    return null;
   } catch {
     return null;
   }
 }
 
-// Detect which columns the table has (cached per session)
-let detectedColumns: string[] | null = null;
-
-async function detectTableColumns(): Promise<string[]> {
-  if (detectedColumns) return detectedColumns;
-  try {
-    const supabase = createClient();
-    const { data } = await supabase
-      .from("payment_methods")
-      .select("*")
-      .limit(1);
-    if (data && data.length > 0) {
-      detectedColumns = Object.keys(data[0]);
-    } else {
-      // Table is empty -- try inserting a test row to see what columns exist
-      // Use the minimal set first
-      detectedColumns = ["id", "name", "komisyon_orani", "baslangic_bakiye", "sort_order"];
-    }
-  } catch {
-    detectedColumns = ["id", "name", "komisyon_orani", "baslangic_bakiye", "sort_order"];
-  }
-  return detectedColumns;
-}
-
 async function syncMethodsToSupabase(methods: PaymentMethod[]) {
   try {
     const supabase = createClient();
-    const cols = await detectTableColumns();
-
-    const hasExcelKolonAdi = cols.includes("excel_kolon_adi");
-    const hasCekimKomisyon = cols.includes("cekim_komisyon_orani");
-
-    const rows = methods.map((m, i) => {
-      const row: Record<string, unknown> = {
-        id: m.id,
-        name: m.name,
-        komisyon_orani: m.komisyonOrani,
-        baslangic_bakiye: m.baslangicBakiye,
-        sort_order: i,
-      };
-      if (hasExcelKolonAdi) row.excel_kolon_adi = m.excelKolonAdi ?? "";
-      if (hasCekimKomisyon) row.cekim_komisyon_orani = m.cekimKomisyonOrani ?? 0;
-      return row;
-    });
-
-    if (rows.length > 0) {
-      // Use upsert instead of delete+insert to avoid data loss on partial failure
-      const { error } = await supabase
-        .from("payment_methods")
-        .upsert(rows, { onConflict: "id" });
-
-      if (error) {
-        console.log("[v0] Supabase upsert failed:", error.message);
-      } else {
-        // Clean up rows that no longer exist
-        const currentIds = methods.map((m) => m.id);
-        await supabase
-          .from("payment_methods")
-          .delete()
-          .not("id", "in", `(${currentIds.join(",")})`);
-      }
+    const { error } = await supabase
+      .from("app_settings")
+      .upsert(
+        { key: "methods_json", value: JSON.stringify(methods) },
+        { onConflict: "key" },
+      );
+    if (error) {
+      console.log("[v0] Supabase methods sync failed:", error.message);
     }
   } catch {
     // Silently fail - localStorage still works as fallback
@@ -237,7 +177,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     initDone.current = true;
 
     (async () => {
-      // Load methods from Supabase
+      // Load methods from Supabase (source of truth)
       const sbMethods = await fetchMethodsFromSupabase();
       if (sbMethods && sbMethods.length > 0) {
         setMethodsState(sbMethods);
@@ -252,6 +192,12 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
           }
           return currentRawRows;
         });
+      } else {
+        // Supabase has no methods yet -- push current localStorage methods to Supabase
+        const localMethods = loadMethodsFromCache();
+        if (localMethods.length > 0 && localMethods !== DEFAULT_METHODS) {
+          syncMethodsToSupabase(localMethods);
+        }
       }
 
       // Load video URL from Supabase

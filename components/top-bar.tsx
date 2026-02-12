@@ -48,7 +48,7 @@ export function TopBar({ data }: TopBarProps) {
 
   const toplamYatirim = data.reduce((sum, d) => sum + d.toplamBorc, 0);
   const toplamCekim = data.reduce((sum, d) => sum + d.toplamKredi, 0);
-  const toplamKomisyon = data.reduce((sum, d) => sum + d.komisyon, 0);
+  const toplamKomisyon = data.reduce((sum, d) => sum + d.komisyon + d.cekimKomisyon, 0);
   const totalKasa = data.reduce((sum, d) => sum + d.kalanKasa, 0);
 
   return (
