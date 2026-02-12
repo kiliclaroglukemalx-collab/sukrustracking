@@ -33,11 +33,11 @@ interface TopBarProps {
 }
 
 export function TopBar({ data }: TopBarProps) {
-  const [roundedHour, setRoundedHour] = useState(getRoundedHour);
+  const [roundedHour, setRoundedHour] = useState("");
   const [dateStr, setDateStr] = useState("");
-  const genelToplam = data.reduce((sum, d) => sum + d.kalanKasa, 0);
 
   useEffect(() => {
+    setRoundedHour(getRoundedHour());
     setDateStr(getFormattedDate());
     const timer = setInterval(() => {
       setRoundedHour(getRoundedHour());
