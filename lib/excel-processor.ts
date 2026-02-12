@@ -4,6 +4,7 @@ export interface PaymentMethod {
   id: string;
   name: string;
   komisyonOrani: number;
+  cekimKomisyonOrani: number;
   baslangicBakiye: number;
 }
 
@@ -20,6 +21,8 @@ export interface KasaCardData {
   toplamKredi: number;
   komisyon: number;
   komisyonOrani: number;
+  cekimKomisyon: number;
+  cekimKomisyonOrani: number;
   netBorc: number;
   kalanKasa: number;
   baslangicBakiye: number;
@@ -27,30 +30,30 @@ export interface KasaCardData {
 
 // Default payment methods with commission rates and starting balances
 export const DEFAULT_METHODS: PaymentMethod[] = [
-  { id: "m-0", name: "Nakit", komisyonOrani: 0, baslangicBakiye: 0 },
-  { id: "m-1", name: "Kredi Karti", komisyonOrani: 1.79, baslangicBakiye: 0 },
-  { id: "m-2", name: "Banka Karti", komisyonOrani: 0.95, baslangicBakiye: 0 },
-  { id: "m-3", name: "Havale/EFT", komisyonOrani: 0, baslangicBakiye: 0 },
-  { id: "m-4", name: "Yemek Karti", komisyonOrani: 5.0, baslangicBakiye: 0 },
-  { id: "m-5", name: "Online Odeme", komisyonOrani: 2.5, baslangicBakiye: 0 },
-  { id: "m-6", name: "Multinet", komisyonOrani: 5.0, baslangicBakiye: 0 },
-  { id: "m-7", name: "Sodexo", komisyonOrani: 5.0, baslangicBakiye: 0 },
-  { id: "m-8", name: "Ticket", komisyonOrani: 5.0, baslangicBakiye: 0 },
-  { id: "m-9", name: "Metropol", komisyonOrani: 5.0, baslangicBakiye: 0 },
-  { id: "m-10", name: "Setcard", komisyonOrani: 5.0, baslangicBakiye: 0 },
-  { id: "m-11", name: "iyzico", komisyonOrani: 2.99, baslangicBakiye: 0 },
-  { id: "m-12", name: "PayPal", komisyonOrani: 3.4, baslangicBakiye: 0 },
-  { id: "m-13", name: "Param", komisyonOrani: 2.79, baslangicBakiye: 0 },
-  { id: "m-14", name: "Paycell", komisyonOrani: 2.5, baslangicBakiye: 0 },
-  { id: "m-15", name: "Hopi", komisyonOrani: 3.0, baslangicBakiye: 0 },
-  { id: "m-16", name: "Tosla", komisyonOrani: 2.5, baslangicBakiye: 0 },
-  { id: "m-17", name: "Papara", komisyonOrani: 1.5, baslangicBakiye: 0 },
-  { id: "m-18", name: "Cuzdan", komisyonOrani: 0, baslangicBakiye: 0 },
-  { id: "m-19", name: "Acik Hesap", komisyonOrani: 0, baslangicBakiye: 0 },
-  { id: "m-20", name: "Fis/Cek", komisyonOrani: 0, baslangicBakiye: 0 },
-  { id: "m-21", name: "Garanti Pay", komisyonOrani: 2.2, baslangicBakiye: 0 },
-  { id: "m-22", name: "QR Odeme", komisyonOrani: 1.8, baslangicBakiye: 0 },
-  { id: "m-23", name: "Puan", komisyonOrani: 0, baslangicBakiye: 0 },
+  { id: "m-0", name: "Nakit", komisyonOrani: 0, cekimKomisyonOrani: 0, baslangicBakiye: 0 },
+  { id: "m-1", name: "Kredi Karti", komisyonOrani: 1.79, cekimKomisyonOrani: 0, baslangicBakiye: 0 },
+  { id: "m-2", name: "Banka Karti", komisyonOrani: 0.95, cekimKomisyonOrani: 0, baslangicBakiye: 0 },
+  { id: "m-3", name: "Havale/EFT", komisyonOrani: 0, cekimKomisyonOrani: 0, baslangicBakiye: 0 },
+  { id: "m-4", name: "Yemek Karti", komisyonOrani: 5.0, cekimKomisyonOrani: 0, baslangicBakiye: 0 },
+  { id: "m-5", name: "Online Odeme", komisyonOrani: 2.5, cekimKomisyonOrani: 0, baslangicBakiye: 0 },
+  { id: "m-6", name: "Multinet", komisyonOrani: 5.0, cekimKomisyonOrani: 0, baslangicBakiye: 0 },
+  { id: "m-7", name: "Sodexo", komisyonOrani: 5.0, cekimKomisyonOrani: 0, baslangicBakiye: 0 },
+  { id: "m-8", name: "Ticket", komisyonOrani: 5.0, cekimKomisyonOrani: 0, baslangicBakiye: 0 },
+  { id: "m-9", name: "Metropol", komisyonOrani: 5.0, cekimKomisyonOrani: 0, baslangicBakiye: 0 },
+  { id: "m-10", name: "Setcard", komisyonOrani: 5.0, cekimKomisyonOrani: 0, baslangicBakiye: 0 },
+  { id: "m-11", name: "iyzico", komisyonOrani: 2.99, cekimKomisyonOrani: 0, baslangicBakiye: 0 },
+  { id: "m-12", name: "PayPal", komisyonOrani: 3.4, cekimKomisyonOrani: 0, baslangicBakiye: 0 },
+  { id: "m-13", name: "Param", komisyonOrani: 2.79, cekimKomisyonOrani: 0, baslangicBakiye: 0 },
+  { id: "m-14", name: "Paycell", komisyonOrani: 2.5, cekimKomisyonOrani: 0, baslangicBakiye: 0 },
+  { id: "m-15", name: "Hopi", komisyonOrani: 3.0, cekimKomisyonOrani: 0, baslangicBakiye: 0 },
+  { id: "m-16", name: "Tosla", komisyonOrani: 2.5, cekimKomisyonOrani: 0, baslangicBakiye: 0 },
+  { id: "m-17", name: "Papara", komisyonOrani: 1.5, cekimKomisyonOrani: 0, baslangicBakiye: 0 },
+  { id: "m-18", name: "Cuzdan", komisyonOrani: 0, cekimKomisyonOrani: 0, baslangicBakiye: 0 },
+  { id: "m-19", name: "Acik Hesap", komisyonOrani: 0, cekimKomisyonOrani: 0, baslangicBakiye: 0 },
+  { id: "m-20", name: "Fis/Cek", komisyonOrani: 0, cekimKomisyonOrani: 0, baslangicBakiye: 0 },
+  { id: "m-21", name: "Garanti Pay", komisyonOrani: 2.2, cekimKomisyonOrani: 0, baslangicBakiye: 0 },
+  { id: "m-22", name: "QR Odeme", komisyonOrani: 1.8, cekimKomisyonOrani: 0, baslangicBakiye: 0 },
+  { id: "m-23", name: "Puan", komisyonOrani: 0, cekimKomisyonOrani: 0, baslangicBakiye: 0 },
 ];
 
 function getKomisyonOrani(
@@ -69,6 +72,26 @@ function getKomisyonOrani(
       m.name.toLowerCase().includes(lower),
   );
   if (partial) return partial.komisyonOrani;
+
+  return 0;
+}
+
+function getCekimKomisyonOrani(
+  odemeTuru: string,
+  methods: PaymentMethod[],
+): number {
+  const exact = methods.find(
+    (m) => m.name.toLowerCase() === odemeTuru.toLowerCase(),
+  );
+  if (exact) return exact.cekimKomisyonOrani;
+
+  const lower = odemeTuru.toLowerCase();
+  const partial = methods.find(
+    (m) =>
+      lower.includes(m.name.toLowerCase()) ||
+      m.name.toLowerCase().includes(lower),
+  );
+  if (partial) return partial.cekimKomisyonOrani;
 
   return 0;
 }
@@ -113,10 +136,12 @@ export function processExcelData(
 
   for (const [odemeTuru, totals] of grouped.entries()) {
     const komisyonOrani = getKomisyonOrani(odemeTuru, methods);
+    const cekimKomisyonOrani = getCekimKomisyonOrani(odemeTuru, methods);
     const baslangicBakiye = getBaslangicBakiye(odemeTuru, methods);
     const komisyon = totals.borc * (komisyonOrani / 100);
+    const cekimKomisyon = totals.kredi * (cekimKomisyonOrani / 100);
     const netBorc = totals.borc - komisyon;
-    const kalanKasa = baslangicBakiye + netBorc - totals.kredi;
+    const kalanKasa = baslangicBakiye + netBorc - totals.kredi - cekimKomisyon;
 
     results.push({
       id: `kasa-${index++}`,
@@ -125,6 +150,8 @@ export function processExcelData(
       toplamKredi: totals.kredi,
       komisyon,
       komisyonOrani,
+      cekimKomisyon,
+      cekimKomisyonOrani,
       netBorc,
       kalanKasa,
       baslangicBakiye,
