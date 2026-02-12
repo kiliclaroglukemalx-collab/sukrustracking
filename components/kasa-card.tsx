@@ -75,14 +75,15 @@ export function KasaCard({ data }: KasaCardProps) {
             </span>
           );
         })()}
-        {/* Komisyon detail line */}
-        {(data.komisyon > 0 || data.cekimKomisyon > 0) && (
-          <span className="mt-0.5 text-[8px] font-medium tracking-wide text-amber-400/70 md:text-[9px]">
-            {data.komisyon > 0 && `K:%${data.komisyonOrani} -₺${formatAmount(data.komisyon)}`}
-            {data.komisyon > 0 && data.cekimKomisyon > 0 && " | "}
-            {data.cekimKomisyon > 0 && `C:%${data.cekimKomisyonOrani} -₺${formatAmount(data.cekimKomisyon)}`}
-          </span>
-        )}
+        {/* Accent underline */}
+        <div
+          className="mt-1.5 h-[2px] w-3/5 rounded-full"
+          style={{
+            background: isNegative
+              ? "linear-gradient(90deg, transparent, rgba(239,68,68,0.5), transparent)"
+              : "linear-gradient(90deg, transparent, rgba(255,255,255,0.25), transparent)",
+          }}
+        />
       </div>
     </div>
   );
