@@ -109,6 +109,9 @@ export function processExcelData(
     grouped.set(key, existing);
   }
 
+  console.log("[v0] Grouped payment types:", Array.from(grouped.keys()));
+  console.log("[v0] Available methods:", methods.map(m => `${m.name}${m.excelKolonAdi ? ` (excel: ${m.excelKolonAdi})` : ""} k:${m.komisyonOrani}%`));
+
   const results: KasaCardData[] = [];
   let index = 0;
 
@@ -121,6 +124,8 @@ export function processExcelData(
     const cekimKomisyon = totals.kredi * (cekimKomisyonOrani / 100);
     const netBorc = totals.borc - komisyon;
     const kalanKasa = baslangicBakiye + netBorc - totals.kredi - cekimKomisyon;
+
+    console.log(`[v0] ${odemeTuru} -> matched: ${matched?.name ?? "NONE"}, komOrani: ${komisyonOrani}%, borc: ${totals.borc}, komisyon: ${komisyon}, cekim: ${totals.kredi}, cekimKom: ${cekimKomisyon}, bakiye: ${baslangicBakiye}, kalan: ${kalanKasa}`);
 
     results.push({
       id: `kasa-${index++}`,

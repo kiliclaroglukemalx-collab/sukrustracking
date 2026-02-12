@@ -54,8 +54,8 @@ export function KasaCard({ data, index }: KasaCardProps) {
         )}
       </div>
 
-      {/* Bottom half - amount */}
-      <div className="flex flex-1 items-center justify-center px-2 py-2.5">
+      {/* Bottom half - amount + komisyon */}
+      <div className="flex flex-1 flex-col items-center justify-center px-2 py-2">
         {(() => {
           const formatted = formatAmount(data.kalanKasa);
           const sizeClass = amountSizeClass(formatted);
@@ -75,6 +75,14 @@ export function KasaCard({ data, index }: KasaCardProps) {
             </span>
           );
         })()}
+        {/* Komisyon detail line */}
+        {(data.komisyon > 0 || data.cekimKomisyon > 0) && (
+          <span className="mt-0.5 text-[8px] font-medium tracking-wide text-amber-400/70 md:text-[9px]">
+            {data.komisyon > 0 && `K:%${data.komisyonOrani} -₺${formatAmount(data.komisyon)}`}
+            {data.komisyon > 0 && data.cekimKomisyon > 0 && " | "}
+            {data.cekimKomisyon > 0 && `C:%${data.cekimKomisyonOrani} -₺${formatAmount(data.cekimKomisyon)}`}
+          </span>
+        )}
       </div>
     </div>
   );
