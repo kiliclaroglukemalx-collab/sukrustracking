@@ -18,7 +18,9 @@ export function ExcelUploader({ onDataLoaded }: ExcelUploaderProps) {
     async (file: File) => {
       const buffer = await file.arrayBuffer();
       const rows = parseExcelFile(buffer);
+      console.log("[v0] Excel parsed rows:", rows.length, "first 3:", rows.slice(0, 3));
       const processed = processExcelData(rows, methods);
+      console.log("[v0] Processed cards:", processed.length, "sample borc/kredi/kom:", processed.slice(0, 3).map(c => ({ name: c.odemeTuruAdi, borc: c.toplamBorc, kredi: c.toplamKredi, komisyon: c.komisyon, kalan: c.kalanKasa })));
       onDataLoaded(processed, rows);
     },
     [onDataLoaded, methods],

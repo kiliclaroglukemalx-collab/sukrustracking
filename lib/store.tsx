@@ -193,7 +193,16 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       if (sbMethods && sbMethods.length > 0) {
         setMethodsState(sbMethods);
         cacheMethodsLocally(sbMethods);
-        setKasaData(generateDemoData(sbMethods));
+        // Only reset to demo if no Excel data has been loaded yet
+        setRawRows((currentRawRows) => {
+          if (currentRawRows.length === 0) {
+            setKasaData(generateDemoData(sbMethods));
+          } else {
+            // Re-process with updated methods from Supabase
+            setKasaData(processExcelData(currentRawRows, sbMethods));
+          }
+          return currentRawRows;
+        });
       }
 
       // Load video URL from Supabase
@@ -227,6 +236,10 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
 
   // --- Excel ---
   const loadExcelData = useCallback((data: KasaCardData[], rows?: PaymentRow[]) => {
+    console.log("[v0] loadExcelData called, cards:", data.length, "rawRows:", rows?.length ?? 0);
+    if (data.length > 0) {
+      console.log("[v0] loadExcelData first card:", { name: data[0].odemeTuruAdi, borc: data[0].toplamBorc, kredi: data[0].toplamKredi, komisyon: data[0].komisyon });
+    }
     setKasaData(data);
     if (rows) {
       setRawRows(rows);

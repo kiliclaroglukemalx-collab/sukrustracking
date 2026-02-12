@@ -51,6 +51,11 @@ export function TopBar({ data }: TopBarProps) {
   const toplamKomisyon = data.reduce((sum, d) => sum + d.komisyon, 0);
   const totalKasa = data.reduce((sum, d) => sum + d.kalanKasa, 0);
 
+  console.log("[v0] TopBar data count:", data.length, "yatirim:", toplamYatirim, "komisyon:", toplamKomisyon, "cekim:", toplamCekim, "kasa:", totalKasa);
+  if (data.length > 0 && toplamYatirim === 0) {
+    console.log("[v0] TopBar first 3 cards detail:", data.slice(0, 3).map(d => ({ name: d.odemeTuruAdi, borc: d.toplamBorc, kredi: d.toplamKredi, komisyon: d.komisyon, bakiye: d.baslangicBakiye, kalan: d.kalanKasa })));
+  }
+
   return (
     <div className="flex h-[72px] items-center justify-between">
       {/* LEFT: Hour + Kasasi + date */}
