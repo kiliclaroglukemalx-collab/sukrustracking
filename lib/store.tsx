@@ -77,52 +77,88 @@ async function fetchMethodsFromSupabase(): Promise<PaymentMethod[] | null> {
       .select("*")
       .order("sort_order", { ascending: true });
 
-    if (error || !data || data.length === 0) return null;
+    if (error) {
+      console.log("[v0] Supabase fetch error:", error.message);
+      return null;
+    }
+    if (!data || data.length === 0) return null;
+
+    // Cache detected columns
+    detectedColumns = Object.keys(data[0]);
 
     return data.map((row: Record<string, unknown>) => ({
       id: row.id as string,
       name: row.name as string,
-      excelKolonAdi: (row.excel_kolon_adi as string) ?? "",
-      komisyonOrani: (row.komisyon_orani as number) ?? 0,
-      cekimKomisyonOrani: (row.cekim_komisyon_orani as number) ?? 0,
-      baslangicBakiye: (row.baslangic_bakiye as number) ?? 0,
+      excelKolonAdi: typeof row.excel_kolon_adi === "string" ? row.excel_kolon_adi : "",
+      komisyonOrani: typeof row.komisyon_orani === "number" ? row.komisyon_orani : 0,
+      cekimKomisyonOrani: typeof row.cekim_komisyon_orani === "number" ? row.cekim_komisyon_orani : 0,
+      baslangicBakiye: typeof row.baslangic_bakiye === "number" ? row.baslangic_bakiye : 0,
     }));
   } catch {
     return null;
   }
 }
 
+// Detect which columns the table has (cached per session)
+let detectedColumns: string[] | null = null;
+
+async function detectTableColumns(): Promise<string[]> {
+  if (detectedColumns) return detectedColumns;
+  try {
+    const supabase = createClient();
+    const { data } = await supabase
+      .from("payment_methods")
+      .select("*")
+      .limit(1);
+    if (data && data.length > 0) {
+      detectedColumns = Object.keys(data[0]);
+    } else {
+      // Table is empty -- try inserting a test row to see what columns exist
+      // Use the minimal set first
+      detectedColumns = ["id", "name", "komisyon_orani", "baslangic_bakiye", "sort_order"];
+    }
+  } catch {
+    detectedColumns = ["id", "name", "komisyon_orani", "baslangic_bakiye", "sort_order"];
+  }
+  return detectedColumns;
+}
+
 async function syncMethodsToSupabase(methods: PaymentMethod[]) {
   try {
     const supabase = createClient();
+    const cols = await detectTableColumns();
 
-    // Delete all existing methods and re-insert (simple full sync)
-    await supabase.from("payment_methods").delete().neq("id", "__never__");
+    const hasExcelKolonAdi = cols.includes("excel_kolon_adi");
+    const hasCekimKomisyon = cols.includes("cekim_komisyon_orani");
 
-    const fullRows = methods.map((m, i) => ({
-      id: m.id,
-      name: m.name,
-      excel_kolon_adi: m.excelKolonAdi ?? "",
-      komisyon_orani: m.komisyonOrani,
-      cekim_komisyon_orani: m.cekimKomisyonOrani ?? 0,
-      baslangic_bakiye: m.baslangicBakiye,
-      sort_order: i,
-    }));
+    const rows = methods.map((m, i) => {
+      const row: Record<string, unknown> = {
+        id: m.id,
+        name: m.name,
+        komisyon_orani: m.komisyonOrani,
+        baslangic_bakiye: m.baslangicBakiye,
+        sort_order: i,
+      };
+      if (hasExcelKolonAdi) row.excel_kolon_adi = m.excelKolonAdi ?? "";
+      if (hasCekimKomisyon) row.cekim_komisyon_orani = m.cekimKomisyonOrani ?? 0;
+      return row;
+    });
 
-    if (fullRows.length > 0) {
-      const { error } = await supabase.from("payment_methods").insert(fullRows);
+    if (rows.length > 0) {
+      // Use upsert instead of delete+insert to avoid data loss on partial failure
+      const { error } = await supabase
+        .from("payment_methods")
+        .upsert(rows, { onConflict: "id" });
 
-      // If insert fails (e.g. missing columns), retry without new columns
       if (error) {
-        console.log("[v0] Full sync failed, retrying without new columns:", error.message);
-        const fallbackRows = methods.map((m, i) => ({
-          id: m.id,
-          name: m.name,
-          komisyon_orani: m.komisyonOrani,
-          baslangic_bakiye: m.baslangicBakiye,
-          sort_order: i,
-        }));
-        await supabase.from("payment_methods").insert(fallbackRows);
+        console.log("[v0] Supabase upsert failed:", error.message);
+      } else {
+        // Clean up rows that no longer exist
+        const currentIds = methods.map((m) => m.id);
+        await supabase
+          .from("payment_methods")
+          .delete()
+          .not("id", "in", `(${currentIds.join(",")})`);
       }
     }
   } catch {
@@ -249,10 +285,6 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
 
   // --- Excel ---
   const loadExcelData = useCallback((data: KasaCardData[], rows?: PaymentRow[]) => {
-    console.log("[v0] loadExcelData called, cards:", data.length, "rawRows:", rows?.length ?? 0);
-    if (data.length > 0) {
-      console.log("[v0] loadExcelData first card:", { name: data[0].odemeTuruAdi, borc: data[0].toplamBorc, kredi: data[0].toplamKredi, komisyon: data[0].komisyon });
-    }
     setKasaData(data);
     if (rows) {
       setRawRows(rows);
