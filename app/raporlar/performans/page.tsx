@@ -74,7 +74,7 @@ export default function PerformansPage() {
           <span>Raporlar</span>
         </Link>
         <h1 className="text-sm font-bold tracking-wide text-neutral-900">
-          Yontem Performansi
+          Dis Finans Cekim Performansi
         </h1>
         <div className="w-20" />
       </div>
@@ -83,11 +83,11 @@ export default function PerformansPage() {
         <div className="mb-4 flex items-center gap-2">
           <Trophy className="h-5 w-5 text-amber-500" strokeWidth={1.5} />
           <h2 className="text-sm font-bold uppercase tracking-[0.12em] text-neutral-800">
-            Yontem Saatlik Performansi
+            Dis Finans Cekim Performansi
           </h2>
         </div>
         <p className="mb-4 text-xs text-neutral-400">
-          Yontemler aldiklari yatirim miktarina gore siralanmistir
+          Yontemler aldiklari cekim miktarina gore siralanmistir
         </p>
 
         <div className="overflow-hidden rounded-xl border border-neutral-200 bg-white">

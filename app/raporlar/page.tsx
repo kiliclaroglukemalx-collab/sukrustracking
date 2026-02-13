@@ -53,9 +53,9 @@ export default function RaporlarPage() {
       badgeBg: "bg-amber-50",
       badgeColor: "text-amber-600",
       badgeText: "Aktif",
-      title: "Yontem Saatlik Performansi",
+      title: "Dis Finans Cekim Performansi",
       description:
-        "Yontemler aldiklari yatirim miktarina gore siralanir. En cok yatirim alan yontemler lig tablosu formatinda listelenir.",
+        "Yontemler aldiklari cekim miktarina gore siralanir. En cok cekim alan yontemler lig tablosu formatinda listelenir.",
       footnote: "Veriler anlik kasa durumunu yansitir",
     },
     {
@@ -63,13 +63,13 @@ export default function RaporlarPage() {
       icon: FileText,
       iconBg: "bg-blue-50",
       iconColor: "text-blue-500",
-      badgeBg: "bg-neutral-100",
-      badgeColor: "text-neutral-400",
-      badgeText: "Yakinda",
+      badgeBg: "bg-blue-50",
+      badgeColor: "text-blue-600",
+      badgeText: "Aktif",
       title: "Cekim Performans Raporu",
       description:
-        "Yontem bazinda cekim performansini detayli analiz eder. Cekim miktarlari, ortalamalar ve trendler raporlanir.",
-      footnote: "Cursor uzerinden gelistirmeye devam edilecek",
+        "Yontem bazinda cekim performansini detayli analiz eder. Hiz-hacim matrisi ile yontemlerin verimliligi gorsellestirilir.",
+      footnote: "Lig tablosu + Scatter plot matrisi",
     },
     {
       href: "/raporlar/analiz",
