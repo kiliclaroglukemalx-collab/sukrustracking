@@ -32,6 +32,7 @@ import {
   BarChart,
   Bar,
   Cell,
+  LabelList,
 } from "recharts";
 import { useStore } from "@/lib/store";
 
@@ -52,9 +53,9 @@ function formatCompact(value: number): string {
 }
 
 function getSpeedLabel(avgDuration: number, midX: number): { label: string; color: string; bg: string } {
-  if (avgDuration <= midX * 0.8) return { label: "Hizli", color: "text-emerald-400", bg: "bg-emerald-400/10" };
-  if (avgDuration >= midX * 1.4) return { label: "Yavas", color: "text-red-400", bg: "bg-red-400/10" };
-  return { label: "Normal", color: "text-amber-400", bg: "bg-amber-400/10" };
+  if (avgDuration <= midX * 0.8) return { label: "Hizli", color: "text-emerald-700", bg: "bg-emerald-100" };
+  if (avgDuration >= midX * 1.4) return { label: "Yavas", color: "text-red-700", bg: "bg-red-100" };
+  return { label: "Normal", color: "text-amber-700", bg: "bg-amber-100" };
 }
 
 /* ═══════════════════════════════════════════════════════
@@ -250,7 +251,7 @@ export default function CekimRaporuPage() {
         <div className="relative mx-auto max-w-6xl px-6">
           {/* Section label */}
           <div className="mb-10 text-center">
-            <p className="mb-2 text-[11px] font-medium uppercase tracking-[0.2em] text-neutral-500">
+            <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.2em] text-neutral-400">
               Cekim Analizi
             </p>
             <h2 className="text-2xl font-bold text-white md:text-3xl">
@@ -267,13 +268,13 @@ export default function CekimRaporuPage() {
                 <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-xl bg-cyan-500/10">
                   <DollarSign className="h-5 w-5 text-cyan-400" strokeWidth={1.5} />
                 </div>
-                <p className="mb-1 text-[10px] font-medium uppercase tracking-[0.15em] text-neutral-500">
+                <p className="mb-1 text-[11px] font-semibold uppercase tracking-[0.15em] text-neutral-400">
                   Toplam Cekim Hacmi
                 </p>
                 <p className="font-mono text-3xl font-black tracking-tight text-white md:text-4xl">
                   ₺{formatCompact(totalVolume)}
                 </p>
-                <p className="mt-2 text-[11px] text-neutral-500">
+                <p className="mt-2 text-xs text-neutral-400">
                   {formatCurrency(totalVolume)} TL
                 </p>
               </div>
@@ -286,14 +287,14 @@ export default function CekimRaporuPage() {
                 <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-xl bg-blue-500/10">
                   <Clock className="h-5 w-5 text-blue-400" strokeWidth={1.5} />
                 </div>
-                <p className="mb-1 text-[10px] font-medium uppercase tracking-[0.15em] text-neutral-500">
+                <p className="mb-1 text-[11px] font-semibold uppercase tracking-[0.15em] text-neutral-400">
                   Ortalama Islem Suresi
                 </p>
                 <p className="font-mono text-3xl font-black tracking-tight text-white md:text-4xl">
                   {avgDuration.toFixed(1)}
-                  <span className="ml-1 text-lg font-medium text-neutral-500">dk</span>
+                  <span className="ml-1 text-lg font-semibold text-neutral-400">dk</span>
                 </p>
-                <p className="mt-2 text-[11px] text-neutral-500">
+                <p className="mt-2 text-xs text-neutral-400">
                   4 yontem ortalamasi
                 </p>
               </div>
@@ -306,13 +307,13 @@ export default function CekimRaporuPage() {
                 <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500/10">
                   <Hash className="h-5 w-5 text-emerald-400" strokeWidth={1.5} />
                 </div>
-                <p className="mb-1 text-[10px] font-medium uppercase tracking-[0.15em] text-neutral-500">
+                <p className="mb-1 text-[11px] font-semibold uppercase tracking-[0.15em] text-neutral-400">
                   Toplam Islem Adedi
                 </p>
                 <p className="font-mono text-3xl font-black tracking-tight text-white md:text-4xl">
                   {formatCurrency(totalTx)}
                 </p>
-                <p className="mt-2 text-[11px] text-neutral-500">
+                <p className="mt-2 text-xs text-neutral-400">
                   Tum yontemler toplami
                 </p>
               </div>
@@ -325,13 +326,13 @@ export default function CekimRaporuPage() {
                 <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-xl bg-violet-500/10">
                   <BarChart3 className="h-5 w-5 text-violet-400" strokeWidth={1.5} />
                 </div>
-                <p className="mb-1 text-[10px] font-medium uppercase tracking-[0.15em] text-neutral-500">
+                <p className="mb-1 text-[11px] font-semibold uppercase tracking-[0.15em] text-neutral-400">
                   Aktif Yontem Sayisi
                 </p>
                 <p className="font-mono text-3xl font-black tracking-tight text-white md:text-4xl">
                   {scatterData.length}
                 </p>
-                <p className="mt-2 text-[11px] text-neutral-500">
+                <p className="mt-2 text-xs text-neutral-400">
                   Aktif cekim kanali
                 </p>
               </div>
@@ -418,15 +419,15 @@ export default function CekimRaporuPage() {
                   </span>
 
                   {/* Speed + Stats */}
-                  <div className="hidden flex-shrink-0 items-center gap-2 md:flex">
-                    <span className={`rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider ${speed.bg} ${speed.color}`}>
+                  <div className="hidden flex-shrink-0 items-center gap-2.5 md:flex">
+                    <span className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ${speed.bg} ${speed.color}`}>
                       {speed.label}
                     </span>
-                    <span className="text-[10px] text-neutral-400">
+                    <span className="text-[11px] font-medium text-neutral-600">
                       {item.avgDuration}dk
                     </span>
-                    <span className="text-[10px] text-neutral-300">·</span>
-                    <span className="text-[10px] text-neutral-400">
+                    <span className="text-[11px] text-neutral-300">·</span>
+                    <span className="text-[11px] font-medium text-neutral-600">
                       {item.txCount} islem
                     </span>
                   </div>
@@ -447,86 +448,123 @@ export default function CekimRaporuPage() {
       </section>
 
       {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-          SECTION 3 — HIZ-HACIM MATRISI (Dark)
+          SECTION 3 — HIZ-HACIM MATRISI (Medium Dark)
       ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
-      <section className="relative overflow-hidden bg-slate-950 py-12 md:py-16">
+      <section className="relative overflow-hidden bg-slate-900 py-12 md:py-16">
         {/* Ambient glow */}
         <div className="pointer-events-none absolute inset-0">
-          <div className="absolute left-1/2 top-1/2 h-[600px] w-[600px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-cyan-500/[0.03] blur-[150px]" />
+          <div className="absolute left-1/2 top-1/2 h-[600px] w-[600px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-cyan-400/[0.06] blur-[150px]" />
         </div>
 
         <div className="relative mx-auto max-w-5xl px-6">
           <div className="mb-10 text-center">
-            <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-white/[0.08] bg-white/[0.03] px-4 py-1.5">
+            <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-white/[0.1] bg-white/[0.05] px-4 py-1.5">
               <Activity className="h-4 w-4 text-cyan-400" strokeWidth={1.5} />
-              <span className="text-[11px] font-semibold uppercase tracking-[0.15em] text-cyan-400">
+              <span className="text-[11px] font-semibold uppercase tracking-[0.15em] text-cyan-300">
                 Matris
               </span>
             </div>
             <h2 className="mb-2 text-xl font-bold text-white md:text-2xl">
               Yontem Hiz-Hacim Matrisi
             </h2>
-            <p className="text-sm text-slate-500">
+            <p className="text-sm text-slate-400">
               Kabarcik boyutu islem adedini, konum ise hiz ve hacim iliskisini gosterir
             </p>
           </div>
 
-          <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-4 md:p-6">
+          <div className="rounded-2xl border border-white/[0.08] bg-slate-800/60 p-4 md:p-6">
             {/* Quadrant legend */}
             <div className="mb-5 flex flex-wrap justify-center gap-4">
               {[
                 { color: "bg-emerald-400", label: "Yildizlar", desc: "Yuksek Hacim, Hizli" },
                 { color: "bg-red-400", label: "Darbogazlar", desc: "Yuksek Hacim, Yavas" },
-                { color: "bg-emerald-400/50", label: "Potansiyel", desc: "Dusuk Hacim, Hizli" },
-                { color: "bg-red-400/50", label: "Verimsiz", desc: "Dusuk Hacim, Yavas" },
+                { color: "bg-emerald-300", label: "Potansiyel", desc: "Dusuk Hacim, Hizli" },
+                { color: "bg-red-300", label: "Verimsiz", desc: "Dusuk Hacim, Yavas" },
               ].map((q) => (
                 <div key={q.label} className="flex items-center gap-1.5">
-                  <span className={`h-2 w-2 rounded-sm ${q.color} opacity-60`} />
-                  <span className="text-[10px] font-medium text-slate-300">{q.label}</span>
-                  <span className="text-[10px] text-slate-600">({q.desc})</span>
+                  <span className={`h-2.5 w-2.5 rounded-sm ${q.color} opacity-70`} />
+                  <span className="text-[11px] font-semibold text-slate-200">{q.label}</span>
+                  <span className="text-[10px] text-slate-400">({q.desc})</span>
                 </div>
               ))}
             </div>
 
             {/* Chart */}
-            <ResponsiveContainer width="100%" height={420}>
-              <ScatterChart margin={{ top: 20, right: 30, bottom: 30, left: 20 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
+            <ResponsiveContainer width="100%" height={440}>
+              <ScatterChart margin={{ top: 30, right: 40, bottom: 35, left: 30 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.10)" />
 
                 {/* Quadrant backgrounds */}
-                <ReferenceArea x1={0} x2={midX} y1={midY} y2={yMax} fill="#10B981" fillOpacity={0.06} ifOverflow="extendDomain" />
-                <ReferenceArea x1={midX} x2={xMax} y1={midY} y2={yMax} fill="#EF4444" fillOpacity={0.06} ifOverflow="extendDomain" />
-                <ReferenceArea x1={0} x2={midX} y1={0} y2={midY} fill="#10B981" fillOpacity={0.03} ifOverflow="extendDomain" />
-                <ReferenceArea x1={midX} x2={xMax} y1={0} y2={midY} fill="#EF4444" fillOpacity={0.03} ifOverflow="extendDomain" />
+                <ReferenceArea x1={0} x2={midX} y1={midY} y2={yMax} fill="#10B981" fillOpacity={0.10} ifOverflow="extendDomain" />
+                <ReferenceArea x1={midX} x2={xMax} y1={midY} y2={yMax} fill="#EF4444" fillOpacity={0.10} ifOverflow="extendDomain" />
+                <ReferenceArea x1={0} x2={midX} y1={0} y2={midY} fill="#10B981" fillOpacity={0.05} ifOverflow="extendDomain" />
+                <ReferenceArea x1={midX} x2={xMax} y1={0} y2={midY} fill="#EF4444" fillOpacity={0.05} ifOverflow="extendDomain" />
 
                 <XAxis
                   type="number"
                   dataKey="avgDuration"
                   domain={[0, xMax]}
-                  tick={{ fontSize: 10, fill: "#64748b" }}
-                  tickFormatter={(v: number) => `${v}dk`}
-                  stroke="rgba(255,255,255,0.08)"
+                  tick={{ fontSize: 11, fill: "#94a3b8", fontWeight: 500 }}
+                  tickFormatter={(v: number) => `${v} dk`}
+                  stroke="rgba(255,255,255,0.12)"
                 >
-                  <Label value="Ortalama Islem Suresi (Dk)" position="bottom" offset={10} style={{ fontSize: 11, fill: "#64748b" }} />
+                  <Label value="Ortalama Islem Suresi (Dk)" position="bottom" offset={12} style={{ fontSize: 12, fill: "#CBD5E1", fontWeight: 600 }} />
                 </XAxis>
                 <YAxis
                   type="number"
                   dataKey="volume"
                   domain={[0, yMax]}
-                  tick={{ fontSize: 10, fill: "#64748b" }}
+                  tick={{ fontSize: 11, fill: "#94a3b8", fontWeight: 500 }}
                   tickFormatter={(v: number) => `₺${formatCompact(v)}`}
-                  stroke="rgba(255,255,255,0.08)"
+                  stroke="rgba(255,255,255,0.12)"
                 >
-                  <Label value="Toplam Hacim (₺)" angle={-90} position="insideLeft" offset={-5} style={{ fontSize: 11, fill: "#64748b", textAnchor: "middle" }} />
+                  <Label value="Toplam Hacim (₺)" angle={-90} position="insideLeft" offset={-10} style={{ fontSize: 12, fill: "#CBD5E1", fontWeight: 600, textAnchor: "middle" }} />
                 </YAxis>
-                <ZAxis type="number" dataKey="txCount" range={[300, 1400]} domain={[0, maxTxCount]} />
+                <ZAxis type="number" dataKey="txCount" range={[400, 1600]} domain={[0, maxTxCount]} />
 
-                <Tooltip content={<MatrixTooltip />} cursor={{ strokeDasharray: "3 3", stroke: "rgba(255,255,255,0.1)" }} />
+                <Tooltip content={<MatrixTooltip />} cursor={{ strokeDasharray: "3 3", stroke: "rgba(255,255,255,0.15)" }} />
 
-                <Scatter data={scatterData} fill="#22D3EE" fillOpacity={0.8} stroke="#06B6D4" strokeWidth={2}>
+                <Scatter data={scatterData} fill="#38BDF8" fillOpacity={0.9} stroke="#FFFFFF" strokeWidth={2}>
+                  <LabelList dataKey="name" position="top" fill="#F1F5F9" fontSize={12} fontWeight={700} offset={16} />
                 </Scatter>
               </ScatterChart>
             </ResponsiveContainer>
+
+            {/* ── Permanent method detail cards (always visible) ── */}
+            <div className="mt-6 grid grid-cols-2 gap-3 border-t border-white/[0.08] pt-6 md:grid-cols-4">
+              {scatterData.map((d) => {
+                const speed = getSpeedLabel(d.avgDuration, midX);
+                const speedDark = d.avgDuration <= midX * 0.8
+                  ? { label: "Hizli", color: "text-emerald-400", bg: "bg-emerald-400/15" }
+                  : d.avgDuration >= midX * 1.4
+                  ? { label: "Yavas", color: "text-red-400", bg: "bg-red-400/15" }
+                  : { label: "Normal", color: "text-amber-400", bg: "bg-amber-400/15" };
+                return (
+                  <div key={d.name} className="rounded-xl border border-white/[0.06] bg-white/[0.03] p-4">
+                    <p className="mb-2 text-xs font-bold text-white">{d.name}</p>
+                    <div className="mb-2 flex items-baseline gap-1">
+                      <span className="font-mono text-lg font-black text-cyan-400">₺{formatCompact(d.volume)}</span>
+                      <span className="text-[10px] font-medium text-slate-400">hacim</span>
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[11px] text-slate-400">Ort. Sure</span>
+                        <span className="text-[11px] font-bold text-white">{d.avgDuration} dk</span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-[11px] text-slate-400">Islem</span>
+                        <span className="text-[11px] font-bold text-white">{formatCurrency(d.txCount)}</span>
+                      </div>
+                      <div className="mt-1 flex justify-end">
+                        <span className={`rounded-full px-2 py-0.5 text-[9px] font-bold uppercase ${speedDark.bg} ${speedDark.color}`}>
+                          {speedDark.label}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         </div>
       </section>
@@ -619,7 +657,7 @@ export default function CekimRaporuPage() {
             <h2 className="mb-2 text-xl font-bold text-white md:text-2xl">
               Personel Cekim Isleme Performansi
             </h2>
-            <p className="text-sm text-slate-500">
+            <p className="text-sm text-slate-400">
               Kim en hizli isliyor, kim en cok hacim ceviriyor
             </p>
           </div>
@@ -665,7 +703,7 @@ export default function CekimRaporuPage() {
 
                     {/* Volume */}
                     <div className="mb-3">
-                      <p className="mb-1 text-[10px] font-medium uppercase tracking-wider text-slate-500">
+                      <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
                         Toplam Hacim
                       </p>
                       <p className="font-mono text-xl font-black text-white">
@@ -682,12 +720,12 @@ export default function CekimRaporuPage() {
                     {/* Stats row */}
                     <div className="grid grid-cols-2 gap-3">
                       <div>
-                        <p className="text-[9px] font-medium uppercase tracking-wider text-slate-500">
+                        <p className="text-[9px] font-semibold uppercase tracking-wider text-slate-400">
                           Islem
                         </p>
                         <div className="flex items-baseline gap-1">
                           <span className="font-mono text-lg font-bold text-white">{person.processedCount}</span>
-                          <span className="text-[10px] text-slate-500">adet</span>
+                          <span className="text-[10px] text-slate-400">adet</span>
                         </div>
                         <div className="mt-1 h-1 w-full overflow-hidden rounded-full bg-white/[0.06]">
                           <div
@@ -697,12 +735,12 @@ export default function CekimRaporuPage() {
                         </div>
                       </div>
                       <div>
-                        <p className="text-[9px] font-medium uppercase tracking-wider text-slate-500">
+                        <p className="text-[9px] font-semibold uppercase tracking-wider text-slate-400">
                           Ort. Sure
                         </p>
                         <div className="flex items-baseline gap-1">
                           <span className="font-mono text-lg font-bold text-white">{person.avgProcessTime}</span>
-                          <span className="text-[10px] text-slate-500">dk</span>
+                          <span className="text-[10px] text-slate-400">dk</span>
                         </div>
                         <div className="mt-1 flex items-center gap-1">
                           {person.avgProcessTime <= 2.5 ? (
@@ -724,14 +762,14 @@ export default function CekimRaporuPage() {
 
           {/* Personel bar chart */}
           <div className="rounded-2xl border border-white/[0.06] bg-white/[0.02] p-5 md:p-6">
-            <h3 className="mb-4 text-center text-xs font-bold uppercase tracking-[0.15em] text-slate-400">
+            <h3 className="mb-4 text-center text-sm font-bold uppercase tracking-[0.15em] text-slate-300">
               Personel Hacim Karsilastirmasi
             </h3>
             <ResponsiveContainer width="100%" height={220}>
               <BarChart data={personelSorted} margin={{ top: 10, right: 20, bottom: 5, left: 20 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
-                <XAxis dataKey="name" tick={{ fontSize: 11, fill: "#94a3b8" }} stroke="rgba(255,255,255,0.06)" />
-                <YAxis tick={{ fontSize: 10, fill: "#64748b" }} tickFormatter={(v: number) => `₺${formatCompact(v)}`} stroke="rgba(255,255,255,0.06)" />
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.08)" />
+                <XAxis dataKey="name" tick={{ fontSize: 12, fill: "#CBD5E1", fontWeight: 600 }} stroke="rgba(255,255,255,0.10)" />
+                <YAxis tick={{ fontSize: 11, fill: "#94a3b8", fontWeight: 500 }} tickFormatter={(v: number) => `₺${formatCompact(v)}`} stroke="rgba(255,255,255,0.10)" />
                 <Tooltip content={<PersonelTooltip />} cursor={{ fill: "rgba(255,255,255,0.03)" }} />
                 <Bar dataKey="totalVolume" radius={[8, 8, 0, 0]} name="Toplam Hacim">
                   {personelSorted.map((_, i) => {
