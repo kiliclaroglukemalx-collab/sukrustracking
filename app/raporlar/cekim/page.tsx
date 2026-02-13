@@ -155,13 +155,13 @@ const PERF_MAP = {
 function IdilNoteLight({ text, title = "Idil'in Notu" }: { text: string; title?: string }) {
   return (
     <div className="mt-8 flex gap-0 overflow-hidden rounded-2xl border border-blue-200/60 bg-blue-50/50">
-      <div className="w-1.5 flex-shrink-0 bg-blue-400" />
-      <div className="px-5 py-4">
-        <div className="mb-2 flex items-center gap-2">
-          <MessageSquareText className="h-4 w-4 text-blue-500" strokeWidth={1.5} />
-          <span className="text-[11px] font-bold uppercase tracking-[0.12em] text-blue-600">{title}</span>
+      <div className="w-2 flex-shrink-0 bg-blue-400" />
+      <div className="px-6 py-5">
+        <div className="mb-3 flex items-center gap-2">
+          <MessageSquareText className="h-5 w-5 text-blue-500" strokeWidth={1.5} />
+          <span className="text-xs font-bold uppercase tracking-[0.12em] text-blue-600">{title}</span>
         </div>
-        <p className="text-[13px] italic leading-relaxed text-neutral-600">{text}</p>
+        <p className="text-[15px] italic leading-relaxed text-neutral-600">{text}</p>
       </div>
     </div>
   );
@@ -170,13 +170,13 @@ function IdilNoteLight({ text, title = "Idil'in Notu" }: { text: string; title?:
 function IdilNoteDark({ text, title = "Idil'in Notu" }: { text: string; title?: string }) {
   return (
     <div className="mt-8 flex gap-0 overflow-hidden rounded-2xl border border-cyan-500/20 bg-white/[0.03]">
-      <div className="w-1.5 flex-shrink-0 bg-cyan-400" />
-      <div className="px-5 py-4">
-        <div className="mb-2 flex items-center gap-2">
-          <MessageSquareText className="h-4 w-4 text-cyan-400" strokeWidth={1.5} />
-          <span className="text-[11px] font-bold uppercase tracking-[0.12em] text-cyan-400">{title}</span>
+      <div className="w-2 flex-shrink-0 bg-cyan-400" />
+      <div className="px-6 py-5">
+        <div className="mb-3 flex items-center gap-2">
+          <MessageSquareText className="h-5 w-5 text-cyan-400" strokeWidth={1.5} />
+          <span className="text-xs font-bold uppercase tracking-[0.12em] text-cyan-400">{title}</span>
         </div>
-        <p className="text-[13px] italic leading-relaxed text-slate-300">{text}</p>
+        <p className="text-[15px] italic leading-relaxed text-slate-300">{text}</p>
       </div>
     </div>
   );
