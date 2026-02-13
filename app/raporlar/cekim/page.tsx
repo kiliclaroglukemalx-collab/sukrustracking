@@ -24,6 +24,7 @@ import {
   Minus,
   MessageSquareText,
   ShieldAlert,
+  RefreshCw,
 } from "lucide-react";
 import {
   ScatterChart,
@@ -66,11 +67,77 @@ function getSpeedLabel(avgDuration: number, midX: number): { label: string; colo
 }
 
 /* ═══════════════════════════════════════════════════════
-   MOCK DATA — Bot rapor yapısının birebir karşılığı
+   VERİ TİPLERİ — API'den gelen veri yapısı
    ═══════════════════════════════════════════════════════ */
 
-// Bölüm 1: Genel Finansal Tablo
-const MOCK_GENEL = {
+interface CekimGenel {
+  toplamBasariliCekim: number;
+  basariliIslemSayisi: number;
+  toplamRedSayisi: number;
+  toplamRedHacmi: number;
+  sistemGenelHizi: number;
+  periodBaslangic: string;
+  periodBitis: string;
+  degisim: { oncekiToplam: number; fark: number };
+}
+
+interface CekimYontem {
+  name: string;
+  volume: number;
+  avgDuration: number;
+  txCount: number;
+  yukYuzdesi: number;
+}
+
+interface CekimPersonel {
+  name: string;
+  islemSayisi: number;
+  ortKararDk: number;
+  performans: "basarili" | "yeterli" | "hizlanmali";
+  emoji: string;
+  totalVolume: number;
+  hizDegisimi: "hizlandi" | "dustu" | "ayni" | null;
+  oncekiDk: number | null;
+}
+
+interface CekimDarbogaz {
+  miktar: number;
+  odemeSistemi: string;
+  beklemeDk: number;
+  aciliyet: "kirmizi" | "sari" | "yesil";
+  durum: string;
+}
+
+interface CekimRed {
+  toplamRed: number;
+  toplamRedHacmi: number;
+  enSikNeden: string;
+  enSikNedenAdet: number;
+  nedenler: { neden: string; adet: number }[];
+}
+
+interface CekimIdilNotlari {
+  yontem: string;
+  personel: string;
+  darbogaz: string;
+  red: string;
+}
+
+interface CekimRaporuData {
+  genel: CekimGenel;
+  yontemler: CekimYontem[];
+  personel: CekimPersonel[];
+  darbogaz: CekimDarbogaz[];
+  red: CekimRed;
+  idilNotlari: CekimIdilNotlari;
+  analizZamani: string;
+}
+
+/* ═══════════════════════════════════════════════════════
+   MOCK DATA — Veri yokken fallback olarak kullanılır
+   ═══════════════════════════════════════════════════════ */
+
+const FALLBACK_GENEL: CekimGenel = {
   toplamBasariliCekim: 1670180,
   basariliIslemSayisi: 3100,
   toplamRedSayisi: 145,
@@ -81,32 +148,28 @@ const MOCK_GENEL = {
   degisim: { oncekiToplam: 1450000, fark: 220180 },
 };
 
-// Bölüm 2: Yöntem Yükü & Risk
-const MOCK_YONTEM = [
+const FALLBACK_YONTEM: CekimYontem[] = [
   { name: "X HAVALE", volume: 977730, avgDuration: 2.5, txCount: 1500, yukYuzdesi: 58.5 },
   { name: "BIGPAYSS HAVALE", volume: 387818, avgDuration: 8.5, txCount: 800, yukYuzdesi: 23.2 },
   { name: "KRIPTOPAY", volume: 207632, avgDuration: 4.5, txCount: 600, yukYuzdesi: 12.4 },
   { name: "MASTER HAVALE", volume: 97000, avgDuration: 9.8, txCount: 200, yukYuzdesi: 5.8 },
 ];
 
-// Bölüm 3: Personel Karnesi
-const MOCK_PERSONEL = [
-  { name: "Tolga", islemSayisi: 52, ortKararDk: 1.8, performans: "basarili" as const, emoji: "✅", totalVolume: 580000, hizDegisimi: "hizlandi" as const, oncekiDk: 2.3 },
-  { name: "Mavi", islemSayisi: 45, ortKararDk: 3.2, performans: "basarili" as const, emoji: "✅", totalVolume: 450000, hizDegisimi: "ayni" as const, oncekiDk: 3.1 },
-  { name: "Gunes", islemSayisi: 38, ortKararDk: 6.5, performans: "yeterli" as const, emoji: "⚠️", totalVolume: 320000, hizDegisimi: "dustu" as const, oncekiDk: 5.2 },
-  { name: "Mira", islemSayisi: 28, ortKararDk: 9.2, performans: "hizlanmali" as const, emoji: "🔴", totalVolume: 190000, hizDegisimi: null, oncekiDk: null },
+const FALLBACK_PERSONEL: CekimPersonel[] = [
+  { name: "Tolga", islemSayisi: 52, ortKararDk: 1.8, performans: "basarili", emoji: "✅", totalVolume: 580000, hizDegisimi: "hizlandi", oncekiDk: 2.3 },
+  { name: "Mavi", islemSayisi: 45, ortKararDk: 3.2, performans: "basarili", emoji: "✅", totalVolume: 450000, hizDegisimi: "ayni", oncekiDk: 3.1 },
+  { name: "Gunes", islemSayisi: 38, ortKararDk: 6.5, performans: "yeterli", emoji: "⚠️", totalVolume: 320000, hizDegisimi: "dustu", oncekiDk: 5.2 },
+  { name: "Mira", islemSayisi: 28, ortKararDk: 9.2, performans: "hizlanmali", emoji: "🔴", totalVolume: 190000, hizDegisimi: null, oncekiDk: null },
 ];
 
-// Bölüm 4: Darboğaz
-const MOCK_DARBOGAZ = [
-  { miktar: 45000, odemeSistemi: "BIGPAYSS HAVALE", beklemeDk: 47, aciliyet: "kirmizi" as const, durum: "Karar Bekliyor" },
-  { miktar: 32000, odemeSistemi: "MASTER HAVALE", beklemeDk: 35, aciliyet: "kirmizi" as const, durum: "Odeme Bekliyor" },
-  { miktar: 18500, odemeSistemi: "KRIPTOPAY", beklemeDk: 22, aciliyet: "sari" as const, durum: "Odeme Bekliyor" },
-  { miktar: 12000, odemeSistemi: "X HAVALE", beklemeDk: 8, aciliyet: "yesil" as const, durum: "Karar Bekliyor" },
+const FALLBACK_DARBOGAZ: CekimDarbogaz[] = [
+  { miktar: 45000, odemeSistemi: "BIGPAYSS HAVALE", beklemeDk: 47, aciliyet: "kirmizi", durum: "Karar Bekliyor" },
+  { miktar: 32000, odemeSistemi: "MASTER HAVALE", beklemeDk: 35, aciliyet: "kirmizi", durum: "Odeme Bekliyor" },
+  { miktar: 18500, odemeSistemi: "KRIPTOPAY", beklemeDk: 22, aciliyet: "sari", durum: "Odeme Bekliyor" },
+  { miktar: 12000, odemeSistemi: "X HAVALE", beklemeDk: 8, aciliyet: "yesil", durum: "Karar Bekliyor" },
 ];
 
-// Bölüm 5: Red Analizi
-const MOCK_RED = {
+const FALLBACK_RED: CekimRed = {
   toplamRed: 145,
   toplamRedHacmi: 287500,
   enSikNeden: "Yetersiz Bakiye",
@@ -120,8 +183,7 @@ const MOCK_RED = {
   ],
 };
 
-// İdil'in AI Yorumları
-const MOCK_IDIL = {
+const FALLBACK_IDIL: CekimIdilNotlari = {
   yontem: "X HAVALE yuku %58'e ulasti, tek gateway'e bu kadar bagimlilik riskli. BIGPAYSS ve KRIPTOPAY'a yuk dagitimi yapilmali.",
   personel: "Tolga bugun yildiz performans sergiliyor, 1.8 dk ortalamayla en atik isimiz. Gunes biraz yavaslamisb onceki 5.2'den 6.5'e dustu — dikkat. Mira'nin 9.2 dk ortalamasi kabul edilemez, acil hizlanmali.",
   darbogaz: "BIGPAYSS HAVALE'de 47 dakikadir bekleyen ₺45.000'lik islem var. Bu gateway'de sistemsel bir sorun olabilir, teknik ekiple kontrol edilmeli.",
@@ -221,14 +283,53 @@ function RedTooltip({ active, payload }: { active?: boolean; payload?: Array<{ p
 export default function CekimRaporuPage() {
   const { role } = useStore();
   const [hydrated, setHydrated] = useState(false);
+  const [isLive, setIsLive] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [lastUpdate, setLastUpdate] = useState<string | null>(null);
 
-  useEffect(() => { setHydrated(true); }, []);
+  // Live data state — fallback to mock when null
+  const [genelData, setGenelData] = useState<CekimGenel>(FALLBACK_GENEL);
+  const [yontemData, setYontemData] = useState<CekimYontem[]>(FALLBACK_YONTEM);
+  const [personelData, setPersonelData] = useState<CekimPersonel[]>(FALLBACK_PERSONEL);
+  const [darbogazData, setDarbogazData] = useState<CekimDarbogaz[]>(FALLBACK_DARBOGAZ);
+  const [redData, setRedData] = useState<CekimRed>(FALLBACK_RED);
+  const [idilData, setIdilData] = useState<CekimIdilNotlari>(FALLBACK_IDIL);
+
+  useEffect(() => {
+    setHydrated(true);
+    fetchLatestRapor();
+  }, []);
+
+  async function fetchLatestRapor() {
+    try {
+      setLoading(true);
+      const res = await fetch("/api/cekim-raporu");
+      const json = await res.json();
+
+      if (json.data) {
+        const d = json.data as CekimRaporuData;
+        if (d.genel) setGenelData(d.genel);
+        if (d.yontemler && d.yontemler.length > 0) setYontemData(d.yontemler);
+        if (d.personel && d.personel.length > 0) setPersonelData(d.personel);
+        if (d.darbogaz) setDarbogazData(d.darbogaz);
+        if (d.red) setRedData(d.red);
+        if (d.idilNotlari) setIdilData(d.idilNotlari);
+        setIsLive(true);
+        setLastUpdate(d.analizZamani || json.createdAt || null);
+      }
+    } catch (err) {
+      console.error("[CekimPage] Veri çekme hatası:", err);
+      // Fallback verileri zaten state'de — bir şey yapmaya gerek yok
+    } finally {
+      setLoading(false);
+    }
+  }
 
   /* ── derived ── */
-  const scatterData = MOCK_YONTEM;
-  const totalVolume = MOCK_GENEL.toplamBasariliCekim;
-  const avgDuration = MOCK_GENEL.sistemGenelHizi;
-  const totalTx = MOCK_GENEL.basariliIslemSayisi;
+  const scatterData = yontemData;
+  const totalVolume = genelData.toplamBasariliCekim;
+  const avgDuration = genelData.sistemGenelHizi;
+  const totalTx = genelData.basariliIslemSayisi;
 
   const maxVolume = useMemo(() => Math.max(...scatterData.map((d) => d.volume)), [scatterData]);
   const maxDuration = useMemo(() => Math.max(...scatterData.map((d) => d.avgDuration)), [scatterData]);
@@ -242,11 +343,11 @@ export default function CekimRaporuPage() {
   const leagueSorted = useMemo(() => [...scatterData].sort((a, b) => b.volume - a.volume), [scatterData]);
   const leagueMax = leagueSorted.length > 0 ? leagueSorted[0].volume : 1;
 
-  const personelSorted = useMemo(() => [...MOCK_PERSONEL].sort((a, b) => b.totalVolume - a.totalVolume), []);
-  const personelMaxVolume = useMemo(() => Math.max(...MOCK_PERSONEL.map((p) => p.totalVolume)), []);
-  const personelMaxCount = useMemo(() => Math.max(...MOCK_PERSONEL.map((p) => p.islemSayisi)), []);
+  const personelSorted = useMemo(() => [...personelData].sort((a, b) => b.totalVolume - a.totalVolume), [personelData]);
+  const personelMaxVolume = useMemo(() => Math.max(...personelData.map((p) => p.totalVolume)), [personelData]);
+  const personelMaxCount = useMemo(() => Math.max(...personelData.map((p) => p.islemSayisi)), [personelData]);
 
-  const redMaxAdet = useMemo(() => Math.max(...MOCK_RED.nedenler.map((n) => n.adet)), []);
+  const redMaxAdet = useMemo(() => Math.max(...redData.nedenler.map((n) => n.adet)), [redData]);
 
   if (!hydrated) return <div className="min-h-screen bg-neutral-950" />;
 
@@ -271,7 +372,10 @@ export default function CekimRaporuPage() {
             <ArrowLeft className="h-4 w-4" strokeWidth={1.5} /><span>Raporlar</span>
           </Link>
           <h1 className="text-sm font-semibold tracking-wide text-white/90">Cekim Performansi</h1>
-          <span className="text-[10px] text-neutral-600">{MOCK_GENEL.periodBaslangic} – {MOCK_GENEL.periodBitis}</span>
+          <div className="flex items-center gap-2">
+            {isLive && <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />}
+            <span className="text-[10px] text-neutral-600">{isLive ? "Canli Veri" : "Ornek Veri"} · {genelData.periodBaslangic} – {genelData.periodBitis}</span>
+          </div>
         </div>
       </div>
 
@@ -300,7 +404,7 @@ export default function CekimRaporuPage() {
                 </div>
                 <p className="mb-1 text-[11px] font-semibold uppercase tracking-[0.15em] text-neutral-400">Toplam Basarili Cekim</p>
                 <p className="font-mono text-2xl font-black tracking-tight text-white md:text-3xl">₺{formatCompact(totalVolume)}</p>
-                <p className="mt-1.5 text-xs text-neutral-400">{formatCurrency(totalVolume)} TL · {MOCK_GENEL.basariliIslemSayisi} islem</p>
+                <p className="mt-1.5 text-xs text-neutral-400">{formatCurrency(totalVolume)} TL · {genelData.basariliIslemSayisi} islem</p>
               </div>
             </div>
 
@@ -351,8 +455,8 @@ export default function CekimRaporuPage() {
                   <XCircle className="h-4 w-4 text-red-400" strokeWidth={1.5} />
                 </div>
                 <p className="mb-1 text-[11px] font-semibold uppercase tracking-[0.15em] text-neutral-400">Red Hacmi</p>
-                <p className="font-mono text-2xl font-black tracking-tight text-red-400 md:text-3xl">₺{formatCompact(MOCK_GENEL.toplamRedHacmi)}</p>
-                <p className="mt-1.5 text-xs text-neutral-400">{MOCK_GENEL.toplamRedSayisi} reddedilen islem</p>
+                <p className="font-mono text-2xl font-black tracking-tight text-red-400 md:text-3xl">₺{formatCompact(genelData.toplamRedHacmi)}</p>
+                <p className="mt-1.5 text-xs text-neutral-400">{genelData.toplamRedSayisi} reddedilen islem</p>
               </div>
             </div>
 
@@ -364,8 +468,8 @@ export default function CekimRaporuPage() {
                   <ArrowUpRight className="h-4 w-4 text-emerald-400" strokeWidth={1.5} />
                 </div>
                 <p className="mb-1 text-[11px] font-semibold uppercase tracking-[0.15em] text-neutral-400">Onceki Periyottan Degisim</p>
-                <p className="font-mono text-2xl font-black tracking-tight text-emerald-400 md:text-3xl">+₺{formatCompact(MOCK_GENEL.degisim.fark)}</p>
-                <p className="mt-1.5 text-xs text-neutral-400">Onceki: ₺{formatCurrency(MOCK_GENEL.degisim.oncekiToplam)}</p>
+                <p className="font-mono text-2xl font-black tracking-tight text-emerald-400 md:text-3xl">{genelData.degisim.fark >= 0 ? "+" : ""}₺{formatCompact(Math.abs(genelData.degisim.fark))}</p>
+                <p className="mt-1.5 text-xs text-neutral-400">Onceki: ₺{formatCurrency(genelData.degisim.oncekiToplam)}</p>
               </div>
             </div>
           </div>
@@ -428,7 +532,7 @@ export default function CekimRaporuPage() {
             })}
           </div>
 
-          <IdilNoteLight text={MOCK_IDIL.yontem} />
+          <IdilNoteLight text={idilData.yontem} />
         </div>
       </section>
 
@@ -524,8 +628,8 @@ export default function CekimRaporuPage() {
               const volumePct = (p.totalVolume / personelMaxVolume) * 100;
               const countPct = (p.islemSayisi / personelMaxCount) * 100;
               const isTopVolume = i === 0;
-              const isTopSpeed = p.ortKararDk === Math.min(...MOCK_PERSONEL.map((x) => x.ortKararDk));
-              const isMostTx = p.islemSayisi === Math.max(...MOCK_PERSONEL.map((x) => x.islemSayisi));
+              const isTopSpeed = p.ortKararDk === Math.min(...personelData.map((x) => x.ortKararDk));
+              const isMostTx = p.islemSayisi === Math.max(...personelData.map((x) => x.islemSayisi));
 
               return (
                 <div key={p.name} className="group relative overflow-hidden rounded-2xl border border-neutral-200/80 bg-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg">
@@ -590,7 +694,7 @@ export default function CekimRaporuPage() {
             })}
           </div>
 
-          <IdilNoteLight text={MOCK_IDIL.personel} />
+          <IdilNoteLight text={idilData.personel} />
         </div>
       </section>
 
@@ -607,12 +711,12 @@ export default function CekimRaporuPage() {
               <AlertTriangle className="h-4 w-4 text-amber-400" strokeWidth={1.5} />
               <span className="text-[11px] font-semibold uppercase tracking-[0.15em] text-amber-400">Darbogaz</span>
             </div>
-            <h2 className="mb-2 text-xl font-bold text-white md:text-2xl">Top {MOCK_DARBOGAZ.length} Bekleyen Islem</h2>
+            <h2 className="mb-2 text-xl font-bold text-white md:text-2xl">Top {darbogazData.length} Bekleyen Islem</h2>
             <p className="text-sm text-slate-400">Uzun suredir bekleyen islemler — acil mudahale gerekebilir</p>
           </div>
 
           <div className="flex flex-col gap-3">
-            {MOCK_DARBOGAZ.map((item, i) => {
+            {darbogazData.map((item, i) => {
               const a = ACILIYET_MAP[item.aciliyet];
               return (
                 <div key={i} className={`flex items-center gap-4 rounded-2xl border p-4 transition-all md:p-5 ${
@@ -644,7 +748,7 @@ export default function CekimRaporuPage() {
             })}
           </div>
 
-          <IdilNoteDark text={MOCK_IDIL.darbogaz} />
+          <IdilNoteDark text={idilData.darbogaz} />
         </div>
       </section>
 
@@ -666,18 +770,18 @@ export default function CekimRaporuPage() {
           <div className="mb-8 grid grid-cols-2 gap-4 md:grid-cols-3">
             <div className="rounded-2xl border border-red-200/60 bg-red-50/50 p-5">
               <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-red-400">Toplam Red</p>
-              <p className="font-mono text-3xl font-black text-red-600">{MOCK_RED.toplamRed}</p>
+              <p className="font-mono text-3xl font-black text-red-600">{redData.toplamRed}</p>
               <p className="mt-1 text-xs text-red-400">reddedilen islem</p>
             </div>
             <div className="rounded-2xl border border-red-200/60 bg-red-50/50 p-5">
               <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-red-400">Red Hacmi</p>
-              <p className="font-mono text-3xl font-black text-red-600">₺{formatCompact(MOCK_RED.toplamRedHacmi)}</p>
-              <p className="mt-1 text-xs text-red-400">{formatCurrency(MOCK_RED.toplamRedHacmi)} TL</p>
+              <p className="font-mono text-3xl font-black text-red-600">₺{formatCompact(redData.toplamRedHacmi)}</p>
+              <p className="mt-1 text-xs text-red-400">{formatCurrency(redData.toplamRedHacmi)} TL</p>
             </div>
             <div className="col-span-2 rounded-2xl border border-amber-200/60 bg-amber-50/50 p-5 md:col-span-1">
               <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-amber-500">En Sik Neden</p>
-              <p className="text-lg font-black text-amber-700">{MOCK_RED.enSikNeden}</p>
-              <p className="mt-1 text-xs text-amber-500">{MOCK_RED.enSikNedenAdet} islem (%{((MOCK_RED.enSikNedenAdet / MOCK_RED.toplamRed) * 100).toFixed(0)})</p>
+              <p className="text-lg font-black text-amber-700">{redData.enSikNeden}</p>
+              <p className="mt-1 text-xs text-amber-500">{redData.enSikNedenAdet} islem (%{((redData.enSikNedenAdet / (redData.toplamRed || 1)) * 100).toFixed(0)})</p>
             </div>
           </div>
 
@@ -685,13 +789,13 @@ export default function CekimRaporuPage() {
           <div className="rounded-2xl border border-neutral-200/80 bg-neutral-50 p-5 md:p-6">
             <h3 className="mb-4 text-center text-xs font-bold uppercase tracking-[0.12em] text-neutral-500">Red Nedenleri Dagilimi</h3>
             <ResponsiveContainer width="100%" height={240}>
-              <BarChart data={MOCK_RED.nedenler} layout="vertical" margin={{ top: 5, right: 30, bottom: 5, left: 10 }}>
+              <BarChart data={redData.nedenler} layout="vertical" margin={{ top: 5, right: 30, bottom: 5, left: 10 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" horizontal={false} />
                 <XAxis type="number" tick={{ fontSize: 11, fill: "#6B7280", fontWeight: 500 }} stroke="#E5E7EB" />
                 <YAxis type="category" dataKey="neden" tick={{ fontSize: 11, fill: "#374151", fontWeight: 600 }} width={120} stroke="#E5E7EB" />
                 <Tooltip content={<RedTooltip />} cursor={{ fill: "rgba(0,0,0,0.03)" }} />
                 <Bar dataKey="adet" radius={[0, 6, 6, 0]} name="Adet">
-                  {MOCK_RED.nedenler.map((entry, i) => (
+                  {redData.nedenler.map((entry, i) => (
                     <Cell key={i} fill={i === 0 ? "#EF4444" : i === 1 ? "#F97316" : "#94A3B8"} />
                   ))}
                   <LabelList dataKey="adet" position="right" fill="#374151" fontSize={12} fontWeight={700} />
@@ -700,7 +804,7 @@ export default function CekimRaporuPage() {
             </ResponsiveContainer>
           </div>
 
-          <IdilNoteLight text={MOCK_IDIL.red} title="Idil'in Onerisi" />
+          <IdilNoteLight text={idilData.red} title="Idil'in Onerisi" />
         </div>
       </section>
 
