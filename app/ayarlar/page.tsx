@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useRef } from "react";
+import React, { useCallback, useRef, useEffect } from "react";
 import Link from "next/link";
 import { ArrowLeft, Plus, Trash2, Layers, Film } from "lucide-react";
 import { useStore } from "@/lib/store";
@@ -10,9 +10,15 @@ export default function AyarlarPage() {
   const { methods, setMethods, videoUrl, setVideoUrl } = useStore();
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // Ref ile her zaman en guncel methods'u tut (stale closure onlemi)
+  const methodsRef = useRef(methods);
+  useEffect(() => { methodsRef.current = methods; }, [methods]);
+
   /* ---- Otomatik kaydet: her degisiklikte 400ms debounce ile setMethods ---- */
   const autoSave = useCallback(
     (updated: PaymentMethod[]) => {
+      // Ref'i hemen guncelle — bir sonraki hizli edit eski veriyi kullanmasin
+      methodsRef.current = updated;
       if (debounceRef.current) clearTimeout(debounceRef.current);
       debounceRef.current = setTimeout(() => {
         setMethods(updated);
@@ -21,14 +27,26 @@ export default function AyarlarPage() {
     [setMethods],
   );
 
+  // Sayfa kapanirken bekleyen debounce varsa hemen kaydet
+  useEffect(() => {
+    return () => {
+      if (debounceRef.current) {
+        clearTimeout(debounceRef.current);
+        // Son halini kaydet
+        setMethods(methodsRef.current);
+      }
+    };
+  }, [setMethods]);
+
   const updateField = useCallback(
     (id: string, field: keyof PaymentMethod, value: string | number) => {
-      const updated = methods.map((m) =>
+      // methodsRef.current her zaman en guncel hali tutar
+      const updated = methodsRef.current.map((m) =>
         m.id === id ? { ...m, [field]: value } : m,
       );
       autoSave(updated);
     },
-    [methods, autoSave],
+    [autoSave],
   );
 
   /* ---- Yeni yontem ekle ---- */
@@ -41,15 +59,17 @@ export default function AyarlarPage() {
       cekimKomisyonOrani: 0,
       baslangicBakiye: 0,
     };
-    setMethods([...methods, newMethod]);
-  }, [methods, setMethods]);
+    const updated = [...methodsRef.current, newMethod];
+    setMethods(updated);
+  }, [setMethods]);
 
   /* ---- Sil ---- */
   const deleteMethod = useCallback(
     (id: string) => {
-      setMethods(methods.filter((m) => m.id !== id));
+      const updated = methodsRef.current.filter((m) => m.id !== id);
+      setMethods(updated);
     },
-    [methods, setMethods],
+    [setMethods],
   );
 
   /* ---- Video URL ---- */
