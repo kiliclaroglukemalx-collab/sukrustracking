@@ -134,6 +134,67 @@ async function loadSettingFromSupabase(
   }
 }
 
+// --- Supabase Odeme helpers ---
+async function fetchOdemelerFromSupabase(): Promise<OdemeKaydi[]> {
+  try {
+    const supabase = createClient();
+    const { data, error } = await supabase
+      .from("odeme_kayitlari")
+      .select("*")
+      .order("tarih", { ascending: false });
+    if (error || !data) return [];
+    return data.map((row: Record<string, unknown>) => ({
+      id: row.id as string,
+      no: row.no as string,
+      tarih: row.tarih as string,
+      islemTipi: row.islem_tipi as IslemTipi,
+      yontem: row.yontem as string,
+      hedefYontem: (row.hedef_yontem as string) || undefined,
+      tutar: Number(row.tutar),
+      dovizCinsi: row.doviz_cinsi as string,
+      kur: row.kur ? Number(row.kur) : undefined,
+      tutarTL: Number(row.tutar_tl),
+      gonderen: (row.gonderen as string) || "",
+      alici: (row.alici as string) || "",
+      aciklama: (row.aciklama as string) || "",
+    }));
+  } catch {
+    return [];
+  }
+}
+
+async function insertOdemeToSupabase(odeme: OdemeKaydi) {
+  try {
+    const supabase = createClient();
+    await supabase.from("odeme_kayitlari").insert({
+      id: odeme.id,
+      no: odeme.no,
+      tarih: odeme.tarih,
+      islem_tipi: odeme.islemTipi,
+      yontem: odeme.yontem,
+      hedef_yontem: odeme.hedefYontem || null,
+      tutar: odeme.tutar,
+      doviz_cinsi: odeme.dovizCinsi,
+      kur: odeme.kur || null,
+      tutar_tl: odeme.tutarTL,
+      gonderen: odeme.gonderen,
+      alici: odeme.alici,
+      aciklama: odeme.aciklama,
+    });
+  } catch {
+    /* silent */
+  }
+}
+
+async function deleteOdemeFromSupabase(id: string) {
+  try {
+    const supabase = createClient();
+    await supabase.from("odeme_kayitlari").delete().eq("id", id);
+  } catch {
+    /* silent */
+  }
+}
+
 // --- Payment (Odeme) Types ---
 export type IslemTipi = "odeme-yap" | "odeme-al" | "transfer";
 
@@ -268,6 +329,12 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         saveVideo(sbVideo);
       }
 
+      // Load odemeler from Supabase (persistent records)
+      const sbOdemeler = await fetchOdemelerFromSupabase();
+      if (sbOdemeler.length > 0) {
+        setOdemeler(sbOdemeler);
+      }
+
       setSupabaseReady(true);
     })();
   }, []);
@@ -319,6 +386,9 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
 
       setOdemeler((prev) => [yeniOdeme, ...prev]);
 
+      // Supabase'e kaydet (arka planda, kalici)
+      insertOdemeToSupabase(yeniOdeme);
+
       // Kasa bakiyesini guncelle
       setKasaData((prev) =>
         prev.map((kasa) => {
@@ -343,6 +413,9 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
 
   const odemeSil = useCallback(
     (id: string) => {
+      // Supabase'den sil (arka planda)
+      deleteOdemeFromSupabase(id);
+
       setOdemeler((prev) => {
         const silinecek = prev.find((o) => o.id === id);
         if (!silinecek) return prev;

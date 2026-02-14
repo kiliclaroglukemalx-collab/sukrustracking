@@ -16,6 +16,7 @@ import {
   ArrowLeft,
   Lock,
   Wallet,
+  CalendarDays,
 } from "lucide-react";
 import { useStore } from "@/lib/store";
 import type { UserRole } from "@/lib/store";
@@ -245,6 +246,29 @@ export function HamburgerMenu() {
                       strokeWidth={1.5}
                     />
                   </button>
+                )}
+
+                {/* Odeme Gecmisi - Master only */}
+                {role === "master" && (
+                  <Link
+                    href="/odemeler/gecmis"
+                    onClick={close}
+                    className="flex w-full items-center justify-between px-4 py-2.5 text-left transition-colors hover:bg-neutral-50"
+                  >
+                    <span className="flex items-center gap-2.5">
+                      <CalendarDays
+                        className="h-3.5 w-3.5 text-neutral-400"
+                        strokeWidth={1.5}
+                      />
+                      <span className="text-[11px] text-neutral-600">
+                        Odeme Gecmisi
+                      </span>
+                    </span>
+                    <ChevronRight
+                      className="h-3 w-3 text-neutral-300"
+                      strokeWidth={1.5}
+                    />
+                  </Link>
                 )}
 
                 {/* Ayarlar - Always visible */}

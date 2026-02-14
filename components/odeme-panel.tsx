@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useCallback } from "react";
+import Link from "next/link";
 import {
   ArrowDownLeft,
   ArrowUpRight,
@@ -10,6 +11,7 @@ import {
   X,
   ChevronDown,
   Trash2,
+  CalendarDays,
 } from "lucide-react";
 import { useStore } from "@/lib/store";
 import type { IslemTipi, OdemeKaydi } from "@/lib/store";
@@ -560,6 +562,16 @@ export function OdemePanel({ onClose }: { onClose: () => void }) {
         ) : (
           /* Gecmis Tab */
           <div className="flex-1 overflow-y-auto px-4 py-3">
+            {/* Takvim sayfasina link */}
+            <Link
+              href="/odemeler/gecmis"
+              onClick={onClose}
+              className="mb-3 flex items-center justify-center gap-2 rounded-xl border border-neutral-700 bg-neutral-900 py-2.5 text-[11px] font-bold uppercase tracking-wider text-neutral-300 transition-colors hover:border-neutral-600 hover:text-white"
+            >
+              <CalendarDays className="h-3.5 w-3.5" strokeWidth={1.5} />
+              Takvimde Goruntule
+            </Link>
+
             {odemeler.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-12 text-center">
                 <p className="text-xs text-neutral-500">

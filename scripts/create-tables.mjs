@@ -53,10 +53,31 @@ CREATE TABLE IF NOT EXISTS public.kasa_snapshots (
 
 CREATE INDEX IF NOT EXISTS idx_kasa_snapshots_date ON public.kasa_snapshots(snapshot_date, snapshot_hour);
 
+-- Odeme Kayitlari (persistent payment records)
+CREATE TABLE IF NOT EXISTS public.odeme_kayitlari (
+  id TEXT PRIMARY KEY,
+  no TEXT NOT NULL,
+  tarih TIMESTAMPTZ NOT NULL DEFAULT now(),
+  islem_tipi TEXT NOT NULL,
+  yontem TEXT NOT NULL,
+  hedef_yontem TEXT,
+  tutar NUMERIC NOT NULL DEFAULT 0,
+  doviz_cinsi TEXT NOT NULL DEFAULT 'TRY',
+  kur NUMERIC,
+  tutar_tl NUMERIC NOT NULL DEFAULT 0,
+  gonderen TEXT DEFAULT '',
+  alici TEXT DEFAULT '',
+  aciklama TEXT DEFAULT '',
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_odeme_kayitlari_tarih ON public.odeme_kayitlari(tarih);
+
 -- RLS
 ALTER TABLE public.payment_methods ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.app_settings ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.kasa_snapshots ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.odeme_kayitlari ENABLE ROW LEVEL SECURITY;
 
 -- Policies (idempotent with DROP IF EXISTS)
 DROP POLICY IF EXISTS "Allow all access to payment_methods" ON public.payment_methods;
@@ -67,6 +88,9 @@ CREATE POLICY "Allow all access to app_settings" ON public.app_settings FOR ALL 
 
 DROP POLICY IF EXISTS "Allow all access to kasa_snapshots" ON public.kasa_snapshots;
 CREATE POLICY "Allow all access to kasa_snapshots" ON public.kasa_snapshots FOR ALL USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Allow all access to odeme_kayitlari" ON public.odeme_kayitlari;
+CREATE POLICY "Allow all access to odeme_kayitlari" ON public.odeme_kayitlari FOR ALL USING (true) WITH CHECK (true);
 `;
 
 async function run() {

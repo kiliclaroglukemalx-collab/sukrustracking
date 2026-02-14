@@ -32,12 +32,35 @@ CREATE TABLE IF NOT EXISTS public.kasa_snapshots (
 -- Create index for fast snapshot lookups by date
 CREATE INDEX IF NOT EXISTS idx_kasa_snapshots_date ON public.kasa_snapshots(snapshot_date, snapshot_hour);
 
+-- Odeme Kayitlari: stores all payment records permanently
+CREATE TABLE IF NOT EXISTS public.odeme_kayitlari (
+  id TEXT PRIMARY KEY,
+  no TEXT NOT NULL,
+  tarih TIMESTAMPTZ NOT NULL DEFAULT now(),
+  islem_tipi TEXT NOT NULL, -- 'odeme-yap' | 'odeme-al' | 'transfer'
+  yontem TEXT NOT NULL,
+  hedef_yontem TEXT,
+  tutar NUMERIC NOT NULL DEFAULT 0,
+  doviz_cinsi TEXT NOT NULL DEFAULT 'TRY',
+  kur NUMERIC,
+  tutar_tl NUMERIC NOT NULL DEFAULT 0,
+  gonderen TEXT DEFAULT '',
+  alici TEXT DEFAULT '',
+  aciklama TEXT DEFAULT '',
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- Index for fast lookups by date
+CREATE INDEX IF NOT EXISTS idx_odeme_kayitlari_tarih ON public.odeme_kayitlari(tarih);
+
 -- Disable RLS for now (no auth, single-user app)
 ALTER TABLE public.payment_methods ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.app_settings ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.kasa_snapshots ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.odeme_kayitlari ENABLE ROW LEVEL SECURITY;
 
 -- Allow all access via anon key (single-user app, no auth)
 CREATE POLICY "Allow all access to payment_methods" ON public.payment_methods FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "Allow all access to app_settings" ON public.app_settings FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "Allow all access to kasa_snapshots" ON public.kasa_snapshots FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Allow all access to odeme_kayitlari" ON public.odeme_kayitlari FOR ALL USING (true) WITH CHECK (true);
