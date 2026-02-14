@@ -154,28 +154,26 @@ export function HamburgerMenu() {
 
               {/* Menu items */}
               <div className="flex flex-col py-1">
-                {/* Excel Yukle - Master only */}
-                {role === "master" && (
-                  <button
-                    type="button"
-                    onClick={() => setActivePanel("excel")}
-                    className="flex w-full items-center justify-between px-4 py-2.5 text-left transition-colors hover:bg-neutral-50"
-                  >
-                    <span className="flex items-center gap-2.5">
-                      <Upload
-                        className="h-3.5 w-3.5 text-neutral-400"
-                        strokeWidth={1.5}
-                      />
-                      <span className="text-[11px] text-neutral-600">
-                        Excel Yukle
-                      </span>
-                    </span>
-                    <ChevronRight
-                      className="h-3 w-3 text-neutral-300"
+                {/* Excel Yukle - Herkes icin */}
+                <button
+                  type="button"
+                  onClick={() => setActivePanel("excel")}
+                  className="flex w-full items-center justify-between px-4 py-2.5 text-left transition-colors hover:bg-neutral-50"
+                >
+                  <span className="flex items-center gap-2.5">
+                    <Upload
+                      className="h-3.5 w-3.5 text-neutral-400"
                       strokeWidth={1.5}
                     />
-                  </button>
-                )}
+                    <span className="text-[11px] text-neutral-600">
+                      Excel Yukle
+                    </span>
+                  </span>
+                  <ChevronRight
+                    className="h-3 w-3 text-neutral-300"
+                    strokeWidth={1.5}
+                  />
+                </button>
 
                 {/* Raporlar - Master only */}
                 {role === "master" && (
