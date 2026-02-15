@@ -16,6 +16,8 @@ import {
   Upload,
   FileSpreadsheet,
   CheckCircle2,
+  Plus,
+  X,
 } from "lucide-react";
 import { useStore } from "@/lib/store";
 import type { KasaCardData } from "@/lib/excel-processor";
@@ -190,6 +192,24 @@ export default function YatirimPerformansPage() {
   const [gunlukCopied, setGunlukCopied] = useState(false);
   const [haftalikCopied, setHaftalikCopied] = useState(false);
 
+  // Manuel giris
+  interface ManuelSatir { id: number; ad: string; yatirim: string; cekim: string; }
+  const [manuelSatirlar, setManuelSatirlar] = useState<ManuelSatir[]>([]);
+  const manuelIdRef = useRef(0);
+
+  const manuelEkle = useCallback(() => {
+    manuelIdRef.current += 1;
+    setManuelSatirlar((prev) => [...prev, { id: manuelIdRef.current, ad: "", yatirim: "", cekim: "" }]);
+  }, []);
+
+  const manuelGuncelle = useCallback((id: number, field: keyof ManuelSatir, val: string) => {
+    setManuelSatirlar((prev) => prev.map((s) => (s.id === id ? { ...s, [field]: val } : s)));
+  }, []);
+
+  const manuelSil = useCallback((id: number) => {
+    setManuelSatirlar((prev) => prev.filter((s) => s.id !== id));
+  }, []);
+
   // Excel upload state
   const [uploadTab, setUploadTab] = useState<"gunluk" | "gecmis">("gunluk");
   const [gecmisStart, setGecmisStart] = useState("");
@@ -322,15 +342,28 @@ export default function YatirimPerformansPage() {
   const hasKasa = aktifKasa.length > 0;
   const hasSn = snapshots.length > 0;
 
+  // Manuel satirlarin sayisal degerleri (%4.5 komisyon otomatik)
+  const MANUEL_KOM_ORAN = 0.045;
+  const manuelTotals = useMemo(() => {
+    let yatirim = 0;
+    let cekim = 0;
+    for (const s of manuelSatirlar) {
+      yatirim += parseFloat(s.yatirim) || 0;
+      cekim += parseFloat(s.cekim) || 0;
+    }
+    const komisyon = yatirim * MANUEL_KOM_ORAN;
+    return { yatirim, cekim, komisyon };
+  }, [manuelSatirlar]);
+
   const totals = useMemo(() => {
-    const yatirim = aktifKasa.reduce((s, k) => s + k.toplamBorc, 0);
-    const komisyon = aktifKasa.reduce((s, k) => s + k.komisyon, 0);
-    const net = aktifKasa.reduce((s, k) => s + k.netBorc, 0);
-    const cekim = aktifKasa.reduce((s, k) => s + k.toplamKredi, 0);
+    const yatirim = aktifKasa.reduce((s, k) => s + k.toplamBorc, 0) + manuelTotals.yatirim;
+    const komisyon = aktifKasa.reduce((s, k) => s + k.komisyon, 0) + manuelTotals.komisyon;
+    const cekim = aktifKasa.reduce((s, k) => s + k.toplamKredi, 0) + manuelTotals.cekim;
     const cekimKom = aktifKasa.reduce((s, k) => s + k.cekimKomisyon, 0);
-    const kalan = aktifKasa.reduce((s, k) => s + k.kalanKasa, 0);
-    return { yatirim, komisyon, net, cekim, cekimKom, kalan };
-  }, [aktifKasa]);
+    // Net Kar = Toplam Yatirim - Komisyon - Cekim
+    const netKar = yatirim - komisyon - cekim;
+    return { yatirim, komisyon, cekim, cekimKom, netKar };
+  }, [aktifKasa, manuelTotals]);
 
   const haftalikTopYatirim = useMemo(() => snapshots.reduce((s, sn) => s + sn.total_yatirim, 0), [snapshots]);
 
@@ -434,13 +467,13 @@ export default function YatirimPerformansPage() {
         {/* KPI Cards */}
         {hasKasa && (
           <div className="mx-auto mt-10 grid max-w-6xl gap-4 px-6 sm:grid-cols-2 lg:grid-cols-4">
-            {/* Toplam Yatirim */}
+            {/* Total Yatirim */}
             <div className="group rounded-2xl border border-white/[0.06] bg-white/[0.03] p-5 backdrop-blur-sm transition-colors hover:bg-white/[0.05]">
               <div className="mb-3 flex items-center gap-2">
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#1E5EFF]/15">
                   <TrendingUp className="h-4 w-4 text-[#1E5EFF]" strokeWidth={1.5} />
                 </div>
-                <span className="text-[10px] font-bold uppercase tracking-widest text-neutral-500">Toplam Yatirim</span>
+                <span className="text-[10px] font-bold uppercase tracking-widest text-neutral-500">Total Yatirim</span>
               </div>
               <p className="font-mono text-2xl font-bold text-white">₺{fmt(totals.yatirim)}</p>
               {hasSn && (
@@ -450,13 +483,24 @@ export default function YatirimPerformansPage() {
               )}
             </div>
 
-            {/* Toplam Komisyon */}
+            {/* Total Cekim */}
+            <div className="group rounded-2xl border border-white/[0.06] bg-white/[0.03] p-5 backdrop-blur-sm transition-colors hover:bg-white/[0.05]">
+              <div className="mb-3 flex items-center gap-2">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-500/15">
+                  <TrendingDown className="h-4 w-4 text-amber-400" strokeWidth={1.5} />
+                </div>
+                <span className="text-[10px] font-bold uppercase tracking-widest text-neutral-500">Total Cekim</span>
+              </div>
+              <p className="font-mono text-2xl font-bold text-amber-400">₺{fmt(totals.cekim)}</p>
+            </div>
+
+            {/* Total Komisyon */}
             <div className="group rounded-2xl border border-white/[0.06] bg-white/[0.03] p-5 backdrop-blur-sm transition-colors hover:bg-white/[0.05]">
               <div className="mb-3 flex items-center gap-2">
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-red-500/15">
                   <BarChart3 className="h-4 w-4 text-red-400" strokeWidth={1.5} />
                 </div>
-                <span className="text-[10px] font-bold uppercase tracking-widest text-neutral-500">Toplam Komisyon</span>
+                <span className="text-[10px] font-bold uppercase tracking-widest text-neutral-500">Total Komisyon</span>
               </div>
               <p className="font-mono text-2xl font-bold text-red-400">-₺{fmt(totals.komisyon)}</p>
               {totals.cekimKom > 0 && (
@@ -466,26 +510,20 @@ export default function YatirimPerformansPage() {
               )}
             </div>
 
-            {/* Net Kalan */}
+            {/* Total Net Kar */}
             <div className="group rounded-2xl border border-white/[0.06] bg-white/[0.03] p-5 backdrop-blur-sm transition-colors hover:bg-white/[0.05]">
               <div className="mb-3 flex items-center gap-2">
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500/15">
                   <Wallet className="h-4 w-4 text-emerald-400" strokeWidth={1.5} />
                 </div>
-                <span className="text-[10px] font-bold uppercase tracking-widest text-neutral-500">Net Kalan</span>
+                <span className="text-[10px] font-bold uppercase tracking-widest text-neutral-500">Total Net Kar</span>
               </div>
-              <p className="font-mono text-2xl font-bold text-emerald-400">₺{fmt(totals.kalan)}</p>
-            </div>
-
-            {/* Toplam Cekim */}
-            <div className="group rounded-2xl border border-white/[0.06] bg-white/[0.03] p-5 backdrop-blur-sm transition-colors hover:bg-white/[0.05]">
-              <div className="mb-3 flex items-center gap-2">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-500/15">
-                  <TrendingDown className="h-4 w-4 text-amber-400" strokeWidth={1.5} />
-                </div>
-                <span className="text-[10px] font-bold uppercase tracking-widest text-neutral-500">Toplam Cekim</span>
-              </div>
-              <p className="font-mono text-2xl font-bold text-amber-400">₺{fmt(totals.cekim)}</p>
+              <p className={`font-mono text-2xl font-bold ${totals.netKar >= 0 ? "text-emerald-400" : "text-red-400"}`}>
+                {totals.netKar >= 0 ? "₺" : "-₺"}{fmt(Math.abs(totals.netKar))}
+              </p>
+              <p className="mt-1 text-[10px] text-neutral-600">
+                Yatirim − Komisyon − Cekim
+              </p>
             </div>
           </div>
         )}
@@ -705,7 +743,7 @@ export default function YatirimPerformansPage() {
                           <th className="px-3 py-2.5 text-right text-[10px] font-bold uppercase tracking-wider text-neutral-400" colSpan={2}>Yatirim</th>
                           <th className="px-3 py-2.5 text-right text-[10px] font-bold uppercase tracking-wider text-neutral-400">Komisyon</th>
                           <th className="px-3 py-2.5 text-right text-[10px] font-bold uppercase tracking-wider text-neutral-400">Cekim</th>
-                          <th className="px-3 py-2.5 text-right text-[10px] font-bold uppercase tracking-wider text-neutral-400">Kalan</th>
+                          <th className="px-3 py-2.5 text-right text-[10px] font-bold uppercase tracking-wider text-neutral-400">Net Kar</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -762,19 +800,93 @@ export default function YatirimPerformansPage() {
                                 )}
                               </td>
                               <td className="px-3 py-3 text-right">
-                                <span className="font-mono text-[12px] font-bold text-emerald-600">₺{fmt(k.kalanKasa)}</span>
+                                {(() => {
+                                  const rowNet = k.toplamBorc - k.komisyon - k.toplamKredi;
+                                  return (
+                                    <span className={`font-mono text-[12px] font-bold ${rowNet >= 0 ? "text-emerald-600" : "text-red-500"}`}>
+                                      {rowNet >= 0 ? "₺" : "-₺"}{fmt(Math.abs(rowNet))}
+                                    </span>
+                                  );
+                                })()}
                               </td>
                             </tr>
                           );
                         })}
+                        {/* Manuel satirlar */}
+                        {manuelSatirlar.map((s) => {
+                          const mYatirim = parseFloat(s.yatirim) || 0;
+                          const mKom = mYatirim * MANUEL_KOM_ORAN;
+                          const mCekim = parseFloat(s.cekim) || 0;
+                          const mNet = mYatirim - mKom - mCekim;
+                          return (
+                          <tr key={s.id} className="border-b border-dashed border-blue-100 bg-blue-50/30">
+                            <td className="px-5 py-1.5">
+                              <input
+                                type="text"
+                                value={s.ad}
+                                onChange={(e) => manuelGuncelle(s.id, "ad", e.target.value)}
+                                placeholder="Yontem adi"
+                                className="w-full bg-transparent text-[12px] font-semibold text-neutral-700 outline-none placeholder:text-neutral-300"
+                              />
+                            </td>
+                            <td className="py-1.5 pl-3 pr-0" colSpan={2}>
+                              <input
+                                type="text"
+                                inputMode="numeric"
+                                value={s.yatirim}
+                                onChange={(e) => manuelGuncelle(s.id, "yatirim", e.target.value)}
+                                placeholder="0"
+                                className="w-full bg-transparent text-right font-mono text-[12px] font-semibold text-neutral-700 outline-none placeholder:text-neutral-300"
+                              />
+                            </td>
+                            <td className="px-3 py-1.5 text-right font-mono text-[10px] text-red-400">
+                              {mKom > 0 ? `-₺${fmt(mKom)}` : "—"}
+                              {mKom > 0 && <span className="ml-0.5 text-[8px] text-neutral-300">%4.5</span>}
+                            </td>
+                            <td className="px-3 py-1.5">
+                              <input
+                                type="text"
+                                inputMode="numeric"
+                                value={s.cekim}
+                                onChange={(e) => manuelGuncelle(s.id, "cekim", e.target.value)}
+                                placeholder="0"
+                                className="w-full bg-transparent text-right font-mono text-[12px] font-semibold text-amber-600 outline-none placeholder:text-neutral-300"
+                              />
+                            </td>
+                            <td className="px-3 py-1.5 flex items-center justify-end gap-2">
+                              <span className={`font-mono text-[10px] font-semibold ${mNet >= 0 ? "text-emerald-500" : "text-red-400"}`}>
+                                {mNet >= 0 ? "₺" : "-₺"}{fmt(Math.abs(mNet))}
+                              </span>
+                              <button type="button" onClick={() => manuelSil(s.id)} className="text-neutral-300 transition-colors hover:text-red-400">
+                                <X className="h-3 w-3" strokeWidth={2} />
+                              </button>
+                            </td>
+                          </tr>
+                          );
+                        })}
                       </tbody>
                       <tfoot>
+                        {/* Manuel ekle butonu */}
+                        <tr className="border-b border-neutral-100">
+                          <td colSpan={6} className="px-5 py-2">
+                            <button
+                              type="button"
+                              onClick={manuelEkle}
+                              className="flex items-center gap-1.5 text-[10px] font-semibold text-[#1E5EFF]/60 transition-colors hover:text-[#1E5EFF]"
+                            >
+                              <Plus className="h-3 w-3" strokeWidth={2} />
+                              Manuel Ekle
+                            </button>
+                          </td>
+                        </tr>
                         <tr className="border-t-2 border-neutral-200 bg-neutral-50">
                           <td className="px-5 py-3"><span className="text-[11px] font-black uppercase tracking-wider text-neutral-600">Toplam</span></td>
                           <td className="py-3 pl-3 pr-0 text-right font-mono text-[12px] font-black text-neutral-800" colSpan={2}>₺{fmt(totals.yatirim)}</td>
                           <td className="px-3 py-3 text-right font-mono text-[11px] font-black text-red-500">{totals.komisyon > 0 ? `-₺${fmt(totals.komisyon)}` : "—"}</td>
                           <td className="px-3 py-3 text-right font-mono text-[11px] font-black text-amber-600">{totals.cekim > 0 ? `₺${fmt(totals.cekim)}` : "—"}</td>
-                          <td className="px-3 py-3 text-right font-mono text-[12px] font-black text-emerald-600">₺{fmt(totals.kalan)}</td>
+                          <td className={`px-3 py-3 text-right font-mono text-[12px] font-black ${totals.netKar >= 0 ? "text-emerald-600" : "text-red-500"}`}>
+                            {totals.netKar >= 0 ? "₺" : "-₺"}{fmt(Math.abs(totals.netKar))}
+                          </td>
                         </tr>
                       </tfoot>
                     </table>
