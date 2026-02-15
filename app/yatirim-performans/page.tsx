@@ -542,6 +542,11 @@ export default function YatirimPerformansPage() {
                 <span className="text-[10px] font-bold uppercase tracking-widest text-neutral-500">Total Yatirim</span>
               </div>
               <p className="font-mono text-2xl font-bold text-white">₺{fmt(totals.yatirim)}</p>
+              {manuelTotals.yatirim > 0 && (
+                <p className="mt-1 text-[10px] text-emerald-500">
+                  +₺{fmt(manuelTotals.yatirim)} manuel dahil
+                </p>
+              )}
             </div>
 
             {/* Total Cekim */}
@@ -553,6 +558,11 @@ export default function YatirimPerformansPage() {
                 <span className="text-[10px] font-bold uppercase tracking-widest text-neutral-500">Total Cekim</span>
               </div>
               <p className="font-mono text-2xl font-bold text-amber-400">₺{fmt(totals.cekim)}</p>
+              {manuelTotals.cekim > 0 && (
+                <p className="mt-1 text-[10px] text-amber-500">
+                  +₺{fmt(manuelTotals.cekim)} manuel dahil
+                </p>
+              )}
             </div>
 
             {/* Total Komisyon */}
@@ -564,6 +574,11 @@ export default function YatirimPerformansPage() {
                 <span className="text-[10px] font-bold uppercase tracking-widest text-neutral-500">Total Komisyon</span>
               </div>
               <p className="font-mono text-2xl font-bold text-red-400">-₺{fmt(totals.komisyon)}</p>
+              {manuelTotals.komisyon > 0 && (
+                <p className="mt-1 text-[10px] text-red-400/70">
+                  +₺{fmt(manuelTotals.komisyon)} manuel (%4.5)
+                </p>
+              )}
               {totals.cekimKom > 0 && (
                 <p className="mt-1 text-[10px] text-neutral-600">
                   Cekim Kom.: -₺{fmt(totals.cekimKom)}
