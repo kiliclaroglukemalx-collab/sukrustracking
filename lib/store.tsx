@@ -107,7 +107,7 @@ async function syncMethodsToSupabase(methods: PaymentMethod[]) {
   }
 }
 
-async function saveSettingToSupabase(key: string, value: string) {
+export async function saveSettingToSupabase(key: string, value: string) {
   try {
     const supabase = createClient();
     await supabase
@@ -118,7 +118,7 @@ async function saveSettingToSupabase(key: string, value: string) {
   }
 }
 
-async function loadSettingFromSupabase(
+export async function loadSettingFromSupabase(
   key: string,
 ): Promise<string | null> {
   try {

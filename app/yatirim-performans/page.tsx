@@ -19,7 +19,7 @@ import {
   Plus,
   X,
 } from "lucide-react";
-import { useStore } from "@/lib/store";
+import { useStore, saveSettingToSupabase, loadSettingFromSupabase } from "@/lib/store";
 import type { KasaCardData } from "@/lib/excel-processor";
 import { parseExcelFile, processExcelData } from "@/lib/excel-processor";
 import { createClient } from "@/lib/supabase/client";
@@ -45,6 +45,13 @@ interface KasaSnapshot {
   total_komisyon: number;
   total_cekim: number;
   details: SnapshotDetail[];
+}
+
+interface ManuelSatir {
+  id: number;
+  ad: string;
+  yatirim: string;
+  cekim: string;
 }
 
 /** snapshot_hour "range:2026-02-08" ise baslangic tarihini dondurur, degilse null */
@@ -194,10 +201,33 @@ export default function YatirimPerformansPage() {
   const [gunlukCopied, setGunlukCopied] = useState(false);
   const [haftalikCopied, setHaftalikCopied] = useState(false);
 
-  // Manuel giris
-  interface ManuelSatir { id: number; ad: string; yatirim: string; cekim: string; }
+  // Manuel giris — Supabase kalici
   const [manuelSatirlar, setManuelSatirlar] = useState<ManuelSatir[]>([]);
   const manuelIdRef = useRef(0);
+  const manuelLoadedRef = useRef(false);
+
+  // Supabase'den yukle (sayfa acilisinda)
+  useEffect(() => {
+    loadSettingFromSupabase("manuel_girisler").then((val) => {
+      if (val) {
+        try {
+          const parsed = JSON.parse(val) as ManuelSatir[];
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setManuelSatirlar(parsed);
+            const maxId = parsed.reduce((mx, s) => Math.max(mx, s.id), 0);
+            manuelIdRef.current = maxId;
+          }
+        } catch { /* ignore */ }
+      }
+      manuelLoadedRef.current = true;
+    });
+  }, []);
+
+  // Her degisiklikte Supabase'e kaydet
+  useEffect(() => {
+    if (!manuelLoadedRef.current) return; // ilk yukleme tamamlanmadan kaydetme
+    saveSettingToSupabase("manuel_girisler", JSON.stringify(manuelSatirlar));
+  }, [manuelSatirlar]);
 
   const manuelEkle = useCallback(() => {
     manuelIdRef.current += 1;
