@@ -158,9 +158,8 @@ function generateHaftalikMetni(
   }
   lines.push("");
   lines.push("━━━━━━━━━━━━━━━━━━━━━━");
-  lines.push(`💰 Aylik Toplam: ₺${fmt(tY)}`);
-  if (tK > 0) lines.push(`📉 Komisyon: -₺${fmt(tK)}`);
-  if (tC > 0) lines.push(`📤 Cekim: ₺${fmt(tC)}`);
+  if (tK > 0) lines.push(`📉 Toplam Komisyon: -₺${fmt(tK)}`);
+  if (tC > 0) lines.push(`📤 Toplam Cekim: ₺${fmt(tC)}`);
   lines.push("");
   if (weeklyMethods.length > 0) {
     lines.push("📋 YONTEM BAZLI:");
@@ -1013,11 +1012,10 @@ export default function YatirimPerformansPage() {
                       })}
                     </div>
 
-                    {/* Weekly total */}
-                    <div className="mt-4 flex items-center justify-between rounded-xl bg-violet-50 px-4 py-3">
-                      <span className="text-[11px] font-black uppercase tracking-wider text-violet-600/70">Aylik Toplam</span>
-                      <span className="font-mono text-[15px] font-black text-violet-600">₺{fmt(aylikTopYatirim)}</span>
-                    </div>
+                    {/* Kayit sayisi */}
+                    <p className="mt-3 text-right text-[10px] text-neutral-400">
+                      {snapshots.length} kayit yuklendi
+                    </p>
                   </div>
 
                   {/* Method-level weekly cumulative */}
