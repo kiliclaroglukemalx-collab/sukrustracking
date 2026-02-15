@@ -149,7 +149,9 @@ async function fetchOdemelerFromSupabase(): Promise<OdemeKaydi[]> {
       tarih: row.tarih as string,
       islemTipi: row.islem_tipi as IslemTipi,
       yontem: row.yontem as string,
+      yontemId: (row.yontem_id as string) || undefined,
       hedefYontem: (row.hedef_yontem as string) || undefined,
+      hedefYontemId: (row.hedef_yontem_id as string) || undefined,
       tutar: Number(row.tutar),
       dovizCinsi: row.doviz_cinsi as string,
       kur: row.kur ? Number(row.kur) : undefined,
@@ -157,6 +159,7 @@ async function fetchOdemelerFromSupabase(): Promise<OdemeKaydi[]> {
       gonderen: (row.gonderen as string) || "",
       alici: (row.alici as string) || "",
       aciklama: (row.aciklama as string) || "",
+      txKodu: (row.tx_kodu as string) || undefined,
     }));
   } catch {
     return [];
@@ -172,7 +175,9 @@ async function insertOdemeToSupabase(odeme: OdemeKaydi) {
       tarih: odeme.tarih,
       islem_tipi: odeme.islemTipi,
       yontem: odeme.yontem,
+      yontem_id: odeme.yontemId || null,
       hedef_yontem: odeme.hedefYontem || null,
+      hedef_yontem_id: odeme.hedefYontemId || null,
       tutar: odeme.tutar,
       doviz_cinsi: odeme.dovizCinsi,
       kur: odeme.kur || null,
@@ -180,6 +185,7 @@ async function insertOdemeToSupabase(odeme: OdemeKaydi) {
       gonderen: odeme.gonderen,
       alici: odeme.alici,
       aciklama: odeme.aciklama,
+      tx_kodu: odeme.txKodu || null,
     });
   } catch {
     /* silent */
@@ -203,8 +209,10 @@ export interface OdemeKaydi {
   no: string; // #001, #002, ...
   tarih: string; // ISO string
   islemTipi: IslemTipi;
-  yontem: string; // kasa adi veya "Dis Kasa"
+  yontem: string; // kasa adi veya "Dis Kasa" (gorsel isim)
+  yontemId?: string; // method.id — isim degisse bile eslestirme bozulmaz
   hedefYontem?: string; // sadece transfer icin
+  hedefYontemId?: string; // hedef method.id
   tutar: number;
   dovizCinsi: string; // "TRY", "USDT", vs.
   kur?: number; // doviz kuru (opsiyonel)
@@ -212,6 +220,7 @@ export interface OdemeKaydi {
   gonderen: string;
   alici: string;
   aciklama: string;
+  txKodu?: string; // kripto islemler icin transaction hash/kodu
 }
 
 // --- Types ---
@@ -228,7 +237,6 @@ interface StoreContextValue {
 
   kasaData: KasaCardData[];
   loadExcelData: (data: KasaCardData[], rows?: PaymentRow[]) => void;
-  resetToDemo: () => void;
 
   videoUrl: string;
   setVideoUrl: (url: string) => void;
@@ -287,23 +295,18 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       }
 
       // Bot tarafindan yuklenen kasa verisini kontrol et
-      let botDataLoaded = false;
+      let botRowsLoaded = false;
       try {
-        const botKasaJson = await loadSettingFromSupabase("bot_kasa_data");
         const botRowsJson = await loadSettingFromSupabase("bot_raw_rows");
         
-        if (botKasaJson) {
-          const botKasa = JSON.parse(botKasaJson);
-          if (Array.isArray(botKasa) && botKasa.length > 0) {
-            setKasaData(botKasa);
-            botDataLoaded = true;
-            
-            if (botRowsJson) {
-              const botRows = JSON.parse(botRowsJson);
-              if (Array.isArray(botRows)) {
-                setRawRows(botRows);
-              }
-            }
+        if (botRowsJson) {
+          const botRows = JSON.parse(botRowsJson);
+          if (Array.isArray(botRows) && botRows.length > 0) {
+            setRawRows(botRows);
+            // Bot raw rows'u guncel methods ile yeniden hesapla
+            // (kullanicinin komisyon/bakiye degisiklikleri korunur)
+            setKasaData(processExcelData(botRows, activeMethods));
+            botRowsLoaded = true;
           }
         }
       } catch {
@@ -311,7 +314,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       }
 
       // Bot verisi yoksa normal akis
-      if (!botDataLoaded) {
+      if (!botRowsLoaded) {
         setRawRows((currentRawRows) => {
           if (currentRawRows.length === 0) {
             setKasaData(generateInitialData(activeMethods));
@@ -363,17 +366,64 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     if (rows) {
       setRawRows(rows);
     }
+    // Gunluk snapshot kaydet (haftalik kumulatif icin)
+    saveKasaSnapshot(data);
   }, []);
 
-  const resetToDemo = useCallback(() => {
-    setRawRows([]);
-    setMethodsState((currentMethods) => {
-      setKasaData(generateInitialData(currentMethods));
-      return currentMethods;
-    });
-  }, []);
+  function saveKasaSnapshot(data: KasaCardData[]) {
+    try {
+      const supabase = createClient();
+      const today = new Date().toISOString().split("T")[0];
+      const totalKasa = data.reduce((s, k) => s + k.kalanKasa, 0);
+      const totalYatirim = data.reduce((s, k) => s + k.toplamBorc, 0);
+      const totalKomisyon = data.reduce((s, k) => s + k.komisyon, 0);
+      const totalCekim = data.reduce((s, k) => s + k.toplamKredi, 0);
+      const details = data.map((k) => ({
+        name: k.odemeTuruAdi,
+        yatirim: k.toplamBorc,
+        komisyon: k.komisyon,
+        komisyonOrani: k.komisyonOrani,
+        netYatirim: k.netBorc,
+        cekim: k.toplamKredi,
+        cekimKomisyon: k.cekimKomisyon,
+        cekimKomisyonOrani: k.cekimKomisyonOrani,
+        kalan: k.kalanKasa,
+        baslangicBakiye: k.baslangicBakiye,
+      }));
+
+      supabase
+        .from("kasa_snapshots")
+        .upsert(
+          {
+            snapshot_hour: "daily",
+            snapshot_date: today,
+            total_kasa: totalKasa,
+            total_yatirim: totalYatirim,
+            total_komisyon: totalKomisyon,
+            total_cekim: totalCekim,
+            details,
+          },
+          { onConflict: "snapshot_date,snapshot_hour" },
+        )
+        .then(() => { /* silent */ })
+        .catch(() => { /* silent */ });
+    } catch {
+      /* silent */
+    }
+  }
 
   // --- Odeme sistemi ---
+  // Kasa eslestirme: yontemId varsa method.id ile, yoksa isimle esle
+  function kasaMatch(kasa: KasaCardData, yontemIsmi: string, yontemId?: string): boolean {
+    if (yontemId) {
+      // Method id ile esledirmeye calis — methods'tan ismi bul
+      const m = methods.find((me) => me.id === yontemId);
+      if (m) return kasa.odemeTuruAdi === m.name;
+    }
+    // Fallback: isim ile esle (eski kayitlar icin)
+    return kasa.odemeTuruAdi === yontemIsmi;
+  }
+
   const odemeEkle = useCallback(
     (input: Omit<OdemeKaydi, "id" | "no" | "tarih">): OdemeKaydi => {
       const now = new Date();
@@ -393,13 +443,13 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       setKasaData((prev) =>
         prev.map((kasa) => {
           let delta = 0;
-          if (input.islemTipi === "odeme-yap" && kasa.odemeTuruAdi === input.yontem) {
-            delta = -input.tutarTL; // kasadan cikis
-          } else if (input.islemTipi === "odeme-al" && kasa.odemeTuruAdi === input.yontem) {
-            delta = input.tutarTL; // kasaya giris
+          if (input.islemTipi === "odeme-yap" && kasaMatch(kasa, input.yontem, input.yontemId)) {
+            delta = -input.tutarTL;
+          } else if (input.islemTipi === "odeme-al" && kasaMatch(kasa, input.yontem, input.yontemId)) {
+            delta = input.tutarTL;
           } else if (input.islemTipi === "transfer") {
-            if (kasa.odemeTuruAdi === input.yontem) delta = -input.tutarTL;
-            if (kasa.odemeTuruAdi === input.hedefYontem) delta = input.tutarTL;
+            if (kasaMatch(kasa, input.yontem, input.yontemId)) delta = -input.tutarTL;
+            if (kasaMatch(kasa, input.hedefYontem || "", input.hedefYontemId)) delta = input.tutarTL;
           }
           if (delta === 0) return kasa;
           return { ...kasa, kalanKasa: kasa.kalanKasa + delta };
@@ -408,7 +458,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
 
       return yeniOdeme;
     },
-    [odemeler.length],
+    [odemeler.length, methods],
   );
 
   const odemeSil = useCallback(
@@ -424,13 +474,13 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         setKasaData((prevKasa) =>
           prevKasa.map((kasa) => {
             let delta = 0;
-            if (silinecek.islemTipi === "odeme-yap" && kasa.odemeTuruAdi === silinecek.yontem) {
-              delta = silinecek.tutarTL; // geri ekle
-            } else if (silinecek.islemTipi === "odeme-al" && kasa.odemeTuruAdi === silinecek.yontem) {
-              delta = -silinecek.tutarTL; // geri cikar
+            if (silinecek.islemTipi === "odeme-yap" && kasaMatch(kasa, silinecek.yontem, silinecek.yontemId)) {
+              delta = silinecek.tutarTL;
+            } else if (silinecek.islemTipi === "odeme-al" && kasaMatch(kasa, silinecek.yontem, silinecek.yontemId)) {
+              delta = -silinecek.tutarTL;
             } else if (silinecek.islemTipi === "transfer") {
-              if (kasa.odemeTuruAdi === silinecek.yontem) delta = silinecek.tutarTL;
-              if (kasa.odemeTuruAdi === silinecek.hedefYontem) delta = -silinecek.tutarTL;
+              if (kasaMatch(kasa, silinecek.yontem, silinecek.yontemId)) delta = silinecek.tutarTL;
+              if (kasaMatch(kasa, silinecek.hedefYontem || "", silinecek.hedefYontemId)) delta = -silinecek.tutarTL;
             }
             if (delta === 0) return kasa;
             return { ...kasa, kalanKasa: kasa.kalanKasa + delta };
@@ -440,7 +490,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         return prev.filter((o) => o.id !== id);
       });
     },
-    [],
+    [methods],
   );
 
   // --- Methods (sync to both localStorage and Supabase) ---
@@ -473,7 +523,6 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       setMethods,
       kasaData,
       loadExcelData,
-      resetToDemo,
       videoUrl,
       setVideoUrl,
       rawRows,
@@ -491,7 +540,6 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       setMethods,
       kasaData,
       loadExcelData,
-      resetToDemo,
       videoUrl,
       setVideoUrl,
       rawRows,

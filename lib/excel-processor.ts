@@ -149,22 +149,21 @@ export function processExcelData(
 
   for (const [odemeTuru, totals] of grouped.entries()) {
     const matched = findMethodForExcel(odemeTuru, methods);
-    const komisyonOrani = matched?.komisyonOrani ?? 0;
-    const cekimKomisyonOrani = matched?.cekimKomisyonOrani ?? 0;
-    const baslangicBakiye = matched?.baslangicBakiye ?? 0;
+    // Silinen yontemlerin Excel artiklarini atla — sadece methods'ta karsiligi olanlar gosterilir
+    if (!matched) continue;
+
+    matchedMethodIds.add(matched.id);
+    const komisyonOrani = matched.komisyonOrani;
+    const cekimKomisyonOrani = matched.cekimKomisyonOrani;
+    const baslangicBakiye = matched.baslangicBakiye;
     const komisyon = totals.borc * (komisyonOrani / 100);
     const cekimKomisyon = totals.kredi * (cekimKomisyonOrani / 100);
     const netBorc = totals.borc - komisyon;
     const kalanKasa = baslangicBakiye + netBorc - totals.kredi - cekimKomisyon;
 
-    // Display name: use Ayarlar method name if matched, otherwise raw Excel name
-    const displayName = matched ? matched.name : odemeTuru;
-    // Track which methods got matched so we can add unmatched ones later
-    if (matched) matchedMethodIds.add(matched.id);
-
     results.push({
       id: `kasa-${index++}`,
-      odemeTuruAdi: displayName,
+      odemeTuruAdi: matched.name,
       toplamBorc: totals.borc,
       toplamKredi: totals.kredi,
       komisyon,

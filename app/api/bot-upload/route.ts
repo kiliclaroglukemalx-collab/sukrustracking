@@ -109,6 +109,36 @@ export async function POST(req: NextRequest) {
         { onConflict: "key" },
       );
 
+    // 7. Gunluk snapshot kaydet (haftalik kumulatif icin)
+    const today = new Date().toISOString().split("T")[0]; // YYYY-MM-DD
+    const snapshotDetails = kasaData.map((k) => ({
+      name: k.odemeTuruAdi,
+      yatirim: k.toplamBorc,
+      komisyon: k.komisyon,
+      komisyonOrani: k.komisyonOrani,
+      netYatirim: k.netBorc,
+      cekim: k.toplamKredi,
+      cekimKomisyon: k.cekimKomisyon,
+      cekimKomisyonOrani: k.cekimKomisyonOrani,
+      kalan: k.kalanKasa,
+      baslangicBakiye: k.baslangicBakiye,
+    }));
+
+    await supabase
+      .from("kasa_snapshots")
+      .upsert(
+        {
+          snapshot_hour: "daily",
+          snapshot_date: today,
+          total_kasa: totalKasa,
+          total_yatirim: totalYatirim,
+          total_komisyon: totalKomisyon,
+          total_cekim: totalCekim,
+          details: snapshotDetails,
+        },
+        { onConflict: "snapshot_date,snapshot_hour" },
+      );
+
     console.log(`[Bot Upload] Excel islendi: ${rows.length} satir, ${kasaData.length} yontem, toplam kasa: ${totalKasa.toLocaleString("tr-TR")}`);
 
     return NextResponse.json({

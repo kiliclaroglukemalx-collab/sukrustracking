@@ -53,6 +53,9 @@ CREATE TABLE IF NOT EXISTS public.kasa_snapshots (
 
 CREATE INDEX IF NOT EXISTS idx_kasa_snapshots_date ON public.kasa_snapshots(snapshot_date, snapshot_hour);
 
+-- Unique constraint: one snapshot per date+hour (enables UPSERT)
+CREATE UNIQUE INDEX IF NOT EXISTS idx_kasa_snapshots_unique ON public.kasa_snapshots(snapshot_date, snapshot_hour);
+
 -- Odeme Kayitlari (persistent payment records)
 CREATE TABLE IF NOT EXISTS public.odeme_kayitlari (
   id TEXT PRIMARY KEY,
@@ -60,7 +63,9 @@ CREATE TABLE IF NOT EXISTS public.odeme_kayitlari (
   tarih TIMESTAMPTZ NOT NULL DEFAULT now(),
   islem_tipi TEXT NOT NULL,
   yontem TEXT NOT NULL,
+  yontem_id TEXT,
   hedef_yontem TEXT,
+  hedef_yontem_id TEXT,
   tutar NUMERIC NOT NULL DEFAULT 0,
   doviz_cinsi TEXT NOT NULL DEFAULT 'TRY',
   kur NUMERIC,
@@ -68,10 +73,24 @@ CREATE TABLE IF NOT EXISTS public.odeme_kayitlari (
   gonderen TEXT DEFAULT '',
   alici TEXT DEFAULT '',
   aciklama TEXT DEFAULT '',
+  tx_kodu TEXT,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
 CREATE INDEX IF NOT EXISTS idx_odeme_kayitlari_tarih ON public.odeme_kayitlari(tarih);
+
+-- Add yontem_id columns if table already exists (safe to run multiple times)
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='odeme_kayitlari' AND column_name='yontem_id') THEN
+    ALTER TABLE public.odeme_kayitlari ADD COLUMN yontem_id TEXT;
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='odeme_kayitlari' AND column_name='hedef_yontem_id') THEN
+    ALTER TABLE public.odeme_kayitlari ADD COLUMN hedef_yontem_id TEXT;
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='odeme_kayitlari' AND column_name='tx_kodu') THEN
+    ALTER TABLE public.odeme_kayitlari ADD COLUMN tx_kodu TEXT;
+  END IF;
+END $$;
 
 -- RLS
 ALTER TABLE public.payment_methods ENABLE ROW LEVEL SECURITY;

@@ -6,8 +6,8 @@ import {
   ArrowDownLeft,
   ArrowUpRight,
   ArrowLeftRight,
-  Download,
   Check,
+  Copy,
   X,
   ChevronDown,
   Trash2,
@@ -51,7 +51,67 @@ function islemLabel(tip: IslemTipi): string {
   }
 }
 
-// ---- Odeme Ozet Karti (neon efektli, screenshot'a uygun) ----
+// ---- Kurumsal metin olusturucu ----
+function generateOdemeMetni(odeme: OdemeKaydi): string {
+  const { tarih, saat } = formatDateTime(odeme.tarih);
+  const isCredit = odeme.islemTipi === "odeme-al";
+  const isTransfer = odeme.islemTipi === "transfer";
+
+  const tipLabel = isCredit ? "ODEME ALINDI" : isTransfer ? "KASALAR ARASI TRANSFER" : "ODEME YAPILDI";
+  const yonEmoji = isCredit ? "📥" : isTransfer ? "🔄" : "📤";
+
+  let lines: string[] = [];
+
+  lines.push(`${yonEmoji} ${tipLabel}`);
+  lines.push(`━━━━━━━━━━━━━━━━━━━━`);
+  lines.push(``);
+
+  // Tutar
+  const sign = isCredit ? "+" : "-";
+  if (odeme.dovizCinsi !== "TRY" && odeme.kur) {
+    lines.push(`💰 Tutar: ${formatCurrency(odeme.tutar)} ${odeme.dovizCinsi}`);
+    lines.push(`📊 Kur: ${odeme.kur.toLocaleString("tr-TR")} TL`);
+    lines.push(`💵 TL Karsiligi: ${sign}₺${formatCurrency(odeme.tutarTL)}`);
+  } else {
+    lines.push(`💰 Tutar: ${sign}₺${formatCurrency(odeme.tutarTL)}`);
+  }
+  lines.push(``);
+
+  // Akis
+  if (isTransfer) {
+    lines.push(`📋 Kaynak: ${odeme.yontem}`);
+    lines.push(`📋 Hedef: ${odeme.hedefYontem}`);
+  } else {
+    lines.push(`📋 Yontem: ${odeme.yontem}`);
+  }
+
+  if (odeme.gonderen) lines.push(`👤 Gonderen: ${odeme.gonderen}`);
+  if (odeme.alici) lines.push(`👤 Alici: ${odeme.alici}`);
+  lines.push(``);
+
+  // TX Kodu
+  if (odeme.txKodu) {
+    lines.push(`🔗 TX: ${odeme.txKodu}`);
+    lines.push(``);
+  }
+
+  // Tarih ve referans
+  lines.push(`📅 ${tarih} | ⏰ ${saat}`);
+  lines.push(`🔖 Ref: ${odeme.no}`);
+
+  // Aciklama
+  if (odeme.aciklama) {
+    lines.push(``);
+    lines.push(`📝 Not: ${odeme.aciklama}`);
+  }
+
+  lines.push(``);
+  lines.push(`━━━━━━━━━━━━━━━━━━━━`);
+
+  return lines.join("\n");
+}
+
+// ---- Odeme Ozet Karti (kurumsal metin + telegram kopyalama) ----
 function OdemeOzetKarti({
   odeme,
   onClose,
@@ -59,35 +119,35 @@ function OdemeOzetKarti({
   odeme: OdemeKaydi;
   onClose: () => void;
 }) {
-  const cardRef = useRef<HTMLDivElement>(null);
-  const [saving, setSaving] = useState(false);
-  const { tarih, saat } = formatDateTime(odeme.tarih);
+  const [copied, setCopied] = useState(false);
+  const metin = generateOdemeMetni(odeme);
 
-  const handleSave = useCallback(async () => {
-    if (!cardRef.current || saving) return;
-    setSaving(true);
+  const handleCopy = useCallback(async () => {
     try {
-      const html2canvas = (await import("html2canvas")).default;
-      const canvas = await html2canvas(cardRef.current, {
-        backgroundColor: "#0a0a0a",
-        scale: 2,
-      });
-      const link = document.createElement("a");
-      link.download = `odeme-${odeme.no.replace("#", "")}-${tarih.replace(/\./g, "-")}.png`;
-      link.href = canvas.toDataURL("image/png");
-      link.click();
+      await navigator.clipboard.writeText(metin);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2500);
     } catch {
-      /* silent */
-    } finally {
-      setSaving(false);
+      // Fallback: eski yontem
+      const ta = document.createElement("textarea");
+      ta.value = metin;
+      ta.style.position = "fixed";
+      ta.style.opacity = "0";
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand("copy");
+      document.body.removeChild(ta);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2500);
     }
-  }, [odeme.no, tarih, saving]);
+  }, [metin]);
 
   const isCredit = odeme.islemTipi === "odeme-al";
+  const { tarih, saat } = formatDateTime(odeme.tarih);
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
-      <div className="relative flex w-full max-w-[720px] flex-col gap-4">
+      <div className="relative flex w-full max-w-md flex-col gap-4">
         {/* Close button */}
         <button
           type="button"
@@ -97,124 +157,145 @@ function OdemeOzetKarti({
           <X className="h-5 w-5" strokeWidth={2} />
         </button>
 
-        {/* The card to screenshot -- LANDSCAPE */}
+        {/* Basari basligi */}
+        <div className="flex items-center justify-center gap-3 pt-2">
+          <div
+            className="flex h-10 w-10 items-center justify-center rounded-xl"
+            style={{
+              background: "rgba(0,255,0,0.1)",
+              boxShadow: "0 0 16px rgba(0,255,0,0.2)",
+            }}
+          >
+            <Check className="h-5 w-5" style={{ color: "#00ff00" }} />
+          </div>
+          <span
+            className="text-base font-black uppercase tracking-[0.2em]"
+            style={{
+              color: "#00ff00",
+              textShadow: "0 0 12px rgba(0,255,0,0.4)",
+            }}
+          >
+            {islemLabel(odeme.islemTipi)}
+          </span>
+        </div>
+
+        {/* Tutar vurgusu */}
+        <div className="text-center">
+          <span
+            className="font-mono text-4xl font-black tabular-nums"
+            style={{
+              color: "#00ff00",
+              textShadow:
+                "0 0 24px rgba(0,255,0,0.4), 0 0 48px rgba(0,255,0,0.2)",
+            }}
+          >
+            {isCredit ? "+" : "-"}₺{formatCurrency(odeme.tutarTL)}
+          </span>
+          {odeme.dovizCinsi !== "TRY" && odeme.kur && (
+            <p className="mt-1 text-sm text-neutral-400">
+              {formatCurrency(odeme.tutar)} {odeme.dovizCinsi} × {odeme.kur.toLocaleString("tr-TR")} TL
+            </p>
+          )}
+        </div>
+
+        {/* Kurumsal metin onizleme */}
         <div
-          ref={cardRef}
-          className="overflow-hidden rounded-2xl border border-neutral-700/50 px-8 py-7"
+          className="overflow-hidden rounded-2xl border border-neutral-700/50"
           style={{
-            background:
-              "linear-gradient(145deg, #0a0a0a 0%, #111111 50%, #0a0a0a 100%)",
-            boxShadow:
-              "0 0 60px rgba(0,255,0,0.08), 0 0 120px rgba(0,255,0,0.04), 0 25px 60px rgba(0,0,0,0.5)",
+            background: "linear-gradient(145deg, #0a0a0a 0%, #111111 50%, #0a0a0a 100%)",
           }}
         >
-          {/* Top row: status + no */}
-          <div className="mb-5 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div
-                className="flex h-10 w-10 items-center justify-center rounded-xl"
-                style={{
-                  background: "rgba(0,255,0,0.1)",
-                  boxShadow: "0 0 16px rgba(0,255,0,0.2)",
-                }}
-              >
-                <Check className="h-5 w-5" style={{ color: "#00ff00" }} />
-              </div>
-              <span
-                className="text-base font-black uppercase tracking-[0.2em]"
-                style={{
-                  color: "#00ff00",
-                  textShadow: "0 0 12px rgba(0,255,0,0.4)",
-                }}
-              >
-                {islemLabel(odeme.islemTipi)}
-              </span>
+          {/* Detay ozet */}
+          <div className="space-y-2.5 px-5 pt-5 pb-4">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-500">Yontem</span>
+              <span className="text-xs font-semibold text-white">{odeme.yontem}</span>
             </div>
-            <span className="font-mono text-base font-bold text-neutral-400">
-              {odeme.no}
-            </span>
+            {odeme.hedefYontem && (
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-500">Hedef</span>
+                <span className="text-xs font-semibold text-white">{odeme.hedefYontem}</span>
+              </div>
+            )}
+            {odeme.gonderen && (
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-500">Gonderen</span>
+                <span className="text-xs font-semibold text-white">{odeme.gonderen}</span>
+              </div>
+            )}
+            {odeme.alici && (
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-500">Alici</span>
+                <span className="text-xs font-semibold text-white">{odeme.alici}</span>
+              </div>
+            )}
+            {odeme.txKodu && (
+              <div className="flex items-center justify-between gap-4">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-500 shrink-0">TX Kodu</span>
+                <span className="truncate font-mono text-[11px] font-semibold text-cyan-400">{odeme.txKodu}</span>
+              </div>
+            )}
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-500">Tarih</span>
+              <span className="text-xs font-semibold text-white">{tarih} · {saat}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-500">Referans</span>
+              <span className="font-mono text-xs font-semibold text-neutral-400">{odeme.no}</span>
+            </div>
+            {odeme.aciklama && (
+              <div className="rounded-lg border border-neutral-800 bg-neutral-900/50 px-3 py-2.5">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-neutral-500">Not</p>
+                <p className="mt-1 text-xs text-neutral-300">{odeme.aciklama}</p>
+              </div>
+            )}
           </div>
 
-          {/* Main content: 2 columns -- left: amount, right: details */}
-          <div className="flex gap-8">
-            {/* Left column: Amount */}
-            <div className="flex flex-col justify-center">
-              <span
-                className="font-mono text-5xl font-black tabular-nums whitespace-nowrap"
-                style={{
-                  color: "#00ff00",
-                  textShadow:
-                    "0 0 24px rgba(0,255,0,0.4), 0 0 48px rgba(0,255,0,0.2), 0 0 96px rgba(0,255,0,0.1)",
-                }}
-              >
-                {isCredit ? "+" : "-"}{"₺"}
-                {formatCurrency(odeme.tutarTL)}
-              </span>
-              {odeme.dovizCinsi !== "TRY" && odeme.kur && (
-                <p className="mt-2 text-sm font-medium text-neutral-400">
-                  {formatCurrency(odeme.tutar)} {odeme.dovizCinsi} x{" "}
-                  {odeme.kur.toLocaleString("tr-TR")} {"₺"}
-                </p>
-              )}
-              {/* Flow description under amount */}
-              <div className="mt-3 rounded-lg border border-neutral-800 bg-neutral-900/40 px-3 py-2">
-                <span className="text-xs font-bold uppercase tracking-wider text-neutral-300">
-                  {odeme.islemTipi === "transfer"
-                    ? `${odeme.yontem} → ${odeme.hedefYontem}`
-                    : odeme.islemTipi === "odeme-yap"
-                      ? `${odeme.yontem} → ${odeme.alici || "-"}`
-                      : `${odeme.gonderen || "-"} → ${odeme.yontem}`}
-                </span>
-              </div>
-            </div>
-
-            {/* Right column: Details */}
-            <div className="flex-1 grid grid-cols-2 gap-x-6 gap-y-3 content-start">
-              <DetailItem label="Tarih" value={tarih} />
-              <DetailItem label="Saat" value={saat} />
-              <DetailItem label="Gonderen" value={odeme.gonderen || "-"} />
-              <DetailItem label="Alici" value={odeme.alici || "-"} />
-              <DetailItem label="Yontem" value={odeme.yontem} />
-              {odeme.hedefYontem && (
-                <DetailItem label="Hedef Kasa" value={odeme.hedefYontem} />
-              )}
-              {/* Description inside the grid */}
-              {odeme.aciklama && (
-                <div className="col-span-2 mt-1 rounded-lg border border-neutral-800 bg-neutral-900/50 px-4 py-3">
-                  <p className="text-[11px] font-bold uppercase tracking-wider text-neutral-400">
-                    Aciklama
-                  </p>
-                  <p className="mt-1 text-sm font-medium text-neutral-200">
-                    {odeme.aciklama}
-                  </p>
-                </div>
-              )}
-            </div>
+          {/* Telegram metin onizleme */}
+          <div className="border-t border-neutral-800 bg-neutral-900/30 px-5 py-4">
+            <p className="mb-2 text-[9px] font-bold uppercase tracking-[0.18em] text-neutral-500">
+              Telegram Metni Onizleme
+            </p>
+            <pre className="whitespace-pre-wrap font-mono text-[11px] leading-relaxed text-neutral-400">
+              {metin}
+            </pre>
           </div>
         </div>
 
-        {/* Save button */}
-        <button
-          type="button"
-          onClick={handleSave}
-          disabled={saving}
-          className="mx-auto flex items-center gap-2 rounded-xl border border-neutral-700 bg-neutral-900 px-8 py-3 text-sm font-bold text-white transition-all hover:border-neutral-600 hover:bg-neutral-800 disabled:opacity-50"
-        >
-          <Download className="h-4 w-4" />
-          {saving ? "Kaydediliyor..." : "Goruntuyyu Kaydet"}
-        </button>
+        {/* Butonlar */}
+        <div className="flex gap-3">
+          <button
+            type="button"
+            onClick={handleCopy}
+            className="flex flex-1 items-center justify-center gap-2 rounded-xl py-3 text-xs font-bold uppercase tracking-[0.12em] text-black transition-all"
+            style={{
+              background: copied
+                ? "linear-gradient(135deg, #00cc00 0%, #009900 100%)"
+                : "linear-gradient(135deg, #00ff00 0%, #00cc00 100%)",
+              boxShadow: "0 0 20px rgba(0,255,0,0.25), 0 0 40px rgba(0,255,0,0.1)",
+            }}
+          >
+            {copied ? (
+              <>
+                <Check className="h-4 w-4" />
+                Kopyalandi!
+              </>
+            ) : (
+              <>
+                <Copy className="h-4 w-4" />
+                Metni Kopyala
+              </>
+            )}
+          </button>
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-xl border border-neutral-700 bg-neutral-900 px-5 py-3 text-xs font-bold uppercase tracking-wider text-neutral-400 transition-colors hover:border-neutral-600 hover:text-white"
+          >
+            Kapat
+          </button>
+        </div>
       </div>
-    </div>
-  );
-}
-
-function DetailItem({ label, value }: { label: string; value: string }) {
-  return (
-    <div>
-      <p className="text-xs font-bold uppercase tracking-wider text-neutral-400">
-        {label}
-      </p>
-      <p className="text-base font-semibold text-white">{value}</p>
     </div>
   );
 }
@@ -281,7 +362,7 @@ function CustomSelect({
 
 // ---- Ana Odeme Paneli ----
 export function OdemePanel({ onClose }: { onClose: () => void }) {
-  const { kasaData, odemeEkle, odemeler, odemeSil } = useStore();
+  const { kasaData, odemeEkle, odemeler, odemeSil, methods } = useStore();
   const [silOnay, setSilOnay] = useState<string | null>(null);
   const [islemTipi, setIslemTipi] = useState<IslemTipi>("odeme-yap");
   const [yontem, setYontem] = useState("");
@@ -291,6 +372,7 @@ export function OdemePanel({ onClose }: { onClose: () => void }) {
   const [kur, setKur] = useState("");
   const [gonderen, setGonderen] = useState("");
   const [alici, setAlici] = useState("");
+  const [txKodu, setTxKodu] = useState("");
   const [aciklama, setAciklama] = useState("");
   const [ozetOdeme, setOzetOdeme] = useState<OdemeKaydi | null>(null);
   const [tab, setTab] = useState<"form" | "gecmis">("form");
@@ -312,10 +394,15 @@ export function OdemePanel({ onClose }: { onClose: () => void }) {
 
   const handleSubmit = () => {
     if (!canSubmit) return;
+    // Method ID'yi bul (isim degisse bile eslestirme bozulmasin)
+    const yontemMethod = methods.find((m) => m.name === yontem);
+    const hedefMethod = islemTipi === "transfer" ? methods.find((m) => m.name === hedefYontem) : undefined;
     const yeni = odemeEkle({
       islemTipi,
       yontem,
+      yontemId: yontemMethod?.id,
       hedefYontem: islemTipi === "transfer" ? hedefYontem : undefined,
+      hedefYontemId: hedefMethod?.id,
       tutar: tutarNum,
       dovizCinsi,
       kur: dovizCinsi !== "TRY" ? kurNum : undefined,
@@ -323,6 +410,7 @@ export function OdemePanel({ onClose }: { onClose: () => void }) {
       gonderen,
       alici,
       aciklama,
+      txKodu: txKodu.trim() || undefined,
     });
     setOzetOdeme(yeni);
     // Reset
@@ -330,6 +418,7 @@ export function OdemePanel({ onClose }: { onClose: () => void }) {
     setKur("");
     setGonderen("");
     setAlici("");
+    setTxKodu("");
     setAciklama("");
   };
 
@@ -524,6 +613,18 @@ export function OdemePanel({ onClose }: { onClose: () => void }) {
                 />
               </div>
             </div>
+
+            {/* TX Kodu (kripto islemler icin) */}
+            <label className="mb-1.5 block text-[9px] font-bold uppercase tracking-[0.18em] text-neutral-500">
+              TX Kodu <span className="normal-case tracking-normal text-neutral-600">(opsiyonel)</span>
+            </label>
+            <input
+              type="text"
+              value={txKodu}
+              onChange={(e) => setTxKodu(e.target.value)}
+              placeholder="Ornek: 0x3a7f...b2c1"
+              className="mb-4 w-full rounded-lg border border-neutral-700 bg-neutral-900 px-3 py-2.5 font-mono text-xs text-white placeholder-neutral-600 outline-none transition-colors focus:border-green-500/50"
+            />
 
             {/* Aciklama */}
             <label className="mb-1.5 block text-[9px] font-bold uppercase tracking-[0.18em] text-neutral-500">

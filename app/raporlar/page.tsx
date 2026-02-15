@@ -7,6 +7,7 @@ import {
   Trophy,
   FileText,
   BarChart2,
+  TrendingUp,
   Lock,
   ChevronRight,
 } from "lucide-react";
@@ -46,6 +47,19 @@ export default function RaporlarPage() {
 
   const sections = [
     {
+      href: "/yatirim-performans",
+      icon: TrendingUp,
+      iconBg: "bg-violet-50",
+      iconColor: "text-violet-500",
+      badgeBg: "bg-violet-50",
+      badgeColor: "text-violet-600",
+      badgeText: "Yeni",
+      title: "Yatirim Performansi",
+      description:
+        "Yontem bazli gunluk yatirim ozeti ve haftalik kumulatif karsilastirma. Performans degisimini ok ve yuzde ile takip edin.",
+      footnote: "Gunluk + Haftalik gorunum",
+    },
+    {
       href: "/raporlar/performans",
       icon: Trophy,
       iconBg: "bg-amber-50",
@@ -82,7 +96,7 @@ export default function RaporlarPage() {
       title: "Gunun Finansal Analizi",
       description:
         "Gunluk finansal performansin kapsamli analizini uretir. Yatirim/cekim oranlari, komisyon dagilimi ve genel degerlendirme iceriri.",
-      footnote: "Mock veri ile hazir, Cursor uzerinden AI entegrasyonu yapilacak",
+      footnote: "",
     },
   ];
 

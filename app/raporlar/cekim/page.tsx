@@ -133,62 +133,7 @@ interface CekimRaporuData {
   analizZamani: string;
 }
 
-/* ═══════════════════════════════════════════════════════
-   MOCK DATA — Veri yokken fallback olarak kullanılır
-   ═══════════════════════════════════════════════════════ */
-
-const FALLBACK_GENEL: CekimGenel = {
-  toplamBasariliCekim: 1670180,
-  basariliIslemSayisi: 3100,
-  toplamRedSayisi: 145,
-  toplamRedHacmi: 287500,
-  sistemGenelHizi: 6.3,
-  periodBaslangic: "00:00",
-  periodBitis: "17:00",
-  degisim: { oncekiToplam: 1450000, fark: 220180 },
-};
-
-const FALLBACK_YONTEM: CekimYontem[] = [
-  { name: "X HAVALE", volume: 977730, avgDuration: 2.5, txCount: 1500, yukYuzdesi: 58.5 },
-  { name: "BIGPAYSS HAVALE", volume: 387818, avgDuration: 8.5, txCount: 800, yukYuzdesi: 23.2 },
-  { name: "KRIPTOPAY", volume: 207632, avgDuration: 4.5, txCount: 600, yukYuzdesi: 12.4 },
-  { name: "MASTER HAVALE", volume: 97000, avgDuration: 9.8, txCount: 200, yukYuzdesi: 5.8 },
-];
-
-const FALLBACK_PERSONEL: CekimPersonel[] = [
-  { name: "Tolga", islemSayisi: 52, ortKararDk: 1.8, performans: "basarili", emoji: "✅", totalVolume: 580000, hizDegisimi: "hizlandi", oncekiDk: 2.3 },
-  { name: "Mavi", islemSayisi: 45, ortKararDk: 3.2, performans: "basarili", emoji: "✅", totalVolume: 450000, hizDegisimi: "ayni", oncekiDk: 3.1 },
-  { name: "Gunes", islemSayisi: 38, ortKararDk: 6.5, performans: "yeterli", emoji: "⚠️", totalVolume: 320000, hizDegisimi: "dustu", oncekiDk: 5.2 },
-  { name: "Mira", islemSayisi: 28, ortKararDk: 9.2, performans: "hizlanmali", emoji: "🔴", totalVolume: 190000, hizDegisimi: null, oncekiDk: null },
-];
-
-const FALLBACK_DARBOGAZ: CekimDarbogaz[] = [
-  { miktar: 45000, odemeSistemi: "BIGPAYSS HAVALE", beklemeDk: 47, aciliyet: "kirmizi", durum: "Karar Bekliyor" },
-  { miktar: 32000, odemeSistemi: "MASTER HAVALE", beklemeDk: 35, aciliyet: "kirmizi", durum: "Odeme Bekliyor" },
-  { miktar: 18500, odemeSistemi: "KRIPTOPAY", beklemeDk: 22, aciliyet: "sari", durum: "Odeme Bekliyor" },
-  { miktar: 12000, odemeSistemi: "X HAVALE", beklemeDk: 8, aciliyet: "yesil", durum: "Karar Bekliyor" },
-];
-
-const FALLBACK_RED: CekimRed = {
-  toplamRed: 145,
-  toplamRedHacmi: 287500,
-  enSikNeden: "Yetersiz Bakiye",
-  enSikNedenAdet: 67,
-  nedenler: [
-    { neden: "Yetersiz Bakiye", adet: 67 },
-    { neden: "Zaman Asimi", adet: 34 },
-    { neden: "Teknik Hata", adet: 22 },
-    { neden: "Kullanici Iptali", adet: 15 },
-    { neden: "Limit Asimi", adet: 7 },
-  ],
-};
-
-const FALLBACK_IDIL: CekimIdilNotlari = {
-  yontem: "X HAVALE yuku %58'e ulasti, tek gateway'e bu kadar bagimlilik riskli. BIGPAYSS ve KRIPTOPAY'a yuk dagitimi yapilmali.",
-  personel: "Tolga bugun yildiz performans sergiliyor, 1.8 dk ortalamayla en atik isimiz. Gunes biraz yavaslamisb onceki 5.2'den 6.5'e dustu — dikkat. Mira'nin 9.2 dk ortalamasi kabul edilemez, acil hizlanmali.",
-  darbogaz: "BIGPAYSS HAVALE'de 47 dakikadir bekleyen ₺45.000'lik islem var. Bu gateway'de sistemsel bir sorun olabilir, teknik ekiple kontrol edilmeli.",
-  red: "Retlerin %46'si Yetersiz Bakiye kaynakli. Musterilere islem oncesi bakiye kontrolu hatirlatmasi yapilmali. Zaman Asimi retleri de %23 ile yuksek — gateway timeout sureleri gozden gecirilmeli.",
-};
+/* Mock data tamamen kaldirildi — sadece canli API verisi kullanilir */
 
 /* ═══════════════════════════════════════════════════════
    LEAGUE TABLE COLORS
@@ -287,13 +232,13 @@ export default function CekimRaporuPage() {
   const [loading, setLoading] = useState(true);
   const [lastUpdate, setLastUpdate] = useState<string | null>(null);
 
-  // Live data state — fallback to mock when null
-  const [genelData, setGenelData] = useState<CekimGenel>(FALLBACK_GENEL);
-  const [yontemData, setYontemData] = useState<CekimYontem[]>(FALLBACK_YONTEM);
-  const [personelData, setPersonelData] = useState<CekimPersonel[]>(FALLBACK_PERSONEL);
-  const [darbogazData, setDarbogazData] = useState<CekimDarbogaz[]>(FALLBACK_DARBOGAZ);
-  const [redData, setRedData] = useState<CekimRed>(FALLBACK_RED);
-  const [idilData, setIdilData] = useState<CekimIdilNotlari>(FALLBACK_IDIL);
+  // Canli veri state — null = henuz veri yok
+  const [genelData, setGenelData] = useState<CekimGenel | null>(null);
+  const [yontemData, setYontemData] = useState<CekimYontem[]>([]);
+  const [personelData, setPersonelData] = useState<CekimPersonel[]>([]);
+  const [darbogazData, setDarbogazData] = useState<CekimDarbogaz[]>([]);
+  const [redData, setRedData] = useState<CekimRed | null>(null);
+  const [idilData, setIdilData] = useState<CekimIdilNotlari | null>(null);
 
   useEffect(() => {
     setHydrated(true);
@@ -318,22 +263,22 @@ export default function CekimRaporuPage() {
         setLastUpdate(d.analizZamani || json.createdAt || null);
       }
     } catch (err) {
-      console.error("[CekimPage] Veri çekme hatası:", err);
-      // Fallback verileri zaten state'de — bir şey yapmaya gerek yok
+      console.error("[CekimPage] Veri cekme hatasi:", err);
     } finally {
       setLoading(false);
     }
   }
 
-  /* ── derived ── */
+  /* ── derived (null-safe) ── */
+  const hasData = genelData !== null && yontemData.length > 0;
   const scatterData = yontemData;
-  const totalVolume = genelData.toplamBasariliCekim;
-  const avgDuration = genelData.sistemGenelHizi;
-  const totalTx = genelData.basariliIslemSayisi;
+  const totalVolume = genelData?.toplamBasariliCekim ?? 0;
+  const avgDuration = genelData?.sistemGenelHizi ?? 0;
+  const totalTx = genelData?.basariliIslemSayisi ?? 0;
 
-  const maxVolume = useMemo(() => Math.max(...scatterData.map((d) => d.volume)), [scatterData]);
-  const maxDuration = useMemo(() => Math.max(...scatterData.map((d) => d.avgDuration)), [scatterData]);
-  const maxTxCount = useMemo(() => Math.max(...scatterData.map((d) => d.txCount)), [scatterData]);
+  const maxVolume = useMemo(() => scatterData.length > 0 ? Math.max(...scatterData.map((d) => d.volume)) : 1, [scatterData]);
+  const maxDuration = useMemo(() => scatterData.length > 0 ? Math.max(...scatterData.map((d) => d.avgDuration)) : 1, [scatterData]);
+  const maxTxCount = useMemo(() => scatterData.length > 0 ? Math.max(...scatterData.map((d) => d.txCount)) : 1, [scatterData]);
 
   const midX = maxDuration / 2;
   const midY = maxVolume / 2;
@@ -344,10 +289,10 @@ export default function CekimRaporuPage() {
   const leagueMax = leagueSorted.length > 0 ? leagueSorted[0].volume : 1;
 
   const personelSorted = useMemo(() => [...personelData].sort((a, b) => b.totalVolume - a.totalVolume), [personelData]);
-  const personelMaxVolume = useMemo(() => Math.max(...personelData.map((p) => p.totalVolume)), [personelData]);
-  const personelMaxCount = useMemo(() => Math.max(...personelData.map((p) => p.islemSayisi)), [personelData]);
+  const personelMaxVolume = useMemo(() => personelData.length > 0 ? Math.max(...personelData.map((p) => p.totalVolume)) : 1, [personelData]);
+  const personelMaxCount = useMemo(() => personelData.length > 0 ? Math.max(...personelData.map((p) => p.islemSayisi)) : 1, [personelData]);
 
-  const redMaxAdet = useMemo(() => Math.max(...redData.nedenler.map((n) => n.adet)), [redData]);
+  const redMaxAdet = useMemo(() => redData && redData.nedenler.length > 0 ? Math.max(...redData.nedenler.map((n) => n.adet)) : 1, [redData]);
 
   if (!hydrated) return <div className="min-h-screen bg-neutral-950" />;
 
@@ -374,11 +319,33 @@ export default function CekimRaporuPage() {
           <h1 className="text-sm font-semibold tracking-wide text-white/90">Cekim Performansi</h1>
           <div className="flex items-center gap-2">
             {isLive && <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />}
-            <span className="text-[10px] text-neutral-600">{isLive ? "Canli Veri" : "Ornek Veri"} · {genelData.periodBaslangic} – {genelData.periodBitis}</span>
+            {genelData && <span className="text-[10px] text-neutral-600">{genelData.periodBaslangic} – {genelData.periodBitis}</span>}
           </div>
         </div>
       </div>
 
+      {/* ━━━ LOADING / EMPTY STATE ━━━ */}
+      {loading && (
+        <div className="flex min-h-[60vh] flex-col items-center justify-center bg-neutral-950">
+          <div className="mb-4 h-8 w-8 animate-spin rounded-full border-2 border-neutral-700 border-t-cyan-400" />
+          <p className="text-sm text-neutral-500">Rapor verisi yukleniyor...</p>
+        </div>
+      )}
+
+      {!loading && !hasData && (
+        <div className="flex min-h-[60vh] flex-col items-center justify-center bg-neutral-950 px-6 text-center">
+          <BarChart3 className="mb-4 h-12 w-12 text-neutral-700" strokeWidth={1} />
+          <h2 className="mb-2 text-lg font-bold text-neutral-300">Henuz Rapor Verisi Yok</h2>
+          <p className="max-w-md text-sm text-neutral-500">
+            Telegram botu henuz bir cekim raporu gondermedi. Bot bir rapor uretip gonderdikten sonra burada canli veri gorunecektir.
+          </p>
+          <Link href="/raporlar" className="mt-6 rounded-xl border border-white/[0.06] bg-white/[0.03] px-6 py-2.5 text-xs font-semibold text-neutral-300 transition-colors hover:bg-white/[0.06]">
+            Raporlara Don
+          </Link>
+        </div>
+      )}
+
+      {!loading && hasData && (<>
       {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
           SECTION 1 — HERO KPI (Dark) — 6 KPI
       ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
@@ -404,7 +371,7 @@ export default function CekimRaporuPage() {
                 </div>
                 <p className="mb-1 text-[11px] font-semibold uppercase tracking-[0.15em] text-neutral-400">Toplam Basarili Cekim</p>
                 <p className="font-mono text-2xl font-black tracking-tight text-white md:text-3xl">₺{formatCompact(totalVolume)}</p>
-                <p className="mt-1.5 text-xs text-neutral-400">{formatCurrency(totalVolume)} TL · {genelData.basariliIslemSayisi} islem</p>
+                <p className="mt-1.5 text-xs text-neutral-400">{formatCurrency(totalVolume)} TL · {genelData?.basariliIslemSayisi ?? 0} islem</p>
               </div>
             </div>
 
@@ -455,8 +422,8 @@ export default function CekimRaporuPage() {
                   <XCircle className="h-4 w-4 text-red-400" strokeWidth={1.5} />
                 </div>
                 <p className="mb-1 text-[11px] font-semibold uppercase tracking-[0.15em] text-neutral-400">Red Hacmi</p>
-                <p className="font-mono text-2xl font-black tracking-tight text-red-400 md:text-3xl">₺{formatCompact(genelData.toplamRedHacmi)}</p>
-                <p className="mt-1.5 text-xs text-neutral-400">{genelData.toplamRedSayisi} reddedilen islem</p>
+                <p className="font-mono text-2xl font-black tracking-tight text-red-400 md:text-3xl">₺{formatCompact(genelData?.toplamRedHacmi ?? 0)}</p>
+                <p className="mt-1.5 text-xs text-neutral-400">{genelData?.toplamRedSayisi ?? 0} reddedilen islem</p>
               </div>
             </div>
 
@@ -468,8 +435,8 @@ export default function CekimRaporuPage() {
                   <ArrowUpRight className="h-4 w-4 text-emerald-400" strokeWidth={1.5} />
                 </div>
                 <p className="mb-1 text-[11px] font-semibold uppercase tracking-[0.15em] text-neutral-400">Onceki Periyottan Degisim</p>
-                <p className="font-mono text-2xl font-black tracking-tight text-emerald-400 md:text-3xl">{genelData.degisim.fark >= 0 ? "+" : ""}₺{formatCompact(Math.abs(genelData.degisim.fark))}</p>
-                <p className="mt-1.5 text-xs text-neutral-400">Onceki: ₺{formatCurrency(genelData.degisim.oncekiToplam)}</p>
+                <p className="font-mono text-2xl font-black tracking-tight text-emerald-400 md:text-3xl">{(genelData?.degisim?.fark ?? 0) >= 0 ? "+" : ""}₺{formatCompact(Math.abs(genelData?.degisim?.fark ?? 0))}</p>
+                <p className="mt-1.5 text-xs text-neutral-400">Onceki: ₺{formatCurrency(genelData?.degisim?.oncekiToplam ?? 0)}</p>
               </div>
             </div>
           </div>
@@ -532,7 +499,7 @@ export default function CekimRaporuPage() {
             })}
           </div>
 
-          <IdilNoteLight text={idilData.yontem} />
+          {idilData?.yontem && <IdilNoteLight text={idilData.yontem} />}
         </div>
       </section>
 
@@ -694,13 +661,14 @@ export default function CekimRaporuPage() {
             })}
           </div>
 
-          <IdilNoteLight text={idilData.personel} />
+          {idilData?.personel && <IdilNoteLight text={idilData.personel} />}
         </div>
       </section>
 
       {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
           SECTION 5 — DARBOĞAZ (Dark)
       ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
+      {darbogazData.length > 0 && (
       <section className="relative overflow-hidden bg-neutral-950 py-12 md:py-16">
         <div className="pointer-events-none absolute inset-0">
           <div className="absolute right-1/3 top-0 h-[400px] w-[400px] rounded-full bg-amber-500/[0.03] blur-[120px]" />
@@ -748,13 +716,15 @@ export default function CekimRaporuPage() {
             })}
           </div>
 
-          <IdilNoteDark text={idilData.darbogaz} />
+          {idilData?.darbogaz && <IdilNoteDark text={idilData.darbogaz} />}
         </div>
       </section>
+      )}
 
       {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
           SECTION 6 — RED ANALİZİ (Light)
       ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */}
+      {redData && (
       <section className="bg-white py-12 md:py-16">
         <div className="mx-auto max-w-5xl px-6">
           <div className="mb-10 text-center">
@@ -804,9 +774,10 @@ export default function CekimRaporuPage() {
             </ResponsiveContainer>
           </div>
 
-          <IdilNoteLight text={idilData.red} title="Idil'in Onerisi" />
+          {idilData?.red && <IdilNoteLight text={idilData.red} title="Idil'in Onerisi" />}
         </div>
       </section>
+      )}
 
       {/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
           SECTION 7 — YONTEM OZET KARTLARI (Dark)
@@ -849,6 +820,7 @@ export default function CekimRaporuPage() {
       </section>
 
       <div className="h-8 bg-neutral-950" />
+      </>)}
     </div>
   );
 }

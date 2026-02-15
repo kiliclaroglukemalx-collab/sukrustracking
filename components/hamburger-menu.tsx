@@ -5,7 +5,6 @@ import Link from "next/link";
 import {
   MoreVertical,
   Upload,
-  RotateCcw,
   Settings,
   BarChart3,
   FileCheck,
@@ -17,6 +16,7 @@ import {
   Lock,
   Wallet,
   CalendarDays,
+  TrendingUp,
 } from "lucide-react";
 import { useStore } from "@/lib/store";
 import type { UserRole } from "@/lib/store";
@@ -26,7 +26,7 @@ import { OdemePanel } from "./odeme-panel";
 type Panel = "main" | "excel" | "password";
 
 export function HamburgerMenu() {
-  const { role, setRole, verifyMasterPassword, loadExcelData, resetToDemo } =
+  const { role, setRole, verifyMasterPassword, loadExcelData } =
     useStore();
   const [isOpen, setIsOpen] = useState(false);
   const [odemeOpen, setOdemeOpen] = useState(false);
@@ -176,6 +176,29 @@ export function HamburgerMenu() {
                   />
                 </button>
 
+                {/* Yatirim Performansi - Master only */}
+                {role === "master" && (
+                  <Link
+                    href="/yatirim-performans"
+                    onClick={close}
+                    className="flex w-full items-center justify-between px-4 py-2.5 text-left transition-colors hover:bg-neutral-50"
+                  >
+                    <span className="flex items-center gap-2.5">
+                      <TrendingUp
+                        className="h-3.5 w-3.5 text-neutral-400"
+                        strokeWidth={1.5}
+                      />
+                      <span className="text-[11px] text-neutral-600">
+                        Yatirim Performansi
+                      </span>
+                    </span>
+                    <ChevronRight
+                      className="h-3 w-3 text-neutral-300"
+                      strokeWidth={1.5}
+                    />
+                  </Link>
+                )}
+
                 {/* Raporlar - Master only */}
                 {role === "master" && (
                   <Link
@@ -292,28 +315,6 @@ export function HamburgerMenu() {
                   />
                 </Link>
 
-                {/* Demo reset - Master only */}
-                {role === "master" && (
-                  <>
-                    <div className="mx-4 h-px bg-neutral-100" />
-                    <button
-                      type="button"
-                      onClick={() => {
-                        resetToDemo();
-                        close();
-                      }}
-                      className="flex w-full items-center gap-2.5 px-4 py-2.5 text-left transition-colors hover:bg-neutral-50"
-                    >
-                      <RotateCcw
-                        className="h-3.5 w-3.5 text-neutral-400"
-                        strokeWidth={1.5}
-                      />
-                      <span className="text-[11px] text-neutral-600">
-                        Demo Veriye Don
-                      </span>
-                    </button>
-                  </>
-                )}
               </div>
             </div>
           )}

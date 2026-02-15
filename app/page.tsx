@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
+import { Upload } from "lucide-react";
 import { TopBar } from "@/components/top-bar";
 import { KasaCard } from "@/components/kasa-card";
 import { HamburgerMenu } from "@/components/hamburger-menu";
@@ -82,7 +83,8 @@ export default function Page() {
           </div>
         )}
 
-        {/* Card grid */}
+        {/* Card grid or empty state */}
+        {visibleCards.length > 0 ? (
         <div
           className={`relative z-10 grid flex-1 ${colsClass[grid.cols] || "grid-cols-7"} gap-x-2.5 gap-y-3 p-2.5 pt-1.5`}
           style={{
@@ -93,6 +95,17 @@ export default function Page() {
             <KasaCard key={card.id} data={card} />
           ))}
         </div>
+        ) : (
+        <div className="relative z-10 flex flex-1 flex-col items-center justify-center px-6 text-center">
+          <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl border border-white/[0.06] bg-white/[0.03]">
+            <Upload className="h-7 w-7 text-neutral-600" strokeWidth={1.5} />
+          </div>
+          <h2 className="mb-2 text-base font-bold text-neutral-300">Kasa Verisi Yok</h2>
+          <p className="max-w-sm text-sm text-neutral-500">
+            Kasa kartlarini gormek icin hamburger menuden Excel yukleyin veya Telegram botu uzerinden veri gonderin.
+          </p>
+        </div>
+        )}
       </div>
     </div>
   );

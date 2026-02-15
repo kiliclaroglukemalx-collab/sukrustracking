@@ -32,6 +32,9 @@ CREATE TABLE IF NOT EXISTS public.kasa_snapshots (
 -- Create index for fast snapshot lookups by date
 CREATE INDEX IF NOT EXISTS idx_kasa_snapshots_date ON public.kasa_snapshots(snapshot_date, snapshot_hour);
 
+-- Unique constraint: one snapshot per date+hour (enables UPSERT)
+CREATE UNIQUE INDEX IF NOT EXISTS idx_kasa_snapshots_unique ON public.kasa_snapshots(snapshot_date, snapshot_hour);
+
 -- Odeme Kayitlari: stores all payment records permanently
 CREATE TABLE IF NOT EXISTS public.odeme_kayitlari (
   id TEXT PRIMARY KEY,
@@ -39,7 +42,9 @@ CREATE TABLE IF NOT EXISTS public.odeme_kayitlari (
   tarih TIMESTAMPTZ NOT NULL DEFAULT now(),
   islem_tipi TEXT NOT NULL, -- 'odeme-yap' | 'odeme-al' | 'transfer'
   yontem TEXT NOT NULL,
+  yontem_id TEXT,         -- method.id for stable matching across renames
   hedef_yontem TEXT,
+  hedef_yontem_id TEXT,   -- hedef method.id for stable matching
   tutar NUMERIC NOT NULL DEFAULT 0,
   doviz_cinsi TEXT NOT NULL DEFAULT 'TRY',
   kur NUMERIC,
@@ -47,6 +52,7 @@ CREATE TABLE IF NOT EXISTS public.odeme_kayitlari (
   gonderen TEXT DEFAULT '',
   alici TEXT DEFAULT '',
   aciklama TEXT DEFAULT '',
+  tx_kodu TEXT,             -- kripto islemleri icin transaction hash/kodu
   created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
