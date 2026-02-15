@@ -36,12 +36,28 @@ interface SnapshotDetail {
 }
 
 interface KasaSnapshot {
+  snapshot_hour: string;
   snapshot_date: string;
   total_kasa: number;
   total_yatirim: number;
   total_komisyon: number;
   total_cekim: number;
   details: SnapshotDetail[];
+}
+
+/** snapshot_hour "range:2026-02-08" ise baslangic tarihini dondurur, degilse null */
+function parseRangeStart(sn: KasaSnapshot): string | null {
+  if (sn.snapshot_hour.startsWith("range:")) return sn.snapshot_hour.slice(6);
+  return null;
+}
+
+/** Snapshot'un gorunum etiketi: "Per 12/02" veya "08/02 — 14/02" */
+function snapshotLabel(sn: KasaSnapshot): string {
+  const rangeStart = parseRangeStart(sn);
+  if (rangeStart) {
+    return `${fmtDate(rangeStart)} — ${fmtDate(sn.snapshot_date)}`;
+  }
+  return `${gunKisa(sn.snapshot_date)} ${fmtDate(sn.snapshot_date)}`;
 }
 
 /* ─── Helpers ─── */
@@ -133,7 +149,7 @@ function generateHaftalikMetni(
   lines.push("━━━━━━━━━━━━━━━━━━━━━━");
   lines.push("");
   for (const sn of snapshots) {
-    lines.push(`📅 ${fmtDate(sn.snapshot_date)} ${gunKisa(sn.snapshot_date)}: ₺${fmt(sn.total_yatirim)}`);
+    lines.push(`📅 ${snapshotLabel(sn)}: ₺${fmt(sn.total_yatirim)}`);
   }
   lines.push("");
   lines.push("━━━━━━━━━━━━━━━━━━━━━━");
@@ -250,43 +266,45 @@ export default function YatirimPerformansPage() {
         baslangicBakiye: k.baslangicBakiye,
       }));
 
-      // Aralik icindeki her gun icin snapshot kaydet
-      const dates: string[] = [];
-      const cur = new Date(gecmisStart + "T00:00:00");
-      const end = new Date(gecmisEnd + "T00:00:00");
-      while (cur <= end) {
-        dates.push(cur.toISOString().split("T")[0]);
-        cur.setDate(cur.getDate() + 1);
-      }
-
+      // Aralik icin TEK kumulatif snapshot kaydet
       const supabase = createClient();
+      const isSingleDay = gecmisStart === gecmisEnd;
+      const snapshotHour = isSingleDay ? "daily" : `range:${gecmisStart}`;
+      const snapshotDate = gecmisEnd;
 
-      // Oncekileri sil, sonra yeniden ekle (unique index olmadan guvenli)
+      // Eski kaydı sil
       await supabase
         .from("kasa_snapshots")
         .delete()
-        .eq("snapshot_hour", "daily")
-        .in("snapshot_date", dates);
+        .eq("snapshot_hour", snapshotHour)
+        .eq("snapshot_date", snapshotDate);
 
-      const insertRows = dates.map((d) => ({
-        snapshot_hour: "daily",
-        snapshot_date: d,
-        total_kasa: totalKasa,
-        total_yatirim: totalYatirim,
-        total_komisyon: totalKomisyon,
-        total_cekim: totalCekim,
-        details,
-      }));
+      // Tek gunluk ise daily'yi de temizle
+      if (isSingleDay) {
+        await supabase
+          .from("kasa_snapshots")
+          .delete()
+          .eq("snapshot_hour", "daily")
+          .eq("snapshot_date", snapshotDate);
+      }
 
       const { error } = await supabase
         .from("kasa_snapshots")
-        .insert(insertRows);
+        .insert({
+          snapshot_hour: snapshotHour,
+          snapshot_date: snapshotDate,
+          total_kasa: totalKasa,
+          total_yatirim: totalYatirim,
+          total_komisyon: totalKomisyon,
+          total_cekim: totalCekim,
+          details,
+        });
 
       if (error) throw error;
 
-      const label = dates.length === 1
-        ? `${dates[0]} tarihli veri kaydedildi`
-        : `${dates.length} gun icin veri kaydedildi (${fmtDate(dates[0])} - ${fmtDate(dates[dates.length - 1])})`;
+      const label = isSingleDay
+        ? `${snapshotDate} tarihli veri kaydedildi`
+        : `${fmtDate(gecmisStart)} - ${fmtDate(gecmisEnd)} araligi kaydedildi`;
 
       setUploadStatus("done");
       setUploadMsg(`${label}: ${processed.length} yontem`);
@@ -316,10 +334,13 @@ export default function YatirimPerformansPage() {
 
   const haftalikTopYatirim = useMemo(() => snapshots.reduce((s, sn) => s + sn.total_yatirim, 0), [snapshots]);
 
+  // Performans degisimi icin sadece gunluk (daily) snapshot'lari kullan
+  const dailySnapshots = useMemo(() => snapshots.filter((sn) => sn.snapshot_hour === "daily"), [snapshots]);
+
   const yediGunOrt = useMemo(() => {
-    if (snapshots.length === 0) return new Map<string, number>();
+    if (dailySnapshots.length === 0) return new Map<string, number>();
     const acc = new Map<string, { total: number; count: number }>();
-    for (const sn of snapshots) {
+    for (const sn of dailySnapshots) {
       for (const d of sn.details) {
         const p = acc.get(d.name) || { total: 0, count: 0 };
         acc.set(d.name, { total: p.total + d.yatirim, count: p.count + 1 });
@@ -328,7 +349,7 @@ export default function YatirimPerformansPage() {
     const result = new Map<string, number>();
     acc.forEach((v, k) => result.set(k, v.count > 0 ? v.total / v.count : 0));
     return result;
-  }, [snapshots]);
+  }, [dailySnapshots]);
 
   const weeklyMethods = useMemo(() => {
     if (snapshots.length === 0) return [];
@@ -763,7 +784,7 @@ export default function YatirimPerformansPage() {
                     <div className="border-t border-neutral-100 px-5 py-2.5">
                       <p className="flex items-center gap-1.5 text-[9px] text-neutral-400">
                         <TrendingUp className="h-3 w-3 text-emerald-500" />
-                        Degisim: bugun vs {snapshots.length} gun ortalamasi
+                        Degisim: bugun vs {dailySnapshots.length} gun ortalamasi
                       </p>
                     </div>
                   )}
@@ -817,8 +838,8 @@ export default function YatirimPerformansPage() {
                         const pct = (sn.total_yatirim / maxY) * 100;
                         return (
                           <div key={sn.snapshot_date} className="flex items-center gap-3">
-                            <span className="w-16 shrink-0 text-right text-[11px] font-semibold text-neutral-500">
-                              {gunKisa(sn.snapshot_date)} {fmtDate(sn.snapshot_date)}
+                            <span className="w-24 shrink-0 text-right text-[11px] font-semibold text-neutral-500">
+                              {snapshotLabel(sn)}
                             </span>
                             <div className="relative h-7 flex-1 overflow-hidden rounded-lg bg-neutral-100">
                               <div
