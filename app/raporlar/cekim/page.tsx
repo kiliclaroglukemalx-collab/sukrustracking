@@ -755,23 +755,31 @@ export default function CekimRaporuPage() {
             </div>
           </div>
 
-          {/* Red nedenleri bar chart */}
+          {/* Red nedenleri — tablo formatinda */}
           <div className="rounded-2xl border border-neutral-200/80 bg-neutral-50 p-5 md:p-6">
-            <h3 className="mb-4 text-center text-xs font-bold uppercase tracking-[0.12em] text-neutral-500">Red Nedenleri Dagilimi</h3>
-            <ResponsiveContainer width="100%" height={240}>
-              <BarChart data={redData.nedenler} layout="vertical" margin={{ top: 5, right: 30, bottom: 5, left: 10 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" horizontal={false} />
-                <XAxis type="number" tick={{ fontSize: 11, fill: "#6B7280", fontWeight: 500 }} stroke="#E5E7EB" />
-                <YAxis type="category" dataKey="neden" tick={{ fontSize: 11, fill: "#374151", fontWeight: 600 }} width={120} stroke="#E5E7EB" />
-                <Tooltip content={<RedTooltip />} cursor={{ fill: "rgba(0,0,0,0.03)" }} />
-                <Bar dataKey="adet" radius={[0, 6, 6, 0]} name="Adet">
-                  {redData.nedenler.map((entry, i) => (
-                    <Cell key={i} fill={i === 0 ? "#EF4444" : i === 1 ? "#F97316" : "#94A3B8"} />
-                  ))}
-                  <LabelList dataKey="adet" position="right" fill="#374151" fontSize={12} fontWeight={700} />
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
+            <h3 className="mb-5 text-center text-xs font-bold uppercase tracking-[0.12em] text-neutral-500">Red Nedenleri Dagilimi</h3>
+            <div className="space-y-3">
+              {redData.nedenler.map((n, i) => {
+                const pct = (n.adet / redMaxAdet) * 100;
+                return (
+                  <div key={i}>
+                    <div className="mb-1 flex items-start justify-between gap-3">
+                      <p className="text-[12px] font-semibold leading-snug text-neutral-700">{n.neden}</p>
+                      <span className="shrink-0 font-mono text-[13px] font-bold text-neutral-800">{n.adet}</span>
+                    </div>
+                    <div className="h-2.5 w-full overflow-hidden rounded-full bg-neutral-200/60">
+                      <div
+                        className="h-full rounded-full transition-all"
+                        style={{
+                          width: `${Math.max(pct, 3)}%`,
+                          backgroundColor: i === 0 ? "#EF4444" : i === 1 ? "#F97316" : "#94A3B8",
+                        }}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           </div>
 
           {idilData?.red && <IdilNoteLight text={idilData.red} title="Idil'in Onerisi" />}
