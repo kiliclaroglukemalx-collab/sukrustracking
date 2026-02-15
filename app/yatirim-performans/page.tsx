@@ -505,11 +505,6 @@ export default function YatirimPerformansPage() {
                 <span className="text-[10px] font-bold uppercase tracking-widest text-neutral-500">Total Yatirim</span>
               </div>
               <p className="font-mono text-2xl font-bold text-white">₺{fmt(totals.yatirim)}</p>
-              {hasSn && (
-                <p className="mt-1 text-[10px] text-neutral-600">
-                  Aylik: ₺{fmt(aylikTopYatirim)}
-                </p>
-              )}
             </div>
 
             {/* Total Cekim */}
