@@ -373,12 +373,13 @@ export default function YatirimPerformansPage() {
 
   // Manuel satirlarin sayisal degerleri (%4.5 komisyon otomatik)
   const MANUEL_KOM_ORAN = 0.045;
+  const parseNum = (v: string) => parseFloat(v.replace(/[^0-9.,]/g, "").replace(",", ".")) || 0;
   const manuelTotals = useMemo(() => {
     let yatirim = 0;
     let cekim = 0;
     for (const s of manuelSatirlar) {
-      yatirim += parseFloat(s.yatirim) || 0;
-      cekim += parseFloat(s.cekim) || 0;
+      yatirim += parseNum(s.yatirim);
+      cekim += parseNum(s.cekim);
     }
     const komisyon = yatirim * MANUEL_KOM_ORAN;
     return { yatirim, cekim, komisyon };
@@ -837,53 +838,64 @@ export default function YatirimPerformansPage() {
                           );
                         })}
                         {/* Manuel satirlar */}
+                        {manuelSatirlar.length > 0 && (
+                          <tr className="border-t-2 border-dashed border-blue-200">
+                            <td colSpan={6} className="bg-blue-50/50 px-5 py-1.5">
+                              <span className="text-[9px] font-bold uppercase tracking-widest text-blue-400">Manuel Girisler</span>
+                            </td>
+                          </tr>
+                        )}
                         {manuelSatirlar.map((s) => {
-                          const mYatirim = parseFloat(s.yatirim) || 0;
+                          const mYatirim = parseFloat(s.yatirim.replace(/[^0-9.,]/g, "").replace(",", ".")) || 0;
                           const mKom = mYatirim * MANUEL_KOM_ORAN;
-                          const mCekim = parseFloat(s.cekim) || 0;
+                          const mCekim = parseFloat(s.cekim.replace(/[^0-9.,]/g, "").replace(",", ".")) || 0;
                           const mNet = mYatirim - mKom - mCekim;
                           return (
-                          <tr key={s.id} className="border-b border-dashed border-blue-100 bg-blue-50/30">
-                            <td className="px-5 py-1.5">
+                          <tr key={s.id} className="border-b border-dashed border-blue-100 bg-blue-50/20">
+                            <td className="px-5 py-2">
                               <input
                                 type="text"
                                 value={s.ad}
                                 onChange={(e) => manuelGuncelle(s.id, "ad", e.target.value)}
-                                placeholder="Yontem adi"
-                                className="w-full bg-transparent text-[12px] font-semibold text-neutral-700 outline-none placeholder:text-neutral-300"
+                                placeholder="Yontem adi yaz..."
+                                className="w-full rounded border border-blue-200 bg-white px-2 py-1 text-[12px] font-semibold text-neutral-700 outline-none focus:border-blue-400 placeholder:text-neutral-300"
                               />
                             </td>
-                            <td className="py-1.5 pl-3 pr-0" colSpan={2}>
+                            <td className="py-2 pl-3 pr-0" colSpan={2}>
                               <input
                                 type="text"
-                                inputMode="numeric"
+                                inputMode="decimal"
                                 value={s.yatirim}
-                                onChange={(e) => manuelGuncelle(s.id, "yatirim", e.target.value)}
-                                placeholder="0"
-                                className="w-full bg-transparent text-right font-mono text-[12px] font-semibold text-neutral-700 outline-none placeholder:text-neutral-300"
+                                onChange={(e) => manuelGuncelle(s.id, "yatirim", e.target.value.replace(/[^0-9.,]/g, ""))}
+                                onKeyDown={(e) => { if (e.key === "Enter") manuelEkle(); }}
+                                placeholder="Yatirim tutari"
+                                className="w-full rounded border border-blue-200 bg-white px-2 py-1 text-right font-mono text-[12px] font-semibold text-neutral-700 outline-none focus:border-blue-400 placeholder:text-neutral-300"
                               />
                             </td>
-                            <td className="px-3 py-1.5 text-right font-mono text-[10px] text-red-400">
+                            <td className="px-3 py-2 text-right font-mono text-[10px] text-red-400">
                               {mKom > 0 ? `-₺${fmt(mKom)}` : "—"}
                               {mKom > 0 && <span className="ml-0.5 text-[8px] text-neutral-300">%4.5</span>}
                             </td>
-                            <td className="px-3 py-1.5">
+                            <td className="px-3 py-2">
                               <input
                                 type="text"
-                                inputMode="numeric"
+                                inputMode="decimal"
                                 value={s.cekim}
-                                onChange={(e) => manuelGuncelle(s.id, "cekim", e.target.value)}
-                                placeholder="0"
-                                className="w-full bg-transparent text-right font-mono text-[12px] font-semibold text-amber-600 outline-none placeholder:text-neutral-300"
+                                onChange={(e) => manuelGuncelle(s.id, "cekim", e.target.value.replace(/[^0-9.,]/g, ""))}
+                                onKeyDown={(e) => { if (e.key === "Enter") manuelEkle(); }}
+                                placeholder="Cekim tutari"
+                                className="w-full rounded border border-blue-200 bg-white px-2 py-1 text-right font-mono text-[12px] font-semibold text-amber-600 outline-none focus:border-blue-400 placeholder:text-neutral-300"
                               />
                             </td>
-                            <td className="px-3 py-1.5 flex items-center justify-end gap-2">
-                              <span className={`font-mono text-[10px] font-semibold ${mNet >= 0 ? "text-emerald-500" : "text-red-400"}`}>
-                                {mNet >= 0 ? "₺" : "-₺"}{fmt(Math.abs(mNet))}
-                              </span>
-                              <button type="button" onClick={() => manuelSil(s.id)} className="text-neutral-300 transition-colors hover:text-red-400">
-                                <X className="h-3 w-3" strokeWidth={2} />
-                              </button>
+                            <td className="px-3 py-2">
+                              <div className="flex items-center justify-end gap-2">
+                                <span className={`font-mono text-[10px] font-semibold ${mNet >= 0 ? "text-emerald-500" : "text-red-400"}`}>
+                                  {mNet >= 0 ? "₺" : "-₺"}{fmt(Math.abs(mNet))}
+                                </span>
+                                <button type="button" onClick={() => manuelSil(s.id)} className="rounded p-0.5 text-neutral-300 transition-colors hover:bg-red-50 hover:text-red-400">
+                                  <X className="h-3.5 w-3.5" strokeWidth={2} />
+                                </button>
+                              </div>
                             </td>
                           </tr>
                           );
@@ -892,14 +904,14 @@ export default function YatirimPerformansPage() {
                       <tfoot>
                         {/* Manuel ekle butonu */}
                         <tr className="border-b border-neutral-100">
-                          <td colSpan={6} className="px-5 py-2">
+                          <td colSpan={6} className="px-5 py-2.5">
                             <button
                               type="button"
                               onClick={manuelEkle}
-                              className="flex items-center gap-1.5 text-[10px] font-semibold text-[#1E5EFF]/60 transition-colors hover:text-[#1E5EFF]"
+                              className="flex items-center gap-1.5 rounded-lg border border-dashed border-blue-300 px-3 py-1.5 text-[10px] font-semibold text-[#1E5EFF]/70 transition-all hover:border-blue-400 hover:bg-blue-50 hover:text-[#1E5EFF]"
                             >
                               <Plus className="h-3 w-3" strokeWidth={2} />
-                              Manuel Ekle
+                              Manuel Yontem Ekle
                             </button>
                           </td>
                         </tr>
