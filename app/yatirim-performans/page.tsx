@@ -591,104 +591,111 @@ export default function YatirimPerformansPage() {
         )}
       </section>
 
-      {/* ━━━ MAIN CONTENT: Light Section ━━━ */}
-      {(hasKasa || hasSn) && (
-        <section className="bg-[#F5F5F7] py-12">
-          <div className="mx-auto max-w-6xl px-6">
+      {/* ━━━ MAIN CONTENT: Light Section — Her zaman yan yana ━━━ */}
+      <section className="bg-[#F5F5F7] py-12">
+        <div className="mx-auto max-w-6xl px-6">
 
-            {/* Yan yana layout */}
-            <div className={`grid gap-6 ${hasKasa && hasSn ? "lg:grid-cols-[1.4fr_1fr]" : ""}`}>
+          {/* Her zaman 2 kolonlu grid */}
+          <div className="grid gap-6 lg:grid-cols-2">
 
-              {/* ── SOL: Gunluk Yontem Tablosu ── */}
-              {hasKasa && (
-                <div className="overflow-hidden rounded-2xl bg-white shadow-sm shadow-black/5">
-                  {/* Header */}
-                  <div className="flex items-center justify-between border-b border-neutral-100 px-6 py-4">
-                    <div>
-                      <h2 className="text-[15px] font-bold text-neutral-900">Gun Ici Yontem Ozeti</h2>
-                      <p className="mt-0.5 text-[11px] text-neutral-400">Canli kasa verisi — anlik durum</p>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={handleGunlukCopy}
-                      className={`flex items-center gap-1.5 rounded-xl px-4 py-2 text-[11px] font-semibold transition-all ${
-                        gunlukCopied
-                          ? "bg-emerald-50 text-emerald-600"
-                          : "bg-neutral-100 text-neutral-500 hover:bg-neutral-200 hover:text-neutral-700"
-                      }`}
-                    >
-                      {gunlukCopied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
-                      {gunlukCopied ? "Kopyalandi" : "Telegram"}
-                    </button>
+            {/* ── SOL: GUNLUK ── */}
+            <div className="overflow-hidden rounded-2xl bg-white shadow-sm shadow-black/5">
+              {/* Header */}
+              <div className="flex items-center justify-between border-b border-neutral-100 px-6 py-4">
+                <div className="flex items-center gap-2.5">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#1E5EFF]/10">
+                    <Wallet className="h-4 w-4 text-[#1E5EFF]" strokeWidth={1.5} />
                   </div>
+                  <div>
+                    <h2 className="text-[15px] font-bold text-neutral-900">Gunluk Rapor</h2>
+                    <p className="text-[10px] text-neutral-400">Bugunun canli kasa verisi</p>
+                  </div>
+                </div>
+                {hasKasa && (
+                  <button
+                    type="button"
+                    onClick={handleGunlukCopy}
+                    className={`flex items-center gap-1.5 rounded-xl px-4 py-2 text-[11px] font-semibold transition-all ${
+                      gunlukCopied
+                        ? "bg-emerald-50 text-emerald-600"
+                        : "bg-neutral-100 text-neutral-500 hover:bg-neutral-200 hover:text-neutral-700"
+                    }`}
+                  >
+                    {gunlukCopied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+                    {gunlukCopied ? "Kopyalandi" : "Telegram"}
+                  </button>
+                )}
+              </div>
 
+              {hasKasa ? (
+                <>
                   {/* Table */}
                   <div className="overflow-x-auto">
                     <table className="w-full">
                       <thead>
                         <tr className="border-b border-neutral-100 bg-neutral-50/70">
-                          <th className="px-6 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-neutral-400">Yontem</th>
-                          <th className="px-4 py-3 text-right text-[10px] font-bold uppercase tracking-wider text-neutral-400" colSpan={2}>Yatirim</th>
-                          <th className="px-4 py-3 text-right text-[10px] font-bold uppercase tracking-wider text-neutral-400">Komisyon</th>
-                          <th className="px-4 py-3 text-right text-[10px] font-bold uppercase tracking-wider text-neutral-400">Cekim</th>
-                          <th className="px-4 py-3 text-right text-[10px] font-bold uppercase tracking-wider text-neutral-400">Kalan</th>
+                          <th className="px-5 py-2.5 text-left text-[10px] font-bold uppercase tracking-wider text-neutral-400">Yontem</th>
+                          <th className="px-3 py-2.5 text-right text-[10px] font-bold uppercase tracking-wider text-neutral-400" colSpan={2}>Yatirim</th>
+                          <th className="px-3 py-2.5 text-right text-[10px] font-bold uppercase tracking-wider text-neutral-400">Komisyon</th>
+                          <th className="px-3 py-2.5 text-right text-[10px] font-bold uppercase tracking-wider text-neutral-400">Cekim</th>
+                          <th className="px-3 py-2.5 text-right text-[10px] font-bold uppercase tracking-wider text-neutral-400">Kalan</th>
                         </tr>
                       </thead>
                       <tbody>
                         {aktifKasa.map((k, i) => {
                           const avg = yediGunOrt.get(k.odemeTuruAdi);
-                          const today = k.toplamBorc;
+                          const bugun = k.toplamBorc;
                           let pct: number | null = null;
                           let dir: "up" | "down" | "same" | null = null;
                           if (avg != null && avg > 0) {
-                            pct = ((today - avg) / avg) * 100;
+                            pct = ((bugun - avg) / avg) * 100;
                             if (pct > 2) dir = "up";
                             else if (pct < -2) dir = "down";
                             else dir = "same";
                           }
                           return (
                             <tr key={k.id} className={`border-b border-neutral-50 transition-colors hover:bg-neutral-50/60 ${i % 2 !== 0 ? "bg-neutral-50/30" : ""}`}>
-                              <td className="px-6 py-3.5">
-                                <span className="text-[13px] font-semibold text-neutral-800">{k.odemeTuruAdi}</span>
+                              <td className="px-5 py-3">
+                                <span className="text-[12px] font-semibold text-neutral-800">{k.odemeTuruAdi}</span>
                               </td>
-                              <td className="py-3.5 pl-4 pr-0 text-right">
-                                <span className="font-mono text-[13px] font-semibold text-neutral-700">₺{fmt(today)}</span>
+                              <td className="py-3 pl-3 pr-0 text-right">
+                                <span className="font-mono text-[12px] font-semibold text-neutral-700">₺{fmt(bugun)}</span>
                               </td>
-                              <td className="py-3.5 pl-1.5 pr-4">
+                              <td className="py-3 pl-1 pr-3">
                                 {dir && pct !== null ? (
-                                  <span className={`inline-flex items-center gap-0.5 rounded-lg px-2 py-1 text-[10px] font-bold ${
+                                  <span className={`inline-flex items-center gap-0.5 rounded-md px-1.5 py-0.5 text-[9px] font-bold ${
                                     dir === "up"
                                       ? "bg-emerald-50 text-emerald-600"
                                       : dir === "down"
                                         ? "bg-red-50 text-red-500"
                                         : "bg-neutral-100 text-neutral-400"
                                   }`}>
-                                    {dir === "up" && <TrendingUp className="h-3 w-3" />}
-                                    {dir === "down" && <TrendingDown className="h-3 w-3" />}
-                                    {dir === "same" && <Minus className="h-3 w-3" />}
+                                    {dir === "up" && <TrendingUp className="h-2.5 w-2.5" />}
+                                    {dir === "down" && <TrendingDown className="h-2.5 w-2.5" />}
+                                    {dir === "same" && <Minus className="h-2.5 w-2.5" />}
                                     {pct > 0 ? "+" : ""}{pct.toFixed(0)}%
                                   </span>
                                 ) : null}
                               </td>
-                              <td className="px-4 py-3.5 text-right">
+                              <td className="px-3 py-3 text-right">
                                 {k.komisyonOrani > 0 ? (
                                   <div className="flex flex-col items-end">
-                                    <span className="font-mono text-[12px] font-semibold text-red-500">-₺{fmt(k.komisyon)}</span>
-                                    <span className="text-[9px] text-neutral-400">%{k.komisyonOrani}</span>
+                                    <span className="font-mono text-[11px] font-semibold text-red-500">-₺{fmt(k.komisyon)}</span>
+                                    <span className="text-[8px] text-neutral-400">%{k.komisyonOrani}</span>
                                   </div>
                                 ) : (
-                                  <span className="text-xs text-neutral-300">—</span>
+                                  <span className="text-[11px] text-neutral-300">—</span>
                                 )}
                               </td>
-                              <td className="px-4 py-3.5 text-right">
+                              <td className="px-3 py-3 text-right">
                                 {k.toplamKredi > 0 ? (
-                                  <span className="font-mono text-[12px] font-semibold text-amber-600">₺{fmt(k.toplamKredi)}</span>
+                                  <span className="font-mono text-[11px] font-semibold text-amber-600">₺{fmt(k.toplamKredi)}</span>
                                 ) : (
-                                  <span className="text-xs text-neutral-300">—</span>
+                                  <span className="text-[11px] text-neutral-300">—</span>
                                 )}
                               </td>
-                              <td className="px-4 py-3.5 text-right">
-                                <span className="font-mono text-[13px] font-bold text-emerald-600">₺{fmt(k.kalanKasa)}</span>
+                              <td className="px-3 py-3 text-right">
+                                <span className="font-mono text-[12px] font-bold text-emerald-600">₺{fmt(k.kalanKasa)}</span>
                               </td>
                             </tr>
                           );
@@ -696,61 +703,65 @@ export default function YatirimPerformansPage() {
                       </tbody>
                       <tfoot>
                         <tr className="border-t-2 border-neutral-200 bg-neutral-50">
-                          <td className="px-6 py-3.5">
-                            <span className="text-[12px] font-black uppercase tracking-wider text-neutral-600">Toplam</span>
-                          </td>
-                          <td className="py-3.5 pl-4 pr-0 text-right font-mono text-[13px] font-black text-neutral-800" colSpan={2}>
-                            ₺{fmt(totals.yatirim)}
-                          </td>
-                          <td className="px-4 py-3.5 text-right font-mono text-[12px] font-black text-red-500">
-                            {totals.komisyon > 0 ? `-₺${fmt(totals.komisyon)}` : "—"}
-                          </td>
-                          <td className="px-4 py-3.5 text-right font-mono text-[12px] font-black text-amber-600">
-                            {totals.cekim > 0 ? `₺${fmt(totals.cekim)}` : "—"}
-                          </td>
-                          <td className="px-4 py-3.5 text-right font-mono text-[13px] font-black text-emerald-600">
-                            ₺{fmt(totals.kalan)}
-                          </td>
+                          <td className="px-5 py-3"><span className="text-[11px] font-black uppercase tracking-wider text-neutral-600">Toplam</span></td>
+                          <td className="py-3 pl-3 pr-0 text-right font-mono text-[12px] font-black text-neutral-800" colSpan={2}>₺{fmt(totals.yatirim)}</td>
+                          <td className="px-3 py-3 text-right font-mono text-[11px] font-black text-red-500">{totals.komisyon > 0 ? `-₺${fmt(totals.komisyon)}` : "—"}</td>
+                          <td className="px-3 py-3 text-right font-mono text-[11px] font-black text-amber-600">{totals.cekim > 0 ? `₺${fmt(totals.cekim)}` : "—"}</td>
+                          <td className="px-3 py-3 text-right font-mono text-[12px] font-black text-emerald-600">₺{fmt(totals.kalan)}</td>
                         </tr>
                       </tfoot>
                     </table>
                   </div>
 
-                  {/* Performance legend */}
                   {yediGunOrt.size > 0 && (
-                    <div className="border-t border-neutral-100 px-6 py-3">
-                      <p className="flex items-center gap-1.5 text-[10px] text-neutral-400">
+                    <div className="border-t border-neutral-100 px-5 py-2.5">
+                      <p className="flex items-center gap-1.5 text-[9px] text-neutral-400">
                         <TrendingUp className="h-3 w-3 text-emerald-500" />
-                        Yuzde degisimi: bugunun yatirimi vs son {snapshots.length} gun ortalamasi
+                        Degisim: bugun vs {snapshots.length} gun ortalamasi
                       </p>
                     </div>
                   )}
+                </>
+              ) : (
+                <div className="flex flex-col items-center justify-center px-6 py-16 text-center">
+                  <Wallet className="mb-3 h-8 w-8 text-neutral-200" strokeWidth={1.5} />
+                  <p className="text-sm font-medium text-neutral-400">Gunluk Veri Yok</p>
+                  <p className="mt-1 text-[11px] text-neutral-400">Yukaridaki &quot;Gunluk Excel&quot; sekmesinden bugunun verisini yukleyin.</p>
                 </div>
               )}
+            </div>
 
-              {/* ── SAG: Haftalik Kumulatif ── */}
-              {hasSn && (
-                <div className="overflow-hidden rounded-2xl bg-white shadow-sm shadow-black/5">
-                  {/* Header */}
-                  <div className="flex items-center justify-between border-b border-neutral-100 px-6 py-4">
-                    <div>
-                      <h2 className="text-[15px] font-bold text-neutral-900">Haftalik Kumulatif</h2>
-                      <p className="mt-0.5 text-[11px] text-neutral-400">Son {snapshots.length} gun — toplam gorunum</p>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={handleHaftalikCopy}
-                      className={`flex items-center gap-1.5 rounded-xl px-4 py-2 text-[11px] font-semibold transition-all ${
-                        haftalikCopied
-                          ? "bg-emerald-50 text-emerald-600"
-                          : "bg-neutral-100 text-neutral-500 hover:bg-neutral-200 hover:text-neutral-700"
-                      }`}
-                    >
-                      {haftalikCopied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
-                      {haftalikCopied ? "Kopyalandi" : "Telegram"}
-                    </button>
+            {/* ── SAG: HAFTALIK ── */}
+            <div className="overflow-hidden rounded-2xl bg-white shadow-sm shadow-black/5">
+              {/* Header */}
+              <div className="flex items-center justify-between border-b border-neutral-100 px-6 py-4">
+                <div className="flex items-center gap-2.5">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-violet-100">
+                    <Calendar className="h-4 w-4 text-violet-600" strokeWidth={1.5} />
                   </div>
+                  <div>
+                    <h2 className="text-[15px] font-bold text-neutral-900">Haftalik Rapor</h2>
+                    <p className="text-[10px] text-neutral-400">{hasSn ? `Son ${snapshots.length} gun — kumulatif` : "Henuz snapshot yok"}</p>
+                  </div>
+                </div>
+                {hasSn && (
+                  <button
+                    type="button"
+                    onClick={handleHaftalikCopy}
+                    className={`flex items-center gap-1.5 rounded-xl px-4 py-2 text-[11px] font-semibold transition-all ${
+                      haftalikCopied
+                        ? "bg-emerald-50 text-emerald-600"
+                        : "bg-neutral-100 text-neutral-500 hover:bg-neutral-200 hover:text-neutral-700"
+                    }`}
+                  >
+                    {haftalikCopied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+                    {haftalikCopied ? "Kopyalandi" : "Telegram"}
+                  </button>
+                )}
+              </div>
 
+              {hasSn ? (
+                <>
                   {/* Day-by-day bars */}
                   <div className="border-b border-neutral-100 px-6 py-5">
                     <p className="mb-3 text-[10px] font-bold uppercase tracking-widest text-neutral-400">Gun Bazli Yatirimlar</p>
@@ -765,7 +776,7 @@ export default function YatirimPerformansPage() {
                             </span>
                             <div className="relative h-7 flex-1 overflow-hidden rounded-lg bg-neutral-100">
                               <div
-                                className="absolute inset-y-0 left-0 rounded-lg bg-gradient-to-r from-[#1E5EFF]/20 to-[#1E5EFF]/10"
+                                className="absolute inset-y-0 left-0 rounded-lg bg-gradient-to-r from-violet-500/20 to-violet-500/10"
                                 style={{ width: `${Math.max(pct, 3)}%` }}
                               />
                               <span className="relative z-10 flex h-full items-center pl-3 font-mono text-[11px] font-bold text-neutral-700">
@@ -778,9 +789,9 @@ export default function YatirimPerformansPage() {
                     </div>
 
                     {/* Weekly total */}
-                    <div className="mt-4 flex items-center justify-between rounded-xl bg-neutral-50 px-4 py-3">
-                      <span className="text-[11px] font-black uppercase tracking-wider text-neutral-500">Haftalik Toplam</span>
-                      <span className="font-mono text-[15px] font-black text-[#1E5EFF]">₺{fmt(haftalikTopYatirim)}</span>
+                    <div className="mt-4 flex items-center justify-between rounded-xl bg-violet-50 px-4 py-3">
+                      <span className="text-[11px] font-black uppercase tracking-wider text-violet-600/70">Haftalik Toplam</span>
+                      <span className="font-mono text-[15px] font-black text-violet-600">₺{fmt(haftalikTopYatirim)}</span>
                     </div>
                   </div>
 
@@ -810,13 +821,19 @@ export default function YatirimPerformansPage() {
                       </table>
                     </div>
                   )}
+                </>
+              ) : (
+                <div className="flex flex-col items-center justify-center px-6 py-16 text-center">
+                  <Calendar className="mb-3 h-8 w-8 text-neutral-200" strokeWidth={1.5} />
+                  <p className="text-sm font-medium text-neutral-400">Haftalik Veri Yok</p>
+                  <p className="mt-1 text-[11px] text-neutral-400">Yukaridaki &quot;Gecmis Gun Yukle&quot; sekmesinden onceki gunlerin verilerini yukleyin.</p>
                 </div>
               )}
-
             </div>
+
           </div>
-        </section>
-      )}
+        </div>
+      </section>
 
       {/* ━━━ FOOTER: Dark Section ━━━ */}
       {(hasKasa || hasSn) && (
