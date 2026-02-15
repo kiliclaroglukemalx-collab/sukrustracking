@@ -52,6 +52,7 @@ interface ManuelSatir {
   ad: string;
   yatirim: string;
   cekim: string;
+  onaylandi: boolean;
 }
 
 /** snapshot_hour "range:2026-02-08" ise baslangic tarihini dondurur, degilse null */
@@ -231,11 +232,15 @@ export default function YatirimPerformansPage() {
 
   const manuelEkle = useCallback(() => {
     manuelIdRef.current += 1;
-    setManuelSatirlar((prev) => [...prev, { id: manuelIdRef.current, ad: "", yatirim: "", cekim: "" }]);
+    setManuelSatirlar((prev) => [...prev, { id: manuelIdRef.current, ad: "", yatirim: "", cekim: "", onaylandi: false }]);
   }, []);
 
   const manuelGuncelle = useCallback((id: number, field: keyof ManuelSatir, val: string) => {
-    setManuelSatirlar((prev) => prev.map((s) => (s.id === id ? { ...s, [field]: val } : s)));
+    setManuelSatirlar((prev) => prev.map((s) => (s.id === id ? { ...s, [field]: val, onaylandi: false } : s)));
+  }, []);
+
+  const manuelOnayla = useCallback((id: number) => {
+    setManuelSatirlar((prev) => prev.map((s) => (s.id === id ? { ...s, onaylandi: true } : s)));
   }, []);
 
   const manuelSil = useCallback((id: number) => {
@@ -401,13 +406,14 @@ export default function YatirimPerformansPage() {
   const hasKasa = aktifKasa.length > 0;
   const hasSn = snapshots.length > 0;
 
-  // Manuel satirlarin sayisal degerleri (%4.5 komisyon otomatik)
+  // Manuel satirlarin sayisal degerleri (%4.5 komisyon otomatik) — sadece onaylanmis satirlar
   const MANUEL_KOM_ORAN = 0.045;
   const parseNum = (v: string) => parseFloat(v.replace(/[^0-9.,]/g, "").replace(",", ".")) || 0;
   const manuelTotals = useMemo(() => {
     let yatirim = 0;
     let cekim = 0;
     for (const s of manuelSatirlar) {
+      if (!s.onaylandi) continue; // sadece onaylanmis satirlar toplama dahil
       yatirim += parseNum(s.yatirim);
       cekim += parseNum(s.cekim);
     }
@@ -880,48 +886,78 @@ export default function YatirimPerformansPage() {
                           const mKom = mYatirim * MANUEL_KOM_ORAN;
                           const mCekim = parseFloat(s.cekim.replace(/[^0-9.,]/g, "").replace(",", ".")) || 0;
                           const mNet = mYatirim - mKom - mCekim;
+                          const confirmed = s.onaylandi;
                           return (
-                          <tr key={s.id} className="border-b border-dashed border-blue-100 bg-blue-50/20">
+                          <tr key={s.id} className={`border-b border-dashed ${confirmed ? "border-emerald-200 bg-emerald-50/30" : "border-blue-100 bg-blue-50/20"}`}>
                             <td className="px-5 py-2">
-                              <input
-                                type="text"
-                                value={s.ad}
-                                onChange={(e) => manuelGuncelle(s.id, "ad", e.target.value)}
-                                placeholder="Yontem adi yaz..."
-                                className="w-full rounded border border-blue-200 bg-white px-2 py-1 text-[12px] font-semibold text-neutral-700 outline-none focus:border-blue-400 placeholder:text-neutral-300"
-                              />
+                              {confirmed ? (
+                                <div className="flex items-center gap-1.5">
+                                  <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-emerald-500" strokeWidth={2} />
+                                  <span className="text-[12px] font-bold text-neutral-800">{s.ad || "Manuel"}</span>
+                                </div>
+                              ) : (
+                                <input
+                                  type="text"
+                                  value={s.ad}
+                                  onChange={(e) => manuelGuncelle(s.id, "ad", e.target.value)}
+                                  placeholder="Yontem adi yaz..."
+                                  className="w-full rounded border border-blue-200 bg-white px-2 py-1 text-[12px] font-semibold text-neutral-700 outline-none focus:border-blue-400 placeholder:text-neutral-300"
+                                />
+                              )}
                             </td>
                             <td className="py-2 pl-3 pr-0" colSpan={2}>
-                              <input
-                                type="text"
-                                inputMode="decimal"
-                                value={s.yatirim}
-                                onChange={(e) => manuelGuncelle(s.id, "yatirim", e.target.value.replace(/[^0-9.,]/g, ""))}
-                                onKeyDown={(e) => { if (e.key === "Enter") manuelEkle(); }}
-                                placeholder="Yatirim tutari"
-                                className="w-full rounded border border-blue-200 bg-white px-2 py-1 text-right font-mono text-[12px] font-semibold text-neutral-700 outline-none focus:border-blue-400 placeholder:text-neutral-300"
-                              />
+                              {confirmed ? (
+                                <span className="block text-right font-mono text-[12px] font-bold text-neutral-800">₺{fmt(mYatirim)}</span>
+                              ) : (
+                                <input
+                                  type="text"
+                                  inputMode="decimal"
+                                  value={s.yatirim}
+                                  onChange={(e) => manuelGuncelle(s.id, "yatirim", e.target.value.replace(/[^0-9.,]/g, ""))}
+                                  onKeyDown={(e) => { if (e.key === "Enter" && mYatirim > 0) manuelOnayla(s.id); }}
+                                  placeholder="Yatirim tutari"
+                                  className="w-full rounded border border-blue-200 bg-white px-2 py-1 text-right font-mono text-[12px] font-semibold text-neutral-700 outline-none focus:border-blue-400 placeholder:text-neutral-300"
+                                />
+                              )}
                             </td>
                             <td className="px-3 py-2 text-right font-mono text-[10px] text-red-400">
                               {mKom > 0 ? `-₺${fmt(mKom)}` : "—"}
                               {mKom > 0 && <span className="ml-0.5 text-[8px] text-neutral-300">%4.5</span>}
                             </td>
                             <td className="px-3 py-2">
-                              <input
-                                type="text"
-                                inputMode="decimal"
-                                value={s.cekim}
-                                onChange={(e) => manuelGuncelle(s.id, "cekim", e.target.value.replace(/[^0-9.,]/g, ""))}
-                                onKeyDown={(e) => { if (e.key === "Enter") manuelEkle(); }}
-                                placeholder="Cekim tutari"
-                                className="w-full rounded border border-blue-200 bg-white px-2 py-1 text-right font-mono text-[12px] font-semibold text-amber-600 outline-none focus:border-blue-400 placeholder:text-neutral-300"
-                              />
+                              {confirmed ? (
+                                <span className="block text-right font-mono text-[12px] font-semibold text-amber-600">
+                                  {mCekim > 0 ? `₺${fmt(mCekim)}` : "—"}
+                                </span>
+                              ) : (
+                                <input
+                                  type="text"
+                                  inputMode="decimal"
+                                  value={s.cekim}
+                                  onChange={(e) => manuelGuncelle(s.id, "cekim", e.target.value.replace(/[^0-9.,]/g, ""))}
+                                  onKeyDown={(e) => { if (e.key === "Enter" && mYatirim > 0) manuelOnayla(s.id); }}
+                                  placeholder="Cekim tutari"
+                                  className="w-full rounded border border-blue-200 bg-white px-2 py-1 text-right font-mono text-[12px] font-semibold text-amber-600 outline-none focus:border-blue-400 placeholder:text-neutral-300"
+                                />
+                              )}
                             </td>
                             <td className="px-3 py-2">
                               <div className="flex items-center justify-end gap-2">
-                                <span className={`font-mono text-[10px] font-semibold ${mNet >= 0 ? "text-emerald-500" : "text-red-400"}`}>
-                                  {mNet >= 0 ? "₺" : "-₺"}{fmt(Math.abs(mNet))}
-                                </span>
+                                {confirmed ? (
+                                  <span className={`font-mono text-[10px] font-semibold ${mNet >= 0 ? "text-emerald-500" : "text-red-400"}`}>
+                                    {mNet >= 0 ? "₺" : "-₺"}{fmt(Math.abs(mNet))}
+                                  </span>
+                                ) : (
+                                  <button
+                                    type="button"
+                                    onClick={() => manuelOnayla(s.id)}
+                                    disabled={mYatirim === 0}
+                                    className="flex items-center gap-1 rounded-lg bg-emerald-500 px-2.5 py-1 text-[10px] font-bold text-white shadow-sm transition-all hover:bg-emerald-600 disabled:cursor-not-allowed disabled:opacity-40"
+                                  >
+                                    <Check className="h-3 w-3" strokeWidth={2.5} />
+                                    Onayla
+                                  </button>
+                                )}
                                 <button type="button" onClick={() => manuelSil(s.id)} className="rounded p-0.5 text-neutral-300 transition-colors hover:bg-red-50 hover:text-red-400">
                                   <X className="h-3.5 w-3.5" strokeWidth={2} />
                                 </button>
