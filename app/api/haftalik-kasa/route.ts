@@ -3,7 +3,8 @@ import { createClient } from "@supabase/supabase-js";
 
 /**
  * GET /api/haftalik-kasa
- * Son 7 gunun kasa snapshot'larini dondurur (haftalik kumulatif icin).
+ * Icinde bulunulan ayin kasa snapshot'larini dondurur.
+ * Ay sonunda otomatik sifirlanir (yeni ay = yeni data).
  */
 export async function GET() {
   try {
@@ -12,15 +13,14 @@ export async function GET() {
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     );
 
-    // Son 30 gun (daily + range snapshot'lari)
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-    const fromDate = thirtyDaysAgo.toISOString().split("T")[0];
+    // Bu ayin 1. gunu
+    const now = new Date();
+    const firstOfMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01`;
 
     const { data, error } = await supabase
       .from("kasa_snapshots")
       .select("*")
-      .gte("snapshot_date", fromDate)
+      .gte("snapshot_date", firstOfMonth)
       .order("snapshot_date", { ascending: true });
 
     if (error) {

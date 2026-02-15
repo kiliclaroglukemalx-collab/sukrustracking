@@ -146,16 +146,19 @@ function generateHaftalikMetni(
   const tK = snapshots.reduce((s, sn) => s + sn.total_komisyon, 0);
   const tC = snapshots.reduce((s, sn) => s + sn.total_cekim, 0);
   const lines: string[] = [];
-  lines.push("📊 HAFTALIK KUMULATIF OZET");
+  const monthName = new Date().toLocaleString("tr-TR", { month: "long", year: "numeric" });
+  lines.push(`📊 AYLIK KUMULATIF OZET — ${monthName.toUpperCase()}`);
   lines.push(`📅 ${first} - ${last}`);
   lines.push("━━━━━━━━━━━━━━━━━━━━━━");
   lines.push("");
   for (const sn of snapshots) {
-    lines.push(`📅 ${snapshotLabel(sn)}: ₺${fmt(sn.total_yatirim)}`);
+    const isRange = sn.snapshot_hour.startsWith("range:");
+    const tag = isRange ? " (haftalik)" : "";
+    lines.push(`📅 ${snapshotLabel(sn)}${tag}: ₺${fmt(sn.total_yatirim)}`);
   }
   lines.push("");
   lines.push("━━━━━━━━━━━━━━━━━━━━━━");
-  lines.push(`💰 Haftalik Toplam: ₺${fmt(tY)}`);
+  lines.push(`💰 Aylik Toplam: ₺${fmt(tY)}`);
   if (tK > 0) lines.push(`📉 Komisyon: -₺${fmt(tK)}`);
   if (tC > 0) lines.push(`📤 Cekim: ₺${fmt(tC)}`);
   lines.push("");
@@ -292,15 +295,42 @@ export default function YatirimPerformansPage() {
       const snapshotHour = isSingleDay ? "daily" : `range:${gecmisStart}`;
       const snapshotDate = gecmisEnd;
 
-      // Eski kaydı sil
+      // Eski ayni range kaydini sil
       await supabase
         .from("kasa_snapshots")
         .delete()
         .eq("snapshot_hour", snapshotHour)
         .eq("snapshot_date", snapshotDate);
 
-      // Tek gunluk ise daily'yi de temizle
-      if (isSingleDay) {
+      if (!isSingleDay) {
+        // Aralik icerisindeki tum gunluk (daily) kayitlari sil
+        // cunku range zaten o gunlerin kumulatifini iceriyor
+        await supabase
+          .from("kasa_snapshots")
+          .delete()
+          .eq("snapshot_hour", "daily")
+          .gte("snapshot_date", gecmisStart)
+          .lte("snapshot_date", gecmisEnd);
+
+        // Aralik icinde eski range kayitlarini da sil (cakisma onlemi)
+        const { data: oldRanges } = await supabase
+          .from("kasa_snapshots")
+          .select("snapshot_hour, snapshot_date")
+          .like("snapshot_hour", "range:%")
+          .gte("snapshot_date", gecmisStart)
+          .lte("snapshot_date", gecmisEnd);
+
+        if (oldRanges && oldRanges.length > 0) {
+          for (const old of oldRanges) {
+            await supabase
+              .from("kasa_snapshots")
+              .delete()
+              .eq("snapshot_hour", old.snapshot_hour)
+              .eq("snapshot_date", old.snapshot_date);
+          }
+        }
+      } else {
+        // Tek gunluk ise daily'yi de temizle
         await supabase
           .from("kasa_snapshots")
           .delete()
@@ -365,7 +395,7 @@ export default function YatirimPerformansPage() {
     return { yatirim, komisyon, cekim, cekimKom, netKar };
   }, [aktifKasa, manuelTotals]);
 
-  const haftalikTopYatirim = useMemo(() => snapshots.reduce((s, sn) => s + sn.total_yatirim, 0), [snapshots]);
+  const aylikTopYatirim = useMemo(() => snapshots.reduce((s, sn) => s + sn.total_yatirim, 0), [snapshots]);
 
   // Performans degisimi icin sadece gunluk (daily) snapshot'lari kullan
   const dailySnapshots = useMemo(() => snapshots.filter((sn) => sn.snapshot_hour === "daily"), [snapshots]);
@@ -478,7 +508,7 @@ export default function YatirimPerformansPage() {
               <p className="font-mono text-2xl font-bold text-white">₺{fmt(totals.yatirim)}</p>
               {hasSn && (
                 <p className="mt-1 text-[10px] text-neutral-600">
-                  Haftalik: ₺{fmt(haftalikTopYatirim)}
+                  Aylik: ₺{fmt(aylikTopYatirim)}
                 </p>
               )}
             </div>
@@ -919,8 +949,12 @@ export default function YatirimPerformansPage() {
                     <Calendar className="h-4 w-4 text-violet-600" strokeWidth={1.5} />
                   </div>
                   <div>
-                    <h2 className="text-[15px] font-bold text-neutral-900">Haftalik Rapor</h2>
-                    <p className="text-[10px] text-neutral-400">{hasSn ? `Son ${snapshots.length} gun — kumulatif` : "Henuz snapshot yok"}</p>
+                    <h2 className="text-[15px] font-bold text-neutral-900">Aylik Rapor</h2>
+                    <p className="text-[10px] text-neutral-400">
+                      {hasSn
+                        ? `${new Date().toLocaleString("tr-TR", { month: "long", year: "numeric" })} — ${snapshots.length} kayit`
+                        : "Henuz snapshot yok"}
+                    </p>
                   </div>
                 </div>
                 {hasSn && (
@@ -943,22 +977,34 @@ export default function YatirimPerformansPage() {
                 <>
                   {/* Day-by-day bars */}
                   <div className="border-b border-neutral-100 px-6 py-5">
-                    <p className="mb-3 text-[10px] font-bold uppercase tracking-widest text-neutral-400">Gun Bazli Yatirimlar</p>
+                    <p className="mb-3 text-[10px] font-bold uppercase tracking-widest text-neutral-400">Yatirim Kayitlari</p>
                     <div className="space-y-2">
                       {snapshots.map((sn) => {
                         const maxY = Math.max(...snapshots.map((s) => s.total_yatirim), 1);
                         const pct = (sn.total_yatirim / maxY) * 100;
+                        const isRange = sn.snapshot_hour.startsWith("range:");
                         return (
-                          <div key={sn.snapshot_date} className="flex items-center gap-3">
-                            <span className="w-24 shrink-0 text-right text-[11px] font-semibold text-neutral-500">
-                              {snapshotLabel(sn)}
-                            </span>
-                            <div className="relative h-7 flex-1 overflow-hidden rounded-lg bg-neutral-100">
+                          <div key={`${sn.snapshot_hour}-${sn.snapshot_date}`} className="flex items-center gap-3">
+                            <div className="w-28 shrink-0 text-right">
+                              <span className={`text-[11px] font-semibold ${isRange ? "text-violet-600" : "text-neutral-500"}`}>
+                                {snapshotLabel(sn)}
+                              </span>
+                              {isRange && (
+                                <span className="ml-1 inline-block rounded-full bg-violet-100 px-1.5 py-0.5 text-[7px] font-bold uppercase text-violet-500">
+                                  haftalik
+                                </span>
+                              )}
+                            </div>
+                            <div className={`relative h-7 flex-1 overflow-hidden rounded-lg ${isRange ? "bg-violet-50" : "bg-neutral-100"}`}>
                               <div
-                                className="absolute inset-y-0 left-0 rounded-lg bg-gradient-to-r from-violet-500/20 to-violet-500/10"
+                                className={`absolute inset-y-0 left-0 rounded-lg ${
+                                  isRange
+                                    ? "bg-gradient-to-r from-violet-500/30 to-violet-500/15"
+                                    : "bg-gradient-to-r from-violet-500/20 to-violet-500/10"
+                                }`}
                                 style={{ width: `${Math.max(pct, 3)}%` }}
                               />
-                              <span className="relative z-10 flex h-full items-center pl-3 font-mono text-[11px] font-bold text-neutral-700">
+                              <span className={`relative z-10 flex h-full items-center pl-3 font-mono text-[11px] font-bold ${isRange ? "text-violet-700" : "text-neutral-700"}`}>
                                 ₺{fmtCompact(sn.total_yatirim)}
                               </span>
                             </div>
@@ -969,15 +1015,15 @@ export default function YatirimPerformansPage() {
 
                     {/* Weekly total */}
                     <div className="mt-4 flex items-center justify-between rounded-xl bg-violet-50 px-4 py-3">
-                      <span className="text-[11px] font-black uppercase tracking-wider text-violet-600/70">Haftalik Toplam</span>
-                      <span className="font-mono text-[15px] font-black text-violet-600">₺{fmt(haftalikTopYatirim)}</span>
+                      <span className="text-[11px] font-black uppercase tracking-wider text-violet-600/70">Aylik Toplam</span>
+                      <span className="font-mono text-[15px] font-black text-violet-600">₺{fmt(aylikTopYatirim)}</span>
                     </div>
                   </div>
 
                   {/* Method-level weekly cumulative */}
                   {weeklyMethods.length > 0 && (
                     <div className="px-6 py-5">
-                      <p className="mb-3 text-[10px] font-bold uppercase tracking-widest text-neutral-400">Yontem Bazli Haftalik</p>
+                      <p className="mb-3 text-[10px] font-bold uppercase tracking-widest text-neutral-400">Yontem Bazli Aylik</p>
                       <table className="w-full">
                         <thead>
                           <tr className="border-b border-neutral-100">
@@ -1004,8 +1050,8 @@ export default function YatirimPerformansPage() {
               ) : (
                 <div className="flex flex-col items-center justify-center px-6 py-16 text-center">
                   <Calendar className="mb-3 h-8 w-8 text-neutral-200" strokeWidth={1.5} />
-                  <p className="text-sm font-medium text-neutral-400">Haftalik Veri Yok</p>
-                  <p className="mt-1 text-[11px] text-neutral-400">Yukaridaki &quot;Gecmis Gun Yukle&quot; sekmesinden onceki gunlerin verilerini yukleyin.</p>
+                  <p className="text-sm font-medium text-neutral-400">Aylik Veri Yok</p>
+                  <p className="mt-1 text-[11px] text-neutral-400">Yukaridaki &quot;Gecmis Gun Yukle&quot; sekmesinden gunluk veya haftalik verilerinizi yukleyin.</p>
                 </div>
               )}
             </div>
