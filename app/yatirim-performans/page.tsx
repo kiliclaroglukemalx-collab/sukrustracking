@@ -176,7 +176,8 @@ export default function YatirimPerformansPage() {
 
   // Excel upload state
   const [uploadTab, setUploadTab] = useState<"gunluk" | "gecmis">("gunluk");
-  const [gecmisDate, setGecmisDate] = useState("");
+  const [gecmisStart, setGecmisStart] = useState("");
+  const [gecmisEnd, setGecmisEnd] = useState("");
   const [uploadStatus, setUploadStatus] = useState<"idle" | "loading" | "done" | "error">("idle");
   const [uploadMsg, setUploadMsg] = useState("");
   const gunlukInputRef = useRef<HTMLInputElement>(null);
@@ -214,9 +215,15 @@ export default function YatirimPerformansPage() {
   }, [methods, loadExcelData]);
 
   const handleGecmisUpload = useCallback(async (file: File) => {
-    if (!gecmisDate) {
+    if (!gecmisStart || !gecmisEnd) {
       setUploadStatus("error");
-      setUploadMsg("Lutfen once bir tarih secin");
+      setUploadMsg("Lutfen baslangic ve bitis tarihlerini secin");
+      setTimeout(() => setUploadStatus("idle"), 3000);
+      return;
+    }
+    if (gecmisStart > gecmisEnd) {
+      setUploadStatus("error");
+      setUploadMsg("Baslangic tarihi bitis tarihinden sonra olamaz");
       setTimeout(() => setUploadStatus("idle"), 3000);
       return;
     }
@@ -243,34 +250,46 @@ export default function YatirimPerformansPage() {
         baslangicBakiye: k.baslangicBakiye,
       }));
 
+      // Aralik icindeki her gun icin snapshot kaydet
+      const dates: string[] = [];
+      const cur = new Date(gecmisStart + "T00:00:00");
+      const end = new Date(gecmisEnd + "T00:00:00");
+      while (cur <= end) {
+        dates.push(cur.toISOString().split("T")[0]);
+        cur.setDate(cur.getDate() + 1);
+      }
+
       const supabase = createClient();
+      const upsertRows = dates.map((d) => ({
+        snapshot_hour: "daily",
+        snapshot_date: d,
+        total_kasa: totalKasa,
+        total_yatirim: totalYatirim,
+        total_komisyon: totalKomisyon,
+        total_cekim: totalCekim,
+        details,
+      }));
+
       const { error } = await supabase
         .from("kasa_snapshots")
-        .upsert(
-          {
-            snapshot_hour: "daily",
-            snapshot_date: gecmisDate,
-            total_kasa: totalKasa,
-            total_yatirim: totalYatirim,
-            total_komisyon: totalKomisyon,
-            total_cekim: totalCekim,
-            details,
-          },
-          { onConflict: "snapshot_date,snapshot_hour" },
-        );
+        .upsert(upsertRows, { onConflict: "snapshot_date,snapshot_hour" });
 
       if (error) throw error;
 
+      const label = dates.length === 1
+        ? `${dates[0]} tarihli veri kaydedildi`
+        : `${dates.length} gun icin veri kaydedildi (${fmtDate(dates[0])} - ${fmtDate(dates[dates.length - 1])})`;
+
       setUploadStatus("done");
-      setUploadMsg(`${gecmisDate} tarihli veri kaydedildi: ${processed.length} yontem`);
+      setUploadMsg(`${label}: ${processed.length} yontem`);
       fetchSnapshots();
-      setTimeout(() => setUploadStatus("idle"), 3000);
+      setTimeout(() => setUploadStatus("idle"), 4000);
     } catch {
       setUploadStatus("error");
       setUploadMsg("Dosya islenirken hata olustu");
       setTimeout(() => setUploadStatus("idle"), 3000);
     }
-  }, [methods, gecmisDate]);
+  }, [methods, gecmisStart, gecmisEnd]);
 
   /* ─── Derived data ─── */
   const aktifKasa = useMemo(() => kasaData.filter((k) => k.toplamBorc > 0 || k.toplamKredi > 0), [kasaData]);
@@ -514,28 +533,47 @@ export default function YatirimPerformansPage() {
                   <div className="flex-1">
                     <p className="text-[13px] font-semibold text-white">Gecmis Gune Veri Yukle</p>
                     <p className="mt-1 text-[11px] leading-relaxed text-neutral-500">
-                      Haftalik kumulatif gorunum icin onceki gunlerin verilerini yukleyin. Sectiginiz tarihe snapshot olarak kaydedilir.
+                      Tarih araligi secin ve Excel yukleyin. Aralik icindeki her gun icin ayni veri snapshot olarak kaydedilir.
                     </p>
-                    <div className="mt-3 flex items-center gap-3">
-                      <label className="text-[10px] font-bold uppercase tracking-widest text-neutral-500">Tarih</label>
-                      <input
-                        type="date"
-                        value={gecmisDate}
-                        onChange={(e) => setGecmisDate(e.target.value)}
-                        max={new Date().toISOString().split("T")[0]}
-                        className="rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-[12px] font-medium text-white outline-none transition-colors focus:border-violet-400/50 [color-scheme:dark]"
-                      />
+                    <div className="mt-3 flex flex-wrap items-center gap-3">
+                      <div className="flex items-center gap-2">
+                        <label className="text-[10px] font-bold uppercase tracking-widest text-neutral-500">Baslangic</label>
+                        <input
+                          type="date"
+                          value={gecmisStart}
+                          onChange={(e) => { setGecmisStart(e.target.value); if (!gecmisEnd || e.target.value > gecmisEnd) setGecmisEnd(e.target.value); }}
+                          max={new Date().toISOString().split("T")[0]}
+                          className="rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-[12px] font-medium text-white outline-none transition-colors focus:border-violet-400/50 [color-scheme:dark]"
+                        />
+                      </div>
+                      <span className="text-neutral-600">—</span>
+                      <div className="flex items-center gap-2">
+                        <label className="text-[10px] font-bold uppercase tracking-widest text-neutral-500">Bitis</label>
+                        <input
+                          type="date"
+                          value={gecmisEnd}
+                          onChange={(e) => setGecmisEnd(e.target.value)}
+                          min={gecmisStart || undefined}
+                          max={new Date().toISOString().split("T")[0]}
+                          className="rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-[12px] font-medium text-white outline-none transition-colors focus:border-violet-400/50 [color-scheme:dark]"
+                        />
+                      </div>
+                      {gecmisStart && gecmisEnd && gecmisStart <= gecmisEnd && (
+                        <span className="rounded-md bg-violet-500/15 px-2 py-1 text-[10px] font-bold text-violet-400">
+                          {Math.round((new Date(gecmisEnd + "T00:00:00").getTime() - new Date(gecmisStart + "T00:00:00").getTime()) / 86400000) + 1} gun
+                        </span>
+                      )}
                     </div>
                   </div>
                   <div
-                    onClick={() => { if (!gecmisDate) { setUploadStatus("error"); setUploadMsg("Lutfen once bir tarih secin"); setTimeout(() => setUploadStatus("idle"), 3000); return; } gecmisInputRef.current?.click(); }}
+                    onClick={() => { if (!gecmisStart || !gecmisEnd) { setUploadStatus("error"); setUploadMsg("Lutfen tarih araligini secin"); setTimeout(() => setUploadStatus("idle"), 3000); return; } gecmisInputRef.current?.click(); }}
                     onDrop={(e) => { e.preventDefault(); const f = e.dataTransfer.files[0]; if (f) handleGecmisUpload(f); }}
                     onDragOver={(e) => e.preventDefault()}
                     onKeyDown={(e) => { if (e.key === "Enter") gecmisInputRef.current?.click(); }}
                     role="button"
                     tabIndex={0}
                     className={`flex w-full cursor-pointer flex-col items-center gap-2 rounded-xl border border-dashed px-8 py-5 transition-all sm:w-auto ${
-                      gecmisDate
+                      gecmisStart && gecmisEnd
                         ? "border-violet-400/20 bg-white/[0.02] hover:border-violet-400/40 hover:bg-white/[0.04]"
                         : "border-white/5 bg-white/[0.01] opacity-50"
                     }`}
@@ -544,7 +582,7 @@ export default function YatirimPerformansPage() {
                       <FileSpreadsheet className="h-5 w-5 text-violet-400/60" strokeWidth={1.5} />
                       <Calendar className="h-4 w-4 text-neutral-500" strokeWidth={1.5} />
                     </div>
-                    <p className="text-[11px] font-medium text-neutral-400">{gecmisDate ? "Surukle veya tikla" : "Once tarih sec"}</p>
+                    <p className="text-[11px] font-medium text-neutral-400">{gecmisStart && gecmisEnd ? "Surukle veya tikla" : "Once tarih sec"}</p>
                     <p className="text-[9px] text-neutral-600">.xlsx, .xls, .csv</p>
                     <input
                       ref={gecmisInputRef}
