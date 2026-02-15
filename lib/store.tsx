@@ -391,19 +391,24 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         baslangicBakiye: k.baslangicBakiye,
       }));
 
+      // Oncekileri sil, sonra ekle (unique index olmadan guvenli)
       supabase
         .from("kasa_snapshots")
-        .upsert(
-          {
-            snapshot_hour: "daily",
-            snapshot_date: today,
-            total_kasa: totalKasa,
-            total_yatirim: totalYatirim,
-            total_komisyon: totalKomisyon,
-            total_cekim: totalCekim,
-            details,
-          },
-          { onConflict: "snapshot_date,snapshot_hour" },
+        .delete()
+        .eq("snapshot_hour", "daily")
+        .eq("snapshot_date", today)
+        .then(() =>
+          supabase
+            .from("kasa_snapshots")
+            .insert({
+              snapshot_hour: "daily",
+              snapshot_date: today,
+              total_kasa: totalKasa,
+              total_yatirim: totalYatirim,
+              total_komisyon: totalKomisyon,
+              total_cekim: totalCekim,
+              details,
+            }),
         )
         .then(() => { /* silent */ })
         .catch(() => { /* silent */ });

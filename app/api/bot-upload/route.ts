@@ -124,20 +124,24 @@ export async function POST(req: NextRequest) {
       baslangicBakiye: k.baslangicBakiye,
     }));
 
+    // Oncekileri sil, sonra ekle (unique index olmadan guvenli)
     await supabase
       .from("kasa_snapshots")
-      .upsert(
-        {
-          snapshot_hour: "daily",
-          snapshot_date: today,
-          total_kasa: totalKasa,
-          total_yatirim: totalYatirim,
-          total_komisyon: totalKomisyon,
-          total_cekim: totalCekim,
-          details: snapshotDetails,
-        },
-        { onConflict: "snapshot_date,snapshot_hour" },
-      );
+      .delete()
+      .eq("snapshot_hour", "daily")
+      .eq("snapshot_date", today);
+
+    await supabase
+      .from("kasa_snapshots")
+      .insert({
+        snapshot_hour: "daily",
+        snapshot_date: today,
+        total_kasa: totalKasa,
+        total_yatirim: totalYatirim,
+        total_komisyon: totalKomisyon,
+        total_cekim: totalCekim,
+        details: snapshotDetails,
+      });
 
     console.log(`[Bot Upload] Excel islendi: ${rows.length} satir, ${kasaData.length} yontem, toplam kasa: ${totalKasa.toLocaleString("tr-TR")}`);
 

@@ -260,7 +260,15 @@ export default function YatirimPerformansPage() {
       }
 
       const supabase = createClient();
-      const upsertRows = dates.map((d) => ({
+
+      // Oncekileri sil, sonra yeniden ekle (unique index olmadan guvenli)
+      await supabase
+        .from("kasa_snapshots")
+        .delete()
+        .eq("snapshot_hour", "daily")
+        .in("snapshot_date", dates);
+
+      const insertRows = dates.map((d) => ({
         snapshot_hour: "daily",
         snapshot_date: d,
         total_kasa: totalKasa,
@@ -272,7 +280,7 @@ export default function YatirimPerformansPage() {
 
       const { error } = await supabase
         .from("kasa_snapshots")
-        .upsert(upsertRows, { onConflict: "snapshot_date,snapshot_hour" });
+        .insert(insertRows);
 
       if (error) throw error;
 
