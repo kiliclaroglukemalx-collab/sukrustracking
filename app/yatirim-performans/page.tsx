@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import Link from "next/link";
 import {
   ArrowLeft,
@@ -13,9 +13,14 @@ import {
   Wallet,
   BarChart3,
   Lock,
+  Upload,
+  FileSpreadsheet,
+  CheckCircle2,
 } from "lucide-react";
 import { useStore } from "@/lib/store";
 import type { KasaCardData } from "@/lib/excel-processor";
+import { parseExcelFile, processExcelData } from "@/lib/excel-processor";
+import { createClient } from "@/lib/supabase/client";
 
 /* ─── Types ─── */
 interface SnapshotDetail {
@@ -163,19 +168,109 @@ async function copyText(text: string) {
 
 /* ─────────────────────────── PAGE ─────────────────────────── */
 export default function YatirimPerformansPage() {
-  const { role, kasaData } = useStore();
+  const { role, kasaData, methods, loadExcelData } = useStore();
   const [hydrated, setHydrated] = useState(false);
   const [snapshots, setSnapshots] = useState<KasaSnapshot[]>([]);
   const [gunlukCopied, setGunlukCopied] = useState(false);
   const [haftalikCopied, setHaftalikCopied] = useState(false);
 
+  // Excel upload state
+  const [uploadTab, setUploadTab] = useState<"gunluk" | "gecmis">("gunluk");
+  const [gecmisDate, setGecmisDate] = useState("");
+  const [uploadStatus, setUploadStatus] = useState<"idle" | "loading" | "done" | "error">("idle");
+  const [uploadMsg, setUploadMsg] = useState("");
+  const gunlukInputRef = useRef<HTMLInputElement>(null);
+  const gecmisInputRef = useRef<HTMLInputElement>(null);
+
   useEffect(() => {
     setHydrated(true);
+    fetchSnapshots();
+  }, []);
+
+  function fetchSnapshots() {
     fetch("/api/haftalik-kasa")
       .then((r) => r.json())
       .then((j) => { if (j.snapshots) setSnapshots(j.snapshots); })
       .catch(() => {});
-  }, []);
+  }
+
+  /* ─── Excel upload handlers ─── */
+  const handleGunlukUpload = useCallback(async (file: File) => {
+    try {
+      setUploadStatus("loading");
+      const buffer = await file.arrayBuffer();
+      const rows = parseExcelFile(buffer);
+      const processed = processExcelData(rows, methods);
+      loadExcelData(processed, rows);
+      setUploadStatus("done");
+      setUploadMsg(`Gunluk veri yuklendi: ${processed.length} yontem`);
+      fetchSnapshots();
+      setTimeout(() => setUploadStatus("idle"), 3000);
+    } catch {
+      setUploadStatus("error");
+      setUploadMsg("Dosya islenirken hata olustu");
+      setTimeout(() => setUploadStatus("idle"), 3000);
+    }
+  }, [methods, loadExcelData]);
+
+  const handleGecmisUpload = useCallback(async (file: File) => {
+    if (!gecmisDate) {
+      setUploadStatus("error");
+      setUploadMsg("Lutfen once bir tarih secin");
+      setTimeout(() => setUploadStatus("idle"), 3000);
+      return;
+    }
+    try {
+      setUploadStatus("loading");
+      const buffer = await file.arrayBuffer();
+      const rows = parseExcelFile(buffer);
+      const processed = processExcelData(rows, methods);
+
+      const totalKasa = processed.reduce((s, k) => s + k.kalanKasa, 0);
+      const totalYatirim = processed.reduce((s, k) => s + k.toplamBorc, 0);
+      const totalKomisyon = processed.reduce((s, k) => s + k.komisyon, 0);
+      const totalCekim = processed.reduce((s, k) => s + k.toplamKredi, 0);
+      const details = processed.map((k) => ({
+        name: k.odemeTuruAdi,
+        yatirim: k.toplamBorc,
+        komisyon: k.komisyon,
+        komisyonOrani: k.komisyonOrani,
+        netYatirim: k.netBorc,
+        cekim: k.toplamKredi,
+        cekimKomisyon: k.cekimKomisyon,
+        cekimKomisyonOrani: k.cekimKomisyonOrani,
+        kalan: k.kalanKasa,
+        baslangicBakiye: k.baslangicBakiye,
+      }));
+
+      const supabase = createClient();
+      const { error } = await supabase
+        .from("kasa_snapshots")
+        .upsert(
+          {
+            snapshot_hour: "daily",
+            snapshot_date: gecmisDate,
+            total_kasa: totalKasa,
+            total_yatirim: totalYatirim,
+            total_komisyon: totalKomisyon,
+            total_cekim: totalCekim,
+            details,
+          },
+          { onConflict: "snapshot_date,snapshot_hour" },
+        );
+
+      if (error) throw error;
+
+      setUploadStatus("done");
+      setUploadMsg(`${gecmisDate} tarihli veri kaydedildi: ${processed.length} yontem`);
+      fetchSnapshots();
+      setTimeout(() => setUploadStatus("idle"), 3000);
+    } catch {
+      setUploadStatus("error");
+      setUploadMsg("Dosya islenirken hata olustu");
+      setTimeout(() => setUploadStatus("idle"), 3000);
+    }
+  }, [methods, gecmisDate]);
 
   /* ─── Derived data ─── */
   const aktifKasa = useMemo(() => kasaData.filter((k) => k.toplamBorc > 0 || k.toplamKredi > 0), [kasaData]);
@@ -347,16 +442,151 @@ export default function YatirimPerformansPage() {
           </div>
         )}
 
-        {noData && (
-          <div className="mx-auto mt-16 flex max-w-6xl flex-col items-center justify-center px-6 pb-8 text-center">
-            <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full border border-white/10 bg-white/5">
-              <BarChart3 className="h-7 w-7 text-neutral-600" strokeWidth={1.5} />
+        {/* ── Excel Yukleme Alani ── */}
+        <div className="mx-auto mt-10 max-w-6xl px-6">
+          <div className="overflow-hidden rounded-2xl border border-white/[0.06] bg-white/[0.03] backdrop-blur-sm">
+            {/* Tab Header */}
+            <div className="flex items-center gap-0 border-b border-white/[0.06]">
+              <button
+                type="button"
+                onClick={() => setUploadTab("gunluk")}
+                className={`flex items-center gap-2 px-6 py-3 text-[11px] font-semibold transition-all ${
+                  uploadTab === "gunluk"
+                    ? "border-b-2 border-[#1E5EFF] text-white"
+                    : "text-neutral-500 hover:text-neutral-300"
+                }`}
+              >
+                <Upload className="h-3.5 w-3.5" strokeWidth={1.5} />
+                Gunluk Excel
+              </button>
+              <button
+                type="button"
+                onClick={() => setUploadTab("gecmis")}
+                className={`flex items-center gap-2 px-6 py-3 text-[11px] font-semibold transition-all ${
+                  uploadTab === "gecmis"
+                    ? "border-b-2 border-violet-400 text-white"
+                    : "text-neutral-500 hover:text-neutral-300"
+                }`}
+              >
+                <Calendar className="h-3.5 w-3.5" strokeWidth={1.5} />
+                Gecmis Gun Yukle
+              </button>
             </div>
-            <p className="text-sm font-medium text-neutral-400">Henuz Veri Yok</p>
-            <p className="mt-1 max-w-xs text-xs text-neutral-600">
-              Excel yukleyin veya Telegram botu uzerinden veri gonderin. Veriler yuklendiginde performans burada gorunecek.
+
+            {/* Tab Content */}
+            <div className="p-6">
+              {uploadTab === "gunluk" && (
+                <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-start sm:gap-6">
+                  <div className="flex-1">
+                    <p className="text-[13px] font-semibold text-white">Bugunun Verisini Yukle</p>
+                    <p className="mt-1 text-[11px] leading-relaxed text-neutral-500">
+                      Bugunun Excel dosyasini yukleyin. Kasa verileri anlik olarak guncellenir ve gunluk snapshot kaydedilir.
+                    </p>
+                  </div>
+                  <div
+                    onClick={() => gunlukInputRef.current?.click()}
+                    onDrop={(e) => { e.preventDefault(); const f = e.dataTransfer.files[0]; if (f) handleGunlukUpload(f); }}
+                    onDragOver={(e) => e.preventDefault()}
+                    onKeyDown={(e) => { if (e.key === "Enter") gunlukInputRef.current?.click(); }}
+                    role="button"
+                    tabIndex={0}
+                    className="flex w-full cursor-pointer flex-col items-center gap-2 rounded-xl border border-dashed border-white/10 bg-white/[0.02] px-8 py-5 transition-all hover:border-[#1E5EFF]/40 hover:bg-white/[0.04] sm:w-auto"
+                  >
+                    <div className="flex items-center gap-2">
+                      <FileSpreadsheet className="h-5 w-5 text-emerald-500/60" strokeWidth={1.5} />
+                      <Upload className="h-4 w-4 text-neutral-500" strokeWidth={1.5} />
+                    </div>
+                    <p className="text-[11px] font-medium text-neutral-400">Surukle veya tikla</p>
+                    <p className="text-[9px] text-neutral-600">.xlsx, .xls, .csv</p>
+                    <input
+                      ref={gunlukInputRef}
+                      type="file"
+                      accept=".xlsx,.xls,.csv"
+                      onChange={(e) => { const f = e.target.files?.[0]; if (f) handleGunlukUpload(f); e.target.value = ""; }}
+                      className="hidden"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {uploadTab === "gecmis" && (
+                <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-start sm:gap-6">
+                  <div className="flex-1">
+                    <p className="text-[13px] font-semibold text-white">Gecmis Gune Veri Yukle</p>
+                    <p className="mt-1 text-[11px] leading-relaxed text-neutral-500">
+                      Haftalik kumulatif gorunum icin onceki gunlerin verilerini yukleyin. Sectiginiz tarihe snapshot olarak kaydedilir.
+                    </p>
+                    <div className="mt-3 flex items-center gap-3">
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-neutral-500">Tarih</label>
+                      <input
+                        type="date"
+                        value={gecmisDate}
+                        onChange={(e) => setGecmisDate(e.target.value)}
+                        max={new Date().toISOString().split("T")[0]}
+                        className="rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-[12px] font-medium text-white outline-none transition-colors focus:border-violet-400/50 [color-scheme:dark]"
+                      />
+                    </div>
+                  </div>
+                  <div
+                    onClick={() => { if (!gecmisDate) { setUploadStatus("error"); setUploadMsg("Lutfen once bir tarih secin"); setTimeout(() => setUploadStatus("idle"), 3000); return; } gecmisInputRef.current?.click(); }}
+                    onDrop={(e) => { e.preventDefault(); const f = e.dataTransfer.files[0]; if (f) handleGecmisUpload(f); }}
+                    onDragOver={(e) => e.preventDefault()}
+                    onKeyDown={(e) => { if (e.key === "Enter") gecmisInputRef.current?.click(); }}
+                    role="button"
+                    tabIndex={0}
+                    className={`flex w-full cursor-pointer flex-col items-center gap-2 rounded-xl border border-dashed px-8 py-5 transition-all sm:w-auto ${
+                      gecmisDate
+                        ? "border-violet-400/20 bg-white/[0.02] hover:border-violet-400/40 hover:bg-white/[0.04]"
+                        : "border-white/5 bg-white/[0.01] opacity-50"
+                    }`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <FileSpreadsheet className="h-5 w-5 text-violet-400/60" strokeWidth={1.5} />
+                      <Calendar className="h-4 w-4 text-neutral-500" strokeWidth={1.5} />
+                    </div>
+                    <p className="text-[11px] font-medium text-neutral-400">{gecmisDate ? "Surukle veya tikla" : "Once tarih sec"}</p>
+                    <p className="text-[9px] text-neutral-600">.xlsx, .xls, .csv</p>
+                    <input
+                      ref={gecmisInputRef}
+                      type="file"
+                      accept=".xlsx,.xls,.csv"
+                      onChange={(e) => { const f = e.target.files?.[0]; if (f) handleGecmisUpload(f); e.target.value = ""; }}
+                      className="hidden"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* Upload status */}
+              {uploadStatus !== "idle" && (
+                <div className={`mt-4 flex items-center gap-2 rounded-lg px-4 py-2.5 ${
+                  uploadStatus === "loading" ? "bg-white/[0.04]" :
+                  uploadStatus === "done" ? "bg-emerald-500/10" :
+                  "bg-red-500/10"
+                }`}>
+                  {uploadStatus === "loading" && (
+                    <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-neutral-600 border-t-white" />
+                  )}
+                  {uploadStatus === "done" && <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" />}
+                  {uploadStatus === "error" && <span className="text-sm text-red-400">!</span>}
+                  <p className={`text-[11px] font-medium ${
+                    uploadStatus === "loading" ? "text-neutral-400" :
+                    uploadStatus === "done" ? "text-emerald-400" :
+                    "text-red-400"
+                  }`}>
+                    {uploadStatus === "loading" ? "Isleniyor..." : uploadMsg}
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {noData && (
+          <div className="mx-auto mt-10 flex max-w-6xl flex-col items-center justify-center px-6 pb-8 text-center">
+            <p className="text-xs text-neutral-600">
+              Yukaridaki alandan Excel yukleyerek baslayabilirsiniz.
             </p>
-            <Link href="/" className="mt-6 text-xs text-neutral-500 underline hover:text-white">Kasaya Don</Link>
           </div>
         )}
       </section>
