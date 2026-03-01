@@ -1,0 +1,79 @@
+// Prisma Schema - Sukrus Tracking
+// Supabase (PostgreSQL) ile uyumlu
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// Ödeme yöntemleri (Nakit, Kredi Kartı, iyzico vb.)
+model PaymentMethod {
+  id                 String   @id
+  name               String
+  komisyonOrani      Decimal  @default(0) @map("komisyon_orani") @db.Decimal
+  cekimKomisyonOrani Decimal  @default(0) @map("cekim_komisyon_orani") @db.Decimal
+  baslangicBakiye    Decimal  @default(0) @map("baslangic_bakiye") @db.Decimal
+  sortOrder          Int      @default(0) @map("sort_order")
+  createdAt          DateTime @default(now()) @map("created_at")
+  updatedAt          DateTime @updatedAt @map("updated_at")
+
+  @@map("payment_methods")
+}
+
+// Uygulama ayarları (key-value: video_url, methods_json, bot verisi vb.)
+model AppSetting {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("app_settings")
+}
+
+// Ödeme kayıtları (ödeme yap, ödeme al, transfer)
+model OdemeKaydi {
+  id          String   @id
+  no          String
+  tarih       DateTime @default(now())
+  islemTipi   String   @map("islem_tipi") // 'odeme-yap' | 'odeme-al' | 'transfer'
+  yontem      String
+  yontemId    String?  @map("yontem_id")
+  hedefYontem String?  @map("hedef_yontem")
+  hedefYontemId String? @map("hedef_yontem_id")
+  tutar       Decimal  @default(0) @db.Decimal
+  dovizCinsi  String   @default("TRY") @map("doviz_cinsi")
+  kur         Decimal? @db.Decimal
+  tutarTl     Decimal  @default(0) @map("tutar_tl") @db.Decimal
+  gonderen    String?  @default("")
+  alici       String?  @default("")
+  aciklama    String?  @default("")
+  txKodu      String?  @map("tx_kodu")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@index([tarih])
+  @@map("odeme_kayitlari")
+}
+
+// Çekim raporu (Telegram bot analiz sonuçları)
+// Eski Supabase: id bigint. Yeni kurulumda uuid kullanılabilir.
+model CekimRaporu {
+  id        BigInt    @id @default(autoincrement())
+  data      Json
+  createdAt DateTime? @default(now()) @map("created_at")
+
+  @@map("cekim_raporlari")
+}
+
+// Rapor bazlı Excel verisi — her rapor kendi verisini tutar
+// report_type: cekim | yatirim | analiz | performans | bonus
+model ReportData {
+  id            String   @id @default(cuid())
+  reportType    String   @unique @map("report_type")
+  rawRows       Json     @default("[]") @map("raw_rows")
+  processedData Json     @default("[]") @map("processed_data")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  @@map("report_data")
+}

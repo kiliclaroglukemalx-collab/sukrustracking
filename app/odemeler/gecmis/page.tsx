@@ -153,7 +153,7 @@ export default function OdemeGecmisPage() {
       <div className="sticky top-0 z-30 border-b border-white/[0.06] bg-neutral-950/80 backdrop-blur-xl">
         <div className="mx-auto flex max-w-4xl items-center justify-between px-4 py-3">
           <Link href="/" className="flex items-center gap-2 text-xs text-neutral-500 transition-colors hover:text-white">
-            <ArrowLeft className="h-4 w-4" strokeWidth={1.5} /><span>Kasa</span>
+            <ArrowLeft className="h-4 w-4" strokeWidth={1.5} /><span>Ana Sayfa</span>
           </Link>
           <h1 className="text-sm font-semibold tracking-wide text-white/90">Odeme Gecmisi</h1>
           <div className="w-16" />

@@ -362,7 +362,7 @@ function CustomSelect({
 
 // ---- Ana Odeme Paneli ----
 export function OdemePanel({ onClose }: { onClose: () => void }) {
-  const { kasaData, odemeEkle, odemeler, odemeSil, methods } = useStore();
+  const { odemeEkle, odemeler, odemeSil, methods } = useStore();
   const [silOnay, setSilOnay] = useState<string | null>(null);
   const [islemTipi, setIslemTipi] = useState<IslemTipi>("odeme-yap");
   const [yontem, setYontem] = useState("");
@@ -377,9 +377,9 @@ export function OdemePanel({ onClose }: { onClose: () => void }) {
   const [ozetOdeme, setOzetOdeme] = useState<OdemeKaydi | null>(null);
   const [tab, setTab] = useState<"form" | "gecmis">("form");
 
-  // Kasa isimleri + Dis Kasa
+  // Yontem isimleri + Dis Kasa
   const kasaIsimleri = [
-    ...kasaData.map((k) => k.odemeTuruAdi),
+    ...methods.map((m) => m.name),
     "Dis Kasa",
   ];
 

@@ -38,7 +38,7 @@ export default function MutabakatPage() {
           href="/"
           className="text-xs text-neutral-500 underline hover:text-neutral-800"
         >
-          Kasaya Don
+          Ana Sayfaya Don
         </Link>
       </div>
     );
@@ -53,7 +53,7 @@ export default function MutabakatPage() {
           className="flex items-center gap-2 text-xs text-neutral-500 transition-colors hover:text-neutral-900"
         >
           <ArrowLeft className="h-4 w-4" strokeWidth={1.5} />
-          <span>Kasaya Don</span>
+          <span>Ana Sayfaya Don</span>
         </Link>
         <h1 className="text-sm font-bold tracking-wide text-neutral-900">
           Mutabakat

@@ -72,6 +72,10 @@ const config: Config = {
         sm: 'calc(var(--radius) - 4px)',
       },
       keyframes: {
+        'logo-spin': {
+          from: { transform: 'rotate(0deg)' },
+          to: { transform: 'rotate(360deg)' },
+        },
         'accordion-down': {
           from: {
             height: '0',
@@ -90,6 +94,7 @@ const config: Config = {
         },
       },
       animation: {
+        'logo-spin': 'logo-spin 20s linear infinite',
         'accordion-down': 'accordion-down 0.2s ease-out',
         'accordion-up': 'accordion-up 0.2s ease-out',
       },

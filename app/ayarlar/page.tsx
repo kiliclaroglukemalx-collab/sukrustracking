@@ -89,7 +89,7 @@ export default function AyarlarPage() {
           className="flex items-center gap-2 text-xs text-neutral-500 transition-colors hover:text-neutral-900"
         >
           <ArrowLeft className="h-4 w-4" strokeWidth={1.5} />
-          <span>Kasaya Don</span>
+          <span>Ana Sayfaya Don</span>
         </Link>
         <h1 className="text-sm font-bold tracking-wide text-neutral-900">
           Ayarlar

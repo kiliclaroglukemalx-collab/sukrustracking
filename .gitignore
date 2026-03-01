@@ -5,7 +5,13 @@ __v0_jsx-dev-runtime.ts
 
 # Common ignores
 node_modules/
+.pnpm-store/
 .next/
+.env
 .env*.local
 .DS_Store
 .vercel
+
+# Cloned old system for comparison (idilsdashboard-w8)
+_old_system/
+.env.vercel

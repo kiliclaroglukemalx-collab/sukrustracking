@@ -9,6 +9,7 @@ interface KpiCardProps {
   change?: number | null;
   changeLabel?: string;
   color?: "default" | "green" | "red" | "blue";
+  description?: string;
 }
 
 function formatDisplay(value: string | number | null, prefix?: string): string {
@@ -26,18 +27,27 @@ const colorMap = {
   blue: "text-[#1E5EFF]",
 };
 
-export function KpiCard({ label, value, prefix, change, changeLabel, color = "default" }: KpiCardProps) {
+export function KpiCard({ label, value, prefix, change, changeLabel, color = "default", description }: KpiCardProps) {
   const isPositive = change !== null && change !== undefined && change > 0;
   const isNegative = change !== null && change !== undefined && change < 0;
 
   return (
-    <div className="flex flex-col justify-between rounded-2xl border border-[#E6EAF0] bg-white p-5">
-      <p className="mb-1 text-[11px] font-medium uppercase tracking-[0.12em] text-neutral-400">
+    <div className="flex min-w-0 flex-col justify-between overflow-hidden rounded-2xl border border-[#E6EAF0] bg-white p-5">
+      <p className="mb-1 truncate text-[11px] font-medium uppercase tracking-[0.12em] text-neutral-400">
         {label}
       </p>
-      <p className={`font-mono text-2xl font-bold tabular-nums ${colorMap[color]}`}>
+      <p
+        className={`min-w-0 font-mono font-bold tabular-nums ${colorMap[color]}`}
+        style={{ fontSize: "clamp(0.75rem, 1.5vw + 0.5rem, 1.5rem)" }}
+        title={typeof value === "string" || typeof value === "number" ? String(formatDisplay(value, prefix)) : undefined}
+      >
         {formatDisplay(value, prefix)}
       </p>
+      {description && (
+        <p className="mt-1.5 text-[10px] leading-tight text-neutral-500">
+          {description}
+        </p>
+      )}
       {(change !== null && change !== undefined) && (
         <div className="mt-2 flex items-center gap-1">
           {isPositive && <TrendingUp className="h-3 w-3 text-emerald-500" strokeWidth={2} />}

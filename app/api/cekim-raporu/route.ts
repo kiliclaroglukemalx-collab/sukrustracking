@@ -1,30 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import { prisma } from "@/lib/prisma";
 
-// Bot API Key — .env.local dosyasında BOT_API_KEY olarak tanımlı
 const BOT_API_KEY = process.env.BOT_API_KEY || "idils-bot-secret-2026";
 
 /**
  * POST /api/cekim-raporu
- *
- * Telegram botu çekim raporu analiz sonucunu ve İdil notlarını bu endpoint'e gönderir.
- * Veri Supabase'deki cekim_raporlari tablosuna kaydedilir.
- * Dashboard bu tablodan en güncel veriyi çeker.
- *
- * Body (JSON):
- * {
- *   genel: { toplamBasariliCekim, basariliIslemSayisi, toplamRedSayisi, toplamRedHacmi, sistemGenelHizi, periodBaslangic, periodBitis, degisim },
- *   yontemler: [{ name, volume, avgDuration, txCount, yukYuzdesi }],
- *   personel: [{ name, islemSayisi, ortKararDk, performans, emoji, totalVolume, hizDegisimi, oncekiDk }],
- *   darbogaz: [{ miktar, odemeSistemi, beklemeDk, aciliyet, durum }],
- *   red: { toplamRed, toplamRedHacmi, enSikNeden, enSikNedenAdet, nedenler: [{ neden, adet }] },
- *   idilNotlari: { yontem, personel, darbogaz, red },
- *   analizZamani: string,
- * }
+ * Telegram botu çekim raporu analiz sonucunu gönderir.
  */
 export async function POST(req: NextRequest) {
   try {
-    // 1. API Key kontrolü
     const apiKey = req.headers.get("x-api-key");
     if (apiKey !== BOT_API_KEY) {
       return NextResponse.json(
@@ -33,7 +17,6 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 2. Body'yi parse et
     const body = await req.json();
 
     if (!body.genel || !body.yontemler || !body.personel) {
@@ -43,16 +26,8 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 3. Supabase bağlantısı
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    );
-
-    // 4. cekim_raporlari tablosuna kaydet
-    const { data, error } = await supabase
-      .from("cekim_raporlari")
-      .insert({
+    const data = await prisma.cekimRaporu.create({
+      data: {
         data: {
           genel: body.genel,
           yontemler: body.yontemler,
@@ -62,29 +37,21 @@ export async function POST(req: NextRequest) {
           idilNotlari: body.idilNotlari || {},
           analizZamani: body.analizZamani || new Date().toISOString(),
         },
-      })
-      .select("id, created_at")
-      .single();
+      },
+    });
 
-    if (error) {
-      console.error("[Cekim Raporu API] Supabase insert hatası:", error);
-      return NextResponse.json(
-        { error: `Veritabanı hatası: ${error.message}` },
-        { status: 500 }
-      );
-    }
-
-    console.log(`[Cekim Raporu API] ✅ Rapor kaydedildi — ID: ${data.id}, zaman: ${data.created_at}`);
+    console.log(`[Cekim Raporu API] Rapor kaydedildi — ID: ${data.id}`);
 
     return NextResponse.json({
       success: true,
-      id: data.id,
-      createdAt: data.created_at,
+      id: String(data.id),
+      createdAt: data.createdAt,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("[Cekim Raporu API] Hata:", error);
+    const message = error instanceof Error ? error.message : "İşlem başarısız";
     return NextResponse.json(
-      { error: error.message || "İşlem başarısız" },
+      { error: message },
       { status: 500 }
     );
   }
@@ -92,37 +59,28 @@ export async function POST(req: NextRequest) {
 
 /**
  * GET /api/cekim-raporu
- *
- * En son çekim raporunu döndürür. Dashboard bu endpoint'i kullanır.
- * x-api-key gerekmez — public read.
+ * En son çekim raporunu döndürür.
  */
 export async function GET() {
   try {
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    );
+    const data = await prisma.cekimRaporu.findFirst({
+      orderBy: { createdAt: "desc" },
+    });
 
-    const { data, error } = await supabase
-      .from("cekim_raporlari")
-      .select("id, data, created_at")
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .single();
-
-    if (error || !data) {
+    if (!data) {
       return NextResponse.json({ data: null, message: "Henüz rapor yok" });
     }
 
     return NextResponse.json({
       data: data.data,
-      id: data.id,
-      createdAt: data.created_at,
+      id: String(data.id),
+      createdAt: data.createdAt,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("[Cekim Raporu API] GET Hata:", error);
+    const message = error instanceof Error ? error.message : "Bilinmeyen hata";
     return NextResponse.json(
-      { data: null, error: error.message },
+      { data: null, error: message },
       { status: 500 }
     );
   }

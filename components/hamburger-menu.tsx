@@ -4,9 +4,7 @@ import React, { useState, useRef, useEffect, useCallback } from "react";
 import Link from "next/link";
 import {
   MoreVertical,
-  Upload,
   Settings,
-  BarChart3,
   FileCheck,
   X,
   ChevronRight,
@@ -20,14 +18,17 @@ import {
 } from "lucide-react";
 import { useStore } from "@/lib/store";
 import type { UserRole } from "@/lib/store";
-import { ExcelUploader } from "./excel-uploader";
 import { OdemePanel } from "./odeme-panel";
 
-type Panel = "main" | "excel" | "password";
+type Panel = "main" | "password";
 
-export function HamburgerMenu() {
-  const { role, setRole, verifyMasterPassword, loadExcelData } =
-    useStore();
+interface HamburgerMenuProps {
+  /** Header icinde kullanildiginda fixed yerine relative */
+  embedded?: boolean;
+}
+
+export function HamburgerMenu({ embedded }: HamburgerMenuProps = {}) {
+  const { role, setRole, verifyMasterPassword } = useStore();
   const [isOpen, setIsOpen] = useState(false);
   const [odemeOpen, setOdemeOpen] = useState(false);
   const [activePanel, setActivePanel] = useState<Panel>("main");
@@ -94,7 +95,7 @@ export function HamburgerMenu() {
   }, [password, verifyMasterPassword, setRole]);
 
   return (
-    <div ref={menuRef} className="fixed right-3 top-2.5 z-50">
+    <div ref={menuRef} className={embedded ? "relative z-50" : "fixed right-3 top-2.5 z-50"}>
       {/* Trigger */}
       <button
         onClick={() => {
@@ -155,31 +156,10 @@ export function HamburgerMenu() {
 
               {/* Menu items */}
               <div className="flex flex-col py-1">
-                {/* Excel Yukle - Herkes icin */}
-                <button
-                  type="button"
-                  onClick={() => setActivePanel("excel")}
-                  className="flex w-full items-center justify-between px-4 py-2.5 text-left transition-colors hover:bg-neutral-50"
-                >
-                  <span className="flex items-center gap-2.5">
-                    <Upload
-                      className="h-3.5 w-3.5 text-neutral-400"
-                      strokeWidth={1.5}
-                    />
-                    <span className="text-[11px] text-neutral-600">
-                      Excel Yukle
-                    </span>
-                  </span>
-                  <ChevronRight
-                    className="h-3 w-3 text-neutral-300"
-                    strokeWidth={1.5}
-                  />
-                </button>
-
-                {/* Yatirim Performansi - Master only */}
+                {/* Ana Sayfa - Master only */}
                 {role === "master" && (
                   <Link
-                    href="/yatirim-performans"
+                    href="/"
                     onClick={close}
                     className="flex w-full items-center justify-between px-4 py-2.5 text-left transition-colors hover:bg-neutral-50"
                   >
@@ -189,30 +169,7 @@ export function HamburgerMenu() {
                         strokeWidth={1.5}
                       />
                       <span className="text-[11px] text-neutral-600">
-                        Yatirim Performansi
-                      </span>
-                    </span>
-                    <ChevronRight
-                      className="h-3 w-3 text-neutral-300"
-                      strokeWidth={1.5}
-                    />
-                  </Link>
-                )}
-
-                {/* Raporlar - Master only */}
-                {role === "master" && (
-                  <Link
-                    href="/raporlar"
-                    onClick={close}
-                    className="flex w-full items-center justify-between px-4 py-2.5 text-left transition-colors hover:bg-neutral-50"
-                  >
-                    <span className="flex items-center gap-2.5">
-                      <BarChart3
-                        className="h-3.5 w-3.5 text-neutral-400"
-                        strokeWidth={1.5}
-                      />
-                      <span className="text-[11px] text-neutral-600">
-                        Raporlar
+                        Ana Sayfa
                       </span>
                     </span>
                     <ChevronRight
@@ -383,25 +340,6 @@ export function HamburgerMenu() {
             </div>
           )}
 
-          {/* EXCEL UPLOAD PANEL */}
-          {activePanel === "excel" && (
-            <div className="p-4">
-              <button
-                type="button"
-                onClick={() => setActivePanel("main")}
-                className="mb-3 flex items-center gap-1 text-[10px] text-neutral-400 transition-colors hover:text-neutral-600"
-              >
-                <ArrowLeft className="h-3 w-3" strokeWidth={1.5} />
-                Menu
-              </button>
-              <ExcelUploader
-                onDataLoaded={(data, rows) => {
-                  loadExcelData(data, rows);
-                  close();
-                }}
-              />
-            </div>
-          )}
         </div>
       )}
       {/* Odeme Panel - Full screen drawer from right */}
