@@ -124,6 +124,21 @@ export interface ParsedRow {
   raw: Record<string, string>;
 }
 
+/** JSON'dan yüklenen satırlarda Date string olarak gelir; ParsedRow'a çevirir. */
+export function deserializeParsedRows(rows: unknown[]): ParsedRow[] {
+  if (!Array.isArray(rows)) return [];
+  return rows.map((r: Record<string, unknown>) => ({
+    playerId: String(r.playerId ?? ""),
+    created: r.created ? parseDate(String(r.created)) : null,
+    depositCount: Number(r.depositCount) || 0,
+    depositAmount: Number(r.depositAmount) || 0,
+    btag: String(r.btag ?? ""),
+    firstDepositDate: r.firstDepositDate ? parseDate(String(r.firstDepositDate)) : null,
+    dateParseFailed: Boolean(r.dateParseFailed),
+    raw: (typeof r.raw === "object" && r.raw !== null ? r.raw as Record<string, string> : {}),
+  }));
+}
+
 export interface DataQualitySummary {
   rowCount: number;
   uniquePlayers: number;

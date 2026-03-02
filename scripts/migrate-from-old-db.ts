@@ -1,11 +1,16 @@
 /**
- * Eski Supabase → Yeni veritabanı migration
+ * Eski veritabanından yeni veritabanına tek seferlik veri taşıma
  *
  * .env'de:
- *   OLD_DATABASE_URL = eski Supabase (kaynak)
- *   DATABASE_URL     = yeni veritabanı (hedef)
+ *   OLD_DATABASE_URL = eski Supabase/DB (kaynak)
+ *   DATABASE_URL     = yeni DB (hedef)
  *
- * Çalıştırma: npx ts-node --compiler-options '{"module":"CommonJS"}' scripts/migrate-old-to-new.ts
+ * Taşınan veriler:
+ *   - payment_methods (ödeme yöntemleri)
+ *   - app_settings (methods_json, video_url vb.)
+ *   - cekim_raporlari (çekim raporları)
+ *
+ * Çalıştırma: pnpm db:migrate-from-old
  */
 
 import "dotenv/config";
@@ -31,19 +36,18 @@ async function main() {
     // Hedef tablolar var mı?
     const tables = await newClient.query(`
       SELECT table_name FROM information_schema.tables 
-      WHERE table_schema = 'public' AND table_name IN ('payment_methods','app_settings','kasa_snapshots','cekim_raporlari')
+      WHERE table_schema = 'public' AND table_name IN ('payment_methods','app_settings','cekim_raporlari')
     `);
-    if (tables.rows.length < 4) {
-      console.error("HATA: Hedef veritabanında gerekli tablolar yok. Önce çalıştırın: npm run db:push");
+    if (tables.rows.length < 3) {
+      console.error("HATA: Hedef veritabanında gerekli tablolar yok. Önce: pnpm db:push");
       process.exit(1);
     }
 
-    // payment_methods'a cekim_komisyon_orani ekle (eski şemada yok)
+    // payment_methods'a cekim_komisyon_orani ekle (eski şemada yoksa)
     await newClient.query(`
       ALTER TABLE payment_methods ADD COLUMN IF NOT EXISTS cekim_komisyon_orani NUMERIC NOT NULL DEFAULT 0
     `);
 
-    // cekim_raporlari id tipi (uuid mi bigint mi?)
     const cekimIdType = await newClient.query(`
       SELECT data_type FROM information_schema.columns 
       WHERE table_name = 'cekim_raporlari' AND column_name = 'id'
@@ -51,11 +55,10 @@ async function main() {
     const cekimHasUuid = cekimIdType.rows[0]?.data_type === "uuid";
 
     console.log("Kaynak: OLD_DATABASE_URL");
-    console.log("Hedef:  DATABASE_URL");
-    console.log(`cekim_raporlari id: ${cekimHasUuid ? "uuid" : "bigint"}\n`);
+    console.log("Hedef:  DATABASE_URL\n");
 
-    // 1. payment_methods (cekim_komisyon_orani = 0)
-    console.log("\n--- payment_methods ---");
+    // 1. payment_methods
+    console.log("--- payment_methods ---");
     const pmRows = await oldClient.query(
       `SELECT id, name, komisyon_orani, baslangic_bakiye, sort_order, created_at, updated_at FROM payment_methods`
     );
@@ -90,29 +93,7 @@ async function main() {
     }
     console.log(`  ✓ ${asCount} kayıt`);
 
-    // 3. kasa_snapshots
-    console.log("\n--- kasa_snapshots ---");
-    const ksRows = await oldClient.query(
-      `SELECT id, snapshot_hour, snapshot_date, total_kasa, total_yatirim, total_komisyon, total_cekim, details, created_at FROM kasa_snapshots`
-    );
-    let ksCount = 0;
-    for (const r of ksRows.rows) {
-      await newClient.query(
-        `INSERT INTO kasa_snapshots (id, snapshot_hour, snapshot_date, total_kasa, total_yatirim, total_komisyon, total_cekim, details, created_at)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8::jsonb, $9)
-         ON CONFLICT (id) DO UPDATE SET
-           total_kasa = EXCLUDED.total_kasa,
-           total_yatirim = EXCLUDED.total_yatirim,
-           total_komisyon = EXCLUDED.total_komisyon,
-           total_cekim = EXCLUDED.total_cekim,
-           details = EXCLUDED.details`,
-        [r.id, r.snapshot_hour, r.snapshot_date, r.total_kasa, r.total_yatirim, r.total_komisyon, r.total_cekim, JSON.stringify(r.details), r.created_at]
-      );
-      ksCount++;
-    }
-    console.log(`  ✓ ${ksCount} kayıt`);
-
-    // 4. cekim_raporlari (id: bigint → uuid, sadece hedef uuid ise)
+    // 3. cekim_raporlari
     console.log("\n--- cekim_raporlari ---");
     if (cekimHasUuid) {
       const crRows = await oldClient.query(`SELECT id, data, created_at FROM cekim_raporlari ORDER BY created_at ASC NULLS LAST`);
@@ -128,10 +109,28 @@ async function main() {
       }
       console.log(`  ✓ ${crCount} kayıt (id bigint→uuid dönüştürüldü)`);
     } else {
-      console.log(`  ⊘ Atlanıyor (veri zaten mevcut, id bigint)`);
+      const crRows = await oldClient.query(`SELECT id, data, created_at FROM cekim_raporlari ORDER BY created_at ASC NULLS LAST`);
+      let crCount = 0;
+      for (const r of crRows.rows) {
+        const createdAt = r.created_at || new Date();
+        await newClient.query(
+          `INSERT INTO cekim_raporlari (id, data, created_at) VALUES ($1, $2::jsonb, $3) ON CONFLICT (id) DO NOTHING`,
+          [r.id, typeof r.data === "string" ? r.data : JSON.stringify(r.data), createdAt]
+        );
+        crCount++;
+      }
+      if (crCount > 0) {
+        try {
+          await newClient.query(`SELECT setval(pg_get_serial_sequence('cekim_raporlari', 'id'), (SELECT COALESCE(MAX(id), 1) FROM cekim_raporlari))`);
+        } catch {
+          /* sequence yoksa atla */
+        }
+      }
+      console.log(`  ✓ ${crCount} kayıt`);
     }
 
     console.log("\n✅ Migration tamamlandı!");
+    console.log("\nSonraki adım: .env'den OLD_DATABASE_URL'i silebilirsiniz.");
   } catch (e) {
     console.error("Hata:", e);
     throw e;

@@ -1,8 +1,6 @@
 # Veritabanı Kurulumu (Prisma)
 
-## 0. Veritabanı — Klon ile Ayrı
-
-Bu proje **yerel Docker PostgreSQL** kullanır (`docker-compose.yml`). Klon ile bağlantı yok. Kurulum: **docs/VERITABANI_AYIRMA.md** veya `pnpm db:setup`
+Bu proje **yerel Docker PostgreSQL** kullanır (`docker-compose.yml`). Kurulum: **docs/VERITABANI_AYIRMA.md** veya `pnpm db:setup`
 
 ## 1. Ortam Değişkenleri
 
@@ -46,18 +44,6 @@ npm run db:migrate
 
 İlk migration oluşturulur ve uygulanır.
 
-### Mevcut SQL scriptleri ile tablolar varsa
-
-Tablolar zaten `scripts/001_create_tables.sql` ile oluşturulduysa:
-
-```bash
-# Schema'yı mevcut DB'den çek (introspect)
-npx prisma db pull
-
-# Migration'ı "uygulandı" olarak işaretle
-npx prisma migrate resolve --applied "migration_name"
-```
-
 ## 4. Seed (Varsayılan Ödeme Yöntemleri)
 
 ```bash
@@ -66,7 +52,19 @@ npm run db:seed
 
 `payment_methods` tablosu boşsa varsayılan yöntemleri ekler.
 
-## 5. Prisma Studio (Görsel DB Yönetimi)
+## 5. Eski DB'den Veri Taşıma (Tek Seferlik)
+
+Eski Supabase/veritabanından faydalı verileri taşımak için:
+
+```bash
+# .env'e OLD_DATABASE_URL ekleyin (eski DB connection string)
+# Sonra:
+pnpm db:migrate-from-old
+```
+
+Taşınan: `payment_methods`, `app_settings`, `cekim_raporlari`. Migration sonrası `.env`'den `OLD_DATABASE_URL` silebilirsiniz.
+
+## 6. Prisma Studio (Görsel DB Yönetimi)
 
 ```bash
 npm run db:studio
@@ -74,22 +72,22 @@ npm run db:studio
 
 Tarayıcıda `http://localhost:5555` açılır.
 
-## 6. Klon Verilerini Temizleme
+## 7. Verileri Temizleme
 
-Klonlanan projeden gelen eski verileri (bonus, kasa, yatırım performansı) siler.
+Mevcut veritabanındaki rapor/çekim verilerini siler:
 
 ```bash
-# Terminalde proje klasöründe olmalısınız (cd sukrustracking)
-npm run db:clear-cloned
+pnpm db:clear-cloned
 ```
 
 ## Komutlar Özeti
 
 | Komut | Açıklama |
 |-------|----------|
-| `npm run db:generate` | Prisma Client oluştur |
-| `npm run db:push` | Schema'yı DB'ye senkronize et |
-| `npm run db:migrate` | Migration oluştur ve uygula |
-| `npm run db:seed` | Seed verilerini yükle |
-| `npm run db:studio` | Prisma Studio aç |
-| `npm run db:clear-cloned` | Klon verilerini temizle (proje klasöründe çalıştırın) |
+| `pnpm db:generate` | Prisma Client oluştur |
+| `pnpm db:push` | Schema'yı DB'ye senkronize et |
+| `pnpm db:migrate` | Migration oluştur ve uygula |
+| `pnpm db:seed` | Seed verilerini yükle |
+| `pnpm db:studio` | Prisma Studio aç |
+| `pnpm db:migrate-from-old` | Eski DB'den veri taşı (tek seferlik) |
+| `pnpm db:clear-cloned` | Rapor/çekim verilerini temizle |

@@ -14,6 +14,7 @@
     "db:seed": "prisma db seed",
     "db:setup": "docker compose up -d && sleep 3 && pnpm db:push && pnpm db:seed",
     "db:clear-cloned": "npx ts-node --compiler-options '{\"module\":\"CommonJS\"}' scripts/clear-cloned-data.ts",
+    "db:migrate-from-old": "npx ts-node --compiler-options '{\"module\":\"CommonJS\"}' scripts/migrate-from-old-db.ts",
     "bot": "cd telegram-bot && pnpm dev",
     "bot:install": "cd telegram-bot && pnpm install"
   },

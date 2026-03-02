@@ -1,6 +1,6 @@
-# Tamamen Ayrı Veritabanı — Klon ile Bağlantı Yok
+# Veritabanı Kurulumu
 
-Bu proje **yerel Docker PostgreSQL** kullanır. Klonlanan sistemle hiçbir bağlantısı yoktur.
+Bu proje **yerel Docker PostgreSQL** kullanır.
 
 ## Hızlı Kurulum
 
@@ -13,7 +13,7 @@ cp .env.example .env
 pnpm db:setup
 ```
 
-Bu kadar. Veritabanı tamamen sizin — klon ile paylaşım yok.
+Bu kadar.
 
 ## Manuel Adımlar
 
@@ -32,7 +32,7 @@ pnpm db:seed
 DATABASE_URL="postgresql://postgres:postgres@localhost:5432/sukrustracking"
 ```
 
-Bu URL sadece yerel Docker container'a işaret eder. Supabase veya eski klon ile ilgisi yoktur.
+Bu URL yerel Docker container'a işaret eder.
 
 ## Docker Yoksa: Neon (Ücretsiz)
 
@@ -41,4 +41,4 @@ Bu URL sadece yerel Docker container'a işaret eder. Supabase veya eski klon ile
 3. `.env` içinde `DATABASE_URL` olarak yapıştırın
 4. `pnpm db:push && pnpm db:seed`
 
-Neon tamamen ayrı bir servis — klon ile bağlantı yok.
+Neon tamamen ayrı bir servistir.

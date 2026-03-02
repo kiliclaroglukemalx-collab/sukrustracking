@@ -49,6 +49,47 @@ export async function syncMethods(methods: PaymentMethod[]): Promise<void> {
   }
 }
 
+// --- Yeni Oyuncular Günlük Veri ---
+export interface YeniOyuncularDailyEntry {
+  rawText: string;
+  rows: unknown[]; // JSON-serializable (Date -> string)
+}
+
+export async function getYeniOyuncularDaily(): Promise<Record<string, YeniOyuncularDailyEntry>> {
+  try {
+    const val = await getSetting("yeni_oyuncular_daily");
+    if (!val) return {};
+    const parsed = JSON.parse(val) as Record<string, YeniOyuncularDailyEntry>;
+    return typeof parsed === "object" && parsed !== null ? parsed : {};
+  } catch {
+    return {};
+  }
+}
+
+export async function saveYeniOyuncularDaily(
+  date: string,
+  rawText: string,
+  rows: unknown[]
+): Promise<void> {
+  try {
+    const current = await getYeniOyuncularDaily();
+    current[date] = { rawText, rows };
+    await saveSetting("yeni_oyuncular_daily", JSON.stringify(current));
+  } catch {
+    /* silent */
+  }
+}
+
+export async function deleteYeniOyuncularDay(date: string): Promise<void> {
+  try {
+    const current = await getYeniOyuncularDaily();
+    delete current[date];
+    await saveSetting("yeni_oyuncular_daily", JSON.stringify(current));
+  } catch {
+    /* silent */
+  }
+}
+
 // --- Rapor Bazlı Veri (her rapor kendi verisini tutar) ---
 export type ReportType = "cekim" | "yatirim" | "analiz" | "performans" | "bonus";
 
