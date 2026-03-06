@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import {
   ArrowLeft,
-  Trophy,
   FileText,
   BarChart2,
   TrendingUp,
@@ -60,19 +59,6 @@ export default function RaporlarPage() {
       description:
         "Yontem bazli gunluk yatirim ozeti ve haftalik kumulatif karsilastirma. Performans degisimini ok ve yuzde ile takip edin.",
       footnote: "Gunluk + Haftalik gorunum",
-    },
-    {
-      href: "/raporlar/performans",
-      icon: Trophy,
-      iconBg: "bg-amber-50",
-      iconColor: "text-amber-500",
-      badgeBg: "bg-amber-50",
-      badgeColor: "text-amber-600",
-      badgeText: "Aktif",
-      title: "Dis Finans Cekim Performansi",
-      description:
-        "Yontemler aldiklari cekim miktarina gore siralanir. En cok cekim alan yontemler lig tablosu formatinda listelenir.",
-      footnote: "Veriler anlik kasa durumunu yansitir",
     },
     {
       href: "/raporlar/cekim",

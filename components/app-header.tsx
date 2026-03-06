@@ -7,7 +7,6 @@ import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
   BarChart2,
-  Trophy,
   FileText,
   Gift,
   Users,
@@ -24,7 +23,6 @@ const NAV_ITEMS = [
 ];
 
 const REPORT_ITEMS = [
-  { href: "/raporlar/performans", icon: Trophy, title: "Dis Finans Cekim Performansi" },
   { href: "/raporlar/cekim", icon: FileText, title: "Cekim Performans Raporu" },
   { href: "/raporlar/analiz", icon: BarChart2, title: "Gunun Finansal Analizi" },
   { href: "/raporlar/bonus", icon: Gift, title: "Bonus Raporu" },

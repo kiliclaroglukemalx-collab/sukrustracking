@@ -3,7 +3,6 @@
 import { useState, useEffect, useMemo, useRef } from "react";
 import Link from "next/link";
 import {
-  Trophy,
   FileText,
   BarChart2,
   TrendingUp,
@@ -21,13 +20,6 @@ const REPORT_CARDS = [
     title: "Yatirim Performansi",
     summary: "Gunluk yatirim ozeti, haftalik karsilastirma ve performans degisimi.",
     color: "violet",
-  },
-  {
-    href: "/raporlar/performans",
-    icon: Trophy,
-    title: "Dis Finans Cekim Performansi",
-    summary: "Yontemler cekim miktarina gore lig tablosu. En cok cekim alan yontemler.",
-    color: "amber",
   },
   {
     href: "/raporlar/cekim",
@@ -114,8 +106,6 @@ function getCardOzet(href: string, cekim: CekimData): string[] {
   const g = cekim?.genel;
   switch (href) {
     case "/raporlar/yatirim-performans":
-      return ["Rapor sayfasindan veri yukleyin"];
-    case "/raporlar/performans":
       return ["Rapor sayfasindan veri yukleyin"];
     case "/raporlar/cekim":
       return g?.toplamBasariliCekim != null

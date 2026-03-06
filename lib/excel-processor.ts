@@ -425,6 +425,38 @@ export function parseExcelFile(buffer: ArrayBuffer): PaymentRow[] {
   return rows;
 }
 
+/** Yontem adini normalize eder (eslestirme icin). */
+export function normalizeYontemAdi(s: string): string {
+  return s
+    .toLowerCase()
+    .trim()
+    .replace(/[\s_\-]+/g, "")
+    .replace(/[iİıI]/g, "i")
+    .replace(/[öÖ]/g, "o")
+    .replace(/[üÜ]/g, "u")
+    .replace(/[şŞ]/g, "s")
+    .replace(/[çÇ]/g, "c")
+    .replace(/[ğĞ]/g, "g");
+}
+
+/** PaymentRow[] verisini yontem adina gore gruplar. Kasa ve cekimler dosyalari icin kullanilir. */
+export function groupPaymentRowsByYontem(
+  rows: PaymentRow[],
+): { yontemAdi: string; borc: number; kredi: number }[] {
+  const map = new Map<string, { borc: number; kredi: number }>();
+  for (const r of rows) {
+    const key = r.odemeTuruAdi.trim();
+    if (!key) continue;
+    const cur = map.get(key) ?? { borc: 0, kredi: 0 };
+    cur.borc += r.borc ?? 0;
+    cur.kredi += r.kredi ?? 0;
+    map.set(key, cur);
+  }
+  return Array.from(map.entries())
+    .map(([yontemAdi, { borc, kredi }]) => ({ yontemAdi, borc, kredi }))
+    .sort((a, b) => a.yontemAdi.localeCompare(b.yontemAdi));
+}
+
 /**
  * Excel yuklenmeden once sadece baslangic bakiyeleri gosterir.
  * Borc, kredi, komisyon hepsi 0 olur.
